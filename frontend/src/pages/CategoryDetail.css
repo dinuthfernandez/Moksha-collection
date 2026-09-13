@@ -1,0 +1,9 @@
+.category-detail {
+  padding: 20px 24px 90px;
+}
+
+.category-detail-back {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}

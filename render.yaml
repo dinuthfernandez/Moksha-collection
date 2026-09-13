@@ -1,0 +1,39 @@
+services:
+  # --- FastAPI backend (Python, talks to Supabase) ---
+  - type: web
+    name: moksha-collections-api
+    env: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SCHEMA
+        value: moksha_collection
+      - key: SUPABASE_DB_PASSWORD
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+  # --- React (Vite) frontend — static build ---
+  - type: web
+    name: moksha-collections-web
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_WHATSAPP_NUMBER
+        value: "97335521619"
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

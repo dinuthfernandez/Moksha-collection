@@ -1,0 +1,143 @@
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: var(--color-black);
+  border-bottom: 1px solid var(--color-line-soft);
+}
+
+.site-header-bar {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.site-logo {
+  display: flex;
+  align-items: center;
+  margin-right: auto;
+}
+
+.site-logo img {
+  height: 46px;
+  width: auto;
+  object-fit: contain;
+}
+
+.site-nav {
+  display: none;
+  align-items: center;
+  gap: 28px;
+}
+
+.site-nav-link {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  color: var(--color-crystal-silver);
+  padding: 8px 2px;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.site-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-magenta);
+  transition: width 0.25s var(--ease-luxury);
+}
+
+.site-nav-link:hover,
+.site-nav-link.is-active {
+  color: var(--color-warm-white);
+}
+
+.site-nav-link:hover::after,
+.site-nav-link.is-active::after {
+  width: 100%;
+}
+
+.site-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+
+.cart-link {
+  position: relative;
+  display: inline-flex;
+  color: var(--color-warm-white);
+}
+
+.cart-link:hover {
+  color: var(--color-magenta);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: var(--color-magenta);
+  color: var(--color-warm-white);
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.menu-toggle {
+  display: inline-flex;
+  background: transparent;
+  border: none;
+  color: var(--color-warm-white);
+  padding: 6px;
+  margin-left: -6px;
+}
+
+.mobile-nav {
+  max-height: 0;
+  overflow: hidden;
+  background-color: var(--color-black);
+  border-top: 1px solid var(--color-line-soft);
+  display: flex;
+  flex-direction: column;
+  transition: max-height 0.3s var(--ease-luxury);
+}
+
+.mobile-nav.is-open {
+  max-height: 400px;
+}
+
+.mobile-nav-link {
+  padding: 14px 24px;
+  font-size: 0.9rem;
+  color: var(--color-crystal-silver);
+  border-bottom: 1px solid var(--color-line-soft);
+}
+
+.mobile-nav-link.is-active {
+  color: var(--color-magenta);
+}
+
+@media (min-width: 992px) {
+  .site-nav {
+    display: flex;
+  }
+  .menu-toggle,
+  .mobile-nav {
+    display: none;
+  }
+}
