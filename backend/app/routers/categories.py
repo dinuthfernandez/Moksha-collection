@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from fastapi import APIRouter, HTTPException
 
@@ -9,17 +9,13 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 
 
 @router.get("", response_model=list[CategoryOut])
-def list_categories(type: Literal["clothing", "accessories"]):
-    """Subcategories under one of the two fixed top-level sections."""
+def list_categories(type: Optional[Literal["clothing", "accessories"]] = None):
+    """Subcategories under one or all of the top-level sections."""
     supabase = get_supabase()
-    result = (
-        supabase.table("categories")
-        .select("*")
-        .eq("type", type)
-        .eq("is_active", True)
-        .order("display_order")
-        .execute()
-    )
+    query = supabase.table("categories").select("*").eq("is_active", True)
+    if type:
+        query = query.eq("type", type)
+    result = query.order("display_order").execute()
     return result.data
 
 

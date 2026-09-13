@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { buildWhatsAppLink } from '../utils/whatsapp'
 import HeroFrame from '../components/ui/HeroFrame'
 import PhotoFrame from '../components/ui/PhotoFrame'
+import PhotoAutoSlider from '../components/ui/PhotoAutoSlider'
+import RoundCategories from '../components/ui/RoundCategories'
 import Reveal from '../components/ui/Reveal'
 import './Home.css'
 
@@ -57,6 +59,16 @@ export default function Home() {
             </div>
           </div>
         </a>
+      </section>
+
+      {/* 2nd Page: Featured Photo Auto-Slider & Top Round Categories */}
+      <section className="container home-second-page-section">
+        <Reveal>
+          <PhotoAutoSlider />
+        </Reveal>
+        <Reveal>
+          <RoundCategories title="Top Categories" eyebrow="Curated Selections" />
+        </Reveal>
       </section>
 
       <Reveal as="section" className="container collections-section">
