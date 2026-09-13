@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     supabase_schema: str = "moksha_collection"
     supabase_db_password: str = ""
 
+    jwt_secret_key: str = "dev-only-insecure-secret-change-me"
+    jwt_algorithm: str = "HS256"
+    jwt_expires_minutes: int = 60 * 24 * 14  # 14 days
+
     port: int = 8000
     allowed_origins: str = "http://localhost:5173"
 

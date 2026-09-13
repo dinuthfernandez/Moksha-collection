@@ -1,7 +1,8 @@
 import { NavLink, Link } from 'react-router-dom'
 import { useState } from 'react'
-import { Menu, X, ShoppingBag } from 'lucide-react'
+import { Menu, X, ShoppingBag, User } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
+import { useAuth } from '../../context/AuthContext'
 import AnnouncementBar from './AnnouncementBar'
 import './Header.css'
 
@@ -17,6 +18,7 @@ const NAV_LINKS = [
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { itemCount } = useCart()
+  const { isAuthenticated, customer } = useAuth()
 
   return (
     <>
@@ -49,6 +51,10 @@ export default function Header() {
           </nav>
 
           <div className="site-header-actions">
+            <Link to={isAuthenticated ? '/account' : '/login'} className="account-link" aria-label="Account">
+              <User size={20} />
+              {isAuthenticated && <span className="account-link-name">{customer?.first_name}</span>}
+            </Link>
             <Link to="/cart" className="cart-link" aria-label="Cart">
               <ShoppingBag size={20} />
               {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}

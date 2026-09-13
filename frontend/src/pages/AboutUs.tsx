@@ -1,4 +1,5 @@
 import { buildWhatsAppLink } from '../utils/whatsapp'
+import PhotoFrame from '../components/ui/PhotoFrame'
 import './AboutUs.css'
 
 export default function AboutUs() {
@@ -11,7 +12,7 @@ export default function AboutUs() {
 
       <div className="about-grid">
         <div className="about-media">
-          <img src="/assets/hero/DSC_5738.jpg.jpeg" alt="Moksha Collections" />
+          <PhotoFrame src="/assets/hero/DSC_5738.jpg.jpeg" alt="Moksha Collections" priority />
         </div>
         <div className="about-content">
           <p>

@@ -1,5 +1,9 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { buildWhatsAppLink } from '../utils/whatsapp'
+import HeroFrame from '../components/ui/HeroFrame'
+import PhotoFrame from '../components/ui/PhotoFrame'
+import Reveal from '../components/ui/Reveal'
 import './Home.css'
 
 const HERO_IMAGES = [
@@ -11,36 +15,51 @@ const HERO_IMAGES = [
   '/assets/hero/DSC_5698.jpg.jpeg',
 ]
 
+const FRAME_COUNT = HERO_IMAGES.length
+
 export default function Home() {
+  // Reproduces the brand's original hero animation: every 2s, exactly one
+  // tile takes its turn crossfading to the logo mark, then back to its photo.
+  const [step, setStep] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => setStep((s) => (s + 1) % (FRAME_COUNT * 2)), 2000)
+    return () => clearInterval(id)
+  }, [])
+
+  const activeFrame = Math.floor(step / 2)
+  const showLogoOnActiveFrame = step % 2 === 0
+
   return (
     <>
-      <section className="hero">
-        <div className="hero-grid">
-          {HERO_IMAGES.map((src) => (
-            <div className="hero-grid-frame" key={src}>
-              <img src={src} alt="Moksha Collections" />
-            </div>
-          ))}
-        </div>
-
-        <div className="hero-panel">
-          <img src="/assets/logo/logo.png" alt="Moksha Collections" className="hero-logo" />
-          <p className="hero-copy">
-            A wardrobe should be edited, not accumulated — a considered selection of contemporary dresses and
-            accessories, curated in Manama for clients across the Gulf.
-          </p>
-          <div className="hero-actions">
-            <Link to="/clothing" className="btn btn-primary">
-              Shop Clothing
-            </Link>
-            <Link to="/accessories" className="btn btn-outline">
-              Shop Accessories
-            </Link>
+      <section className="moksha-hero-split-wrapper">
+        <div className="hero-window-left">
+          <div className="luxury-stagger-grid">
+            {HERO_IMAGES.map((src, i) => (
+              <HeroFrame key={src} src={src} showLogo={i === activeFrame && showLogoOnActiveFrame} priority={i < 2} />
+            ))}
           </div>
         </div>
+
+        <a
+          href={buildWhatsAppLink("Hello! I'd like to hear about Moksha Collections' exclusive offers.")}
+          target="_blank"
+          rel="noreferrer"
+          className="hero-window-right"
+          aria-label="Ask about exclusive offers"
+        >
+          <div className="promo-image-container">
+            <img src="/assets/hero/DSC_5598.jpg.jpeg" alt="Exclusive Offers - Moksha Collections" loading="eager" />
+            <div className="promo-overlay-content">
+              <span className="promo-tag">Limited Access</span>
+              <h3 className="promo-title">Exclusive Offers</h3>
+              <span className="promo-link-action">Discover Now</span>
+            </div>
+          </div>
+        </a>
       </section>
 
-      <section className="container collections-section">
+      <Reveal as="section" className="container collections-section">
         <div className="section-heading">
           <span className="eyebrow">Two Collections</span>
           <h2 className="section-title">Clothing &amp; Accessories, Equal in Every Way</h2>
@@ -59,12 +78,12 @@ export default function Home() {
             </div>
           </Link>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="story-section">
+      <Reveal as="section" className="story-section">
         <div className="container story-grid">
           <div className="story-media">
-            <img src="/assets/hero/DSC_5642.jpg.jpeg" alt="Moksha Collections styling" />
+            <PhotoFrame src="/assets/hero/DSC_5642.jpg.jpeg" alt="Moksha Collections styling" />
           </div>
           <div className="story-content">
             <span className="eyebrow">Our Story</span>
@@ -83,9 +102,9 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="container size-chart-teaser">
+      <Reveal as="section" className="container size-chart-teaser">
         <div className="size-chart-teaser-card">
           <div>
             <span className="eyebrow">Fit With Confidence</span>
@@ -96,9 +115,9 @@ export default function Home() {
             View Size Charts
           </Link>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="container concierge-section">
+      <Reveal as="section" className="container concierge-section">
         <div className="concierge-card">
           <span className="eyebrow">Private Concierge</span>
           <h2 className="section-title">Styling Guidance, A Message Away</h2>
@@ -114,7 +133,8 @@ export default function Home() {
             Message Us on WhatsApp
           </a>
         </div>
-      </section>
+      </Reveal>
     </>
   )
 }
+

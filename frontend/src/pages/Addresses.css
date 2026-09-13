@@ -1,0 +1,133 @@
+.addresses-page {
+  padding: 20px 24px 100px;
+}
+
+.addresses-toolbar {
+  display: flex;
+  justify-content: center;
+  margin: 28px 0;
+}
+
+.address-form {
+  max-width: 560px;
+  margin: 24px auto 40px;
+  background: var(--color-onyx-soft);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.address-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--color-crystal-silver);
+}
+
+.address-form input,
+.address-form select,
+.address-form textarea {
+  background: var(--color-onyx);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--color-warm-white);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.address-form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.phone-field {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 8px;
+}
+
+.address-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+}
+
+.address-checkbox input {
+  width: auto;
+}
+
+.address-form-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.address-list {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.address-card {
+  position: relative;
+  background: var(--color-onyx-soft);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+}
+
+.address-card h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: var(--color-magenta);
+}
+
+.address-card p {
+  color: var(--color-crystal-silver);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.address-default-badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-warm-white);
+  background: var(--color-magenta);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.address-card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.address-delete {
+  color: var(--color-magenta);
+  border-color: rgba(225, 10, 140, 0.3);
+}
+
+@media (min-width: 560px) {
+  .address-form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .address-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

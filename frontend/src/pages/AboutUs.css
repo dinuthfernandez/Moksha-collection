@@ -17,12 +17,6 @@
   aspect-ratio: 4 / 5;
 }
 
-.about-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .about-content {
   display: flex;
   flex-direction: column;

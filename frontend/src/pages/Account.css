@@ -1,0 +1,97 @@
+.account-page {
+  padding: 20px 24px 100px;
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.account-card {
+  background: var(--color-onyx-soft);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-card h3 {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.account-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--color-crystal-silver);
+}
+
+.account-card input,
+.account-card select {
+  background: var(--color-onyx);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--color-warm-white);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.account-card input:disabled {
+  opacity: 0.6;
+}
+
+.account-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.phone-field {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 8px;
+}
+
+.account-status {
+  font-size: 0.85rem;
+}
+
+.account-status.is-success {
+  color: var(--color-whatsapp);
+}
+
+.account-status.is-error {
+  color: var(--color-magenta);
+}
+
+.account-links p {
+  color: var(--color-crystal-silver);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.account-divider {
+  border: 0;
+  height: 1px;
+  background: var(--color-line);
+  margin: 4px 0;
+}
+
+.account-logout {
+  color: var(--color-magenta);
+  border-color: rgba(225, 10, 140, 0.3);
+}
+
+@media (min-width: 900px) {
+  .account-grid {
+    grid-template-columns: 1.4fr 1fr;
+    align-items: start;
+  }
+}

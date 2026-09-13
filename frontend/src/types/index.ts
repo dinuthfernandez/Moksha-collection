@@ -47,3 +47,66 @@ export interface CartItem {
   size?: string
   color?: string
 }
+
+// ---------------------------------------------------------------------------
+// Auth / customer account
+// ---------------------------------------------------------------------------
+export interface Customer {
+  id: string
+  email: string
+  first_name: string
+  last_name: string
+  phone_country_code: string
+  phone: string
+  created_at: string
+}
+
+export interface AuthResponse {
+  access_token: string
+  token_type: 'bearer'
+  customer: Customer
+}
+
+export interface RegisterPayload {
+  email: string
+  password: string
+  first_name: string
+  last_name: string
+  phone_country_code: string
+  phone: string
+}
+
+export interface LoginPayload {
+  email: string
+  password: string
+}
+
+export interface CustomerUpdatePayload {
+  first_name: string
+  last_name: string
+  phone_country_code: string
+  phone: string
+}
+
+// International-ready delivery address.
+export interface Address {
+  id: string
+  customer_id: string
+  created_at: string
+  label: string
+  full_name: string
+  phone_country_code: string
+  phone: string
+  country_code: string
+  country_name: string
+  address_line1: string
+  address_line2?: string | null
+  city: string
+  state_region?: string | null
+  postal_code?: string | null
+  delivery_notes?: string | null
+  is_default: boolean
+}
+
+export type AddressPayload = Omit<Address, 'id' | 'customer_id' | 'created_at'>
+

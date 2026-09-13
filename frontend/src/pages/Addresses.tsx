@@ -1,0 +1,237 @@
+import { useEffect, useState } from 'react'
+import { createAddress, deleteAddress, getAddresses, updateAddress } from '../api/addresses'
+import type { Address, AddressPayload } from '../types'
+import { COUNTRIES, findCountry } from '../data/countries'
+import EmptyState from '../components/ui/EmptyState'
+import './Addresses.css'
+
+const EMPTY_FORM: AddressPayload = {
+  label: 'Home',
+  full_name: '',
+  phone_country_code: '+973',
+  phone: '',
+  country_code: 'BH',
+  country_name: 'Bahrain',
+  address_line1: '',
+  address_line2: '',
+  city: '',
+  state_region: '',
+  postal_code: '',
+  delivery_notes: '',
+  is_default: false,
+}
+
+export default function Addresses() {
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | 'new' | null>(null)
+  const [form, setForm] = useState<AddressPayload>(EMPTY_FORM)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = () => {
+    setLoading(true)
+    getAddresses()
+      .then(setAddresses)
+      .catch(() => setAddresses([]))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(load, [])
+
+  const startAdd = () => {
+    setForm(EMPTY_FORM)
+    setEditingId('new')
+    setError(null)
+  }
+
+  const startEdit = (address: Address) => {
+    const { id, customer_id, created_at, ...rest } = address
+    void id
+    void customer_id
+    void created_at
+    setForm(rest)
+    setEditingId(address.id)
+    setError(null)
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setForm(EMPTY_FORM)
+  }
+
+  const onCountryChange = (code: string) => {
+    const country = findCountry(code)
+    setForm((f) => ({
+      ...f,
+      country_code: code,
+      country_name: country?.name ?? f.country_name,
+      phone_country_code: country?.dialCode ?? f.phone_country_code,
+    }))
+  }
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    try {
+      if (editingId === 'new') {
+        await createAddress(form)
+      } else if (editingId) {
+        await updateAddress(editingId, form)
+      }
+      cancelEdit()
+      load()
+    } catch {
+      setError('Could not save this address. Please check the details and try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const onDelete = async (id: string) => {
+    if (!window.confirm('Remove this address?')) return
+    await deleteAddress(id)
+    load()
+  }
+
+  return (
+    <div className="container addresses-page">
+      <div className="section-heading">
+        <span className="eyebrow">Delivery</span>
+        <h1 className="section-title">Delivery Addresses</h1>
+        <p className="section-subtitle">Add addresses anywhere in the world — we'll confirm delivery options at checkout.</p>
+      </div>
+
+      {!editingId && (
+        <div className="addresses-toolbar">
+          <button className="btn btn-primary" onClick={startAdd}>
+            Add New Address
+          </button>
+        </div>
+      )}
+
+      {editingId && (
+        <form className="address-form" onSubmit={onSubmit}>
+          {error && <p className="auth-form-error">{error}</p>}
+
+          <div className="address-form-row">
+            <label>
+              <span>Label</span>
+              <input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} placeholder="Home, Work..." />
+            </label>
+            <label>
+              <span>Full name</span>
+              <input required value={form.full_name} onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))} />
+            </label>
+          </div>
+
+          <label>
+            <span>Phone number</span>
+            <div className="phone-field">
+              <select value={form.phone_country_code} onChange={(e) => setForm((f) => ({ ...f, phone_country_code: e.target.value }))} aria-label="Country code">
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.dialCode}>
+                    {c.dialCode} {c.code}
+                  </option>
+                ))}
+              </select>
+              <input required value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+            </div>
+          </label>
+
+          <label>
+            <span>Country</span>
+            <select required value={form.country_code} onChange={(e) => onCountryChange(e.target.value)}>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Address line 1</span>
+            <input required value={form.address_line1} onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))} />
+          </label>
+          <label>
+            <span>Address line 2 (optional)</span>
+            <input value={form.address_line2 ?? ''} onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))} />
+          </label>
+
+          <div className="address-form-row">
+            <label>
+              <span>City</span>
+              <input required value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
+            </label>
+            <label>
+              <span>State / Region (optional)</span>
+              <input value={form.state_region ?? ''} onChange={(e) => setForm((f) => ({ ...f, state_region: e.target.value }))} />
+            </label>
+          </div>
+
+          <label>
+            <span>Postal / ZIP code (optional)</span>
+            <input value={form.postal_code ?? ''} onChange={(e) => setForm((f) => ({ ...f, postal_code: e.target.value }))} />
+          </label>
+
+          <label>
+            <span>Delivery notes (optional)</span>
+            <textarea rows={3} value={form.delivery_notes ?? ''} onChange={(e) => setForm((f) => ({ ...f, delivery_notes: e.target.value }))} />
+          </label>
+
+          <label className="address-checkbox">
+            <input type="checkbox" checked={form.is_default} onChange={(e) => setForm((f) => ({ ...f, is_default: e.target.checked }))} />
+            <span>Set as default delivery address</span>
+          </label>
+
+          <div className="address-form-actions">
+            <button className="btn btn-primary" type="submit" disabled={saving}>
+              {saving ? 'Saving…' : 'Save Address'}
+            </button>
+            <button className="btn btn-outline" type="button" onClick={cancelEdit}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {!loading && !editingId && addresses.length === 0 && (
+        <EmptyState title="No Addresses Yet" message="Add your first delivery address to speed up checkout." />
+      )}
+
+      {!editingId && addresses.length > 0 && (
+        <ul className="address-list">
+          {addresses.map((a) => (
+            <li key={a.id} className="address-card">
+              {a.is_default && <span className="address-default-badge">Default</span>}
+              <h3>{a.label}</h3>
+              <p>{a.full_name}</p>
+              <p>
+                {a.phone_country_code} {a.phone}
+              </p>
+              <p>
+                {a.address_line1}
+                {a.address_line2 ? `, ${a.address_line2}` : ''}
+              </p>
+              <p>
+                {a.city}
+                {a.state_region ? `, ${a.state_region}` : ''} {a.postal_code ?? ''}
+              </p>
+              <p>{a.country_name}</p>
+              <div className="address-card-actions">
+                <button className="btn btn-outline" onClick={() => startEdit(a)}>
+                  Edit
+                </button>
+                <button className="btn btn-outline address-delete" onClick={() => onDelete(a.id)}>
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}

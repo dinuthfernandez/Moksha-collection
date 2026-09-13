@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
+import { AuthProvider } from './context/AuthContext'
 import Layout from './components/layout/Layout'
+import ProtectedRoute from './components/auth/ProtectedRoute'
 import Home from './pages/Home'
 import CategoryLanding from './pages/CategoryLanding'
 import CategoryDetail from './pages/CategoryDetail'
@@ -9,11 +11,16 @@ import AboutUs from './pages/AboutUs'
 import ContactUs from './pages/ContactUs'
 import Policies from './pages/Policies'
 import Cart from './pages/Cart'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Account from './pages/Account'
+import Addresses from './pages/Addresses'
 import NotFound from './pages/NotFound'
 
 export default function App() {
   return (
-    <CartProvider>
+    <AuthProvider>
+      <CartProvider>
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />
@@ -44,9 +51,16 @@ export default function App() {
           <Route path="contact-us" element={<ContactUs />} />
           <Route path="policies" element={<Policies />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="account" element={<Account />} />
+            <Route path="addresses" element={<Addresses />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
-    </CartProvider>
+      </CartProvider>
+    </AuthProvider>
   )
 }

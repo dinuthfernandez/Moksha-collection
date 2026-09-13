@@ -49,6 +49,19 @@ All tables live in the **`moksha_collection`** schema — never `public`.
 3. Run `backend/sql/002_seed_reference_data.sql` — seeds size charts and the
    header announcement bar text only. **Categories and products are left
    empty on purpose** until real content is provided.
+4. Run `backend/sql/003_customers_and_addresses.sql` — creates the customer
+   accounts and international delivery-address tables used by the login/
+   register system.
+
+## Accounts, login & delivery addresses
+- Customers register/log in with email + password (bcrypt-hashed, JWT session
+  token, 14-day expiry). See `backend/app/routers/auth.py`.
+- Each customer can save multiple delivery addresses with full international
+  fields (country, phone country code, state/region, postal code, delivery
+  notes) — `backend/app/routers/addresses.py` and the frontend `/addresses` page.
+- Set `JWT_SECRET_KEY` to a long random value in production (generate one with
+  `python -c "import secrets; print(secrets.token_urlsafe(48))"`) — never reuse
+  the local dev value in `.env.example`.
 
 ## Deploying to Render
 `render.yaml` defines two independent services (Blueprint deploy):

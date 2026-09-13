@@ -18,6 +18,12 @@ services:
         value: moksha_collection
       - key: SUPABASE_DB_PASSWORD
         sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRES_MINUTES
+        value: "20160"
       - key: ALLOWED_ORIGINS
         sync: false
 

@@ -192,6 +192,25 @@ p {
   white-space: nowrap;
 }
 
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s var(--ease-luxury), transform 0.8s var(--ease-luxury);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 @media (max-width: 640px) {
   .container {
     padding: 0 18px;
