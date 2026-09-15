@@ -133,23 +133,6 @@ export default function Home() {
         </div>
       </Reveal>
 
-      <Reveal as="section" className="container concierge-section">
-        <div className="concierge-card">
-          <span className="eyebrow">Private Concierge</span>
-          <h2 className="section-title">Styling Guidance, A Message Away</h2>
-          <p className="section-subtitle">
-            Our concierge is available on WhatsApp for styling advice, order questions, and discreet assistance.
-          </p>
-          <a
-            href={buildWhatsAppLink('Hello! I have an inquiry regarding Moksha Collections.')}
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn-whatsapp"
-          >
-            Message Us on WhatsApp
-          </a>
-        </div>
-      </Reveal>
     </>
   )
 }

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import get_settings
-from .routers import addresses, announcements, auth, categories, contact, health, size_charts
+from .routers import addresses, announcements, auth, categories, contact, health, size_charts, wishlists
 
 settings = get_settings()
 
@@ -60,10 +60,10 @@ app.include_router(announcements.router, prefix="/api")
 app.include_router(contact.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(addresses.router, prefix="/api")
+app.include_router(wishlists.router, prefix="/api")
 
 
 @app.get("/")
 def root():
     return {"service": "moksha-collections-api", "status": "running"}
-
 

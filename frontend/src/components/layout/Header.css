@@ -77,6 +77,16 @@
   color: var(--color-warm-white);
 }
 
+.wishlist-link {
+  position: relative;
+  display: inline-flex;
+  color: var(--color-warm-white);
+}
+
+.wishlist-link:hover {
+  color: var(--color-magenta);
+}
+
 .cart-link:hover {
   color: var(--color-magenta);
 }

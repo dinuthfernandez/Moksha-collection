@@ -1,8 +1,9 @@
 import { NavLink, Link } from 'react-router-dom'
 import { useState } from 'react'
-import { Menu, X, ShoppingBag, User } from 'lucide-react'
+import { Menu, X, ShoppingBag, User, Heart } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
+import { useWishlist } from '../../context/WishlistContext'
 import AnnouncementBar from './AnnouncementBar'
 import './Header.css'
 
@@ -19,6 +20,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const { itemCount } = useCart()
   const { isAuthenticated, customer } = useAuth()
+  const { itemCount: wishlistCount } = useWishlist()
 
   return (
     <>
@@ -51,6 +53,10 @@ export default function Header() {
           </nav>
 
           <div className="site-header-actions">
+            <Link to={isAuthenticated ? '/wishlist' : '/login'} className="wishlist-link" aria-label="Wishlist">
+              <Heart size={20} />
+              {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}
+            </Link>
             <Link to={isAuthenticated ? '/account' : '/login'} className="account-link" aria-label="Account">
               <User size={20} />
               {isAuthenticated && <span className="account-link-name">{customer?.first_name}</span>}

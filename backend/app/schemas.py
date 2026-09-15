@@ -83,6 +83,24 @@ class CustomerUpdateIn(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Customer wishlist
+# ---------------------------------------------------------------------------
+class WishlistItemIn(BaseModel):
+    product_id: str = Field(min_length=1, max_length=160)
+    product_name: str = Field(min_length=1, max_length=200)
+    product_slug: Optional[str] = Field(default=None, max_length=160)
+    image_url: Optional[str] = Field(default=None, max_length=1000)
+    price: Optional[float] = Field(default=None, ge=0)
+    currency: str = Field(default="BHD", min_length=3, max_length=3)
+
+
+class WishlistItemOut(WishlistItemIn):
+    id: str
+    customer_id: str
+    created_at: str
+
+
+# ---------------------------------------------------------------------------
 # Delivery addresses (international-ready)
 # ---------------------------------------------------------------------------
 class AddressIn(BaseModel):

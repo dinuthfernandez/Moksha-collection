@@ -88,6 +88,20 @@ export interface CustomerUpdatePayload {
   phone: string
 }
 
+export interface WishlistItem {
+  id: string
+  customer_id: string
+  product_id: string
+  product_name: string
+  product_slug?: string | null
+  image_url?: string | null
+  price?: number | null
+  currency: string
+  created_at: string
+}
+
+export type WishlistItemPayload = Omit<WishlistItem, 'id' | 'customer_id' | 'created_at'>
+
 // International-ready delivery address.
 export interface Address {
   id: string
@@ -109,4 +123,3 @@ export interface Address {
 }
 
 export type AddressPayload = Omit<Address, 'id' | 'customer_id' | 'created_at'>
-
