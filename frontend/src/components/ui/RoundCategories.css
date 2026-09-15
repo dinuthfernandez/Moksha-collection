@@ -263,17 +263,19 @@
   @media (min-width: 769px) {
     .round-categories-header {
       display: grid;
-      grid-template-columns: 40% 30% 30%;
-      align-items: center;
+      grid-template-columns: 36% 34% 30%;
+      align-items: start;
       gap: 0;
     }
 
     .round-categories-tabs {
       justify-self: start;
+      margin-top: 24px;
     }
 
     .round-categories-view-all {
       justify-self: end;
+      margin-top: 24px;
     }
   }
   .round-categories-view-all {
