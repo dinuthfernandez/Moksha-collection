@@ -8,7 +8,7 @@
 
 .round-categories-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 20px;
   margin-bottom: 28px;
@@ -20,7 +20,6 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  justify-content: center;
 }
 
 .round-categories-title {
@@ -252,31 +251,31 @@
   letter-spacing: 1px;
 }
 
+/* Desktop: keep the filter pill close to the heading, bottom-aligned with
+   the "Top Categories" title line (not the smaller eyebrow line above it). */
+@media (min-width: 769px) {
+  .round-categories-header {
+    display: grid;
+    grid-template-columns: minmax(200px, 36%) auto 1fr;
+    align-items: end;
+    column-gap: 24px;
+  }
+
+  .round-categories-tabs {
+    justify-self: start;
+  }
+
+  .round-categories-view-all {
+    justify-self: end;
+  }
+}
+
 /* Mobile & Tablet Adjustments */
 @media (max-width: 768px) {
   .round-categories-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 14px;
-  }
-
-  @media (min-width: 769px) {
-    .round-categories-header {
-      display: grid;
-      grid-template-columns: 36% 34% 30%;
-      align-items: start;
-      gap: 0;
-    }
-
-    .round-categories-tabs {
-      justify-self: start;
-      margin-top: 24px;
-    }
-
-    .round-categories-view-all {
-      justify-self: end;
-      margin-top: 24px;
-    }
   }
   .round-categories-view-all {
     align-self: flex-end;
