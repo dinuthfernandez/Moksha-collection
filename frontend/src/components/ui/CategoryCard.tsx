@@ -7,7 +7,10 @@ export default function CategoryCard({ category, basePath }: { category: Categor
     <Link to={`${basePath}/${category.slug}`} className="category-card">
       <div className="category-card-media">
         {category.image_url ? (
-          <img src={category.image_url} alt={category.name} />
+          <>
+            <img src={category.image_url} alt="" aria-hidden="true" className="category-card-media-blur" />
+            <img src={category.image_url} alt={category.name} className="category-card-media-fg" />
+          </>
         ) : (
           <div className="category-card-placeholder" />
         )}
