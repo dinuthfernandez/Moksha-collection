@@ -15,6 +15,19 @@
   --color-whatsapp: #25d366;
   --color-line: rgba(255, 255, 255, 0.08);
   --color-line-soft: rgba(255, 255, 255, 0.05);
+  --color-line-strong: rgba(255, 255, 255, 0.16);
+  --surface-tint: rgba(255, 255, 255, 0.04);
+  --surface-tint-faint: rgba(255, 255, 255, 0.015);
+
+  /* Constant regardless of theme — used for text/icons composited over
+     photographs (which always carry a dark scrim) or over fixed brand-color
+     surfaces (magenta/WhatsApp green), so contrast never breaks when the
+     site theme is switched. */
+  --fixed-white: #faf7f2;
+  --fixed-ink: #0e0a14;
+  --on-brand-text: #faf7f2;
+  --on-photo-heading: #faf7f2;
+  --on-photo-text: #c8cad0;
 
   --font-display: "Playfair Display", Georgia, serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
@@ -28,6 +41,24 @@
 
   --shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.45);
   --ease-luxury: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Light theme — same brand palette (magenta/WhatsApp green never change),
+   with the onyx/warm-white surface relationship inverted. Applied via a
+   `data-theme="light"` attribute on <html>, set by ThemeContext. */
+:root[data-theme='light'] {
+  --color-onyx: #faf7f2;
+  --color-onyx-soft: #ffffff;
+  --color-onyx-elevated: #f2ece2;
+  --color-black: #ffffff;
+  --color-warm-white: #17121b;
+  --color-crystal-silver: #6b6570;
+  --color-line: rgba(14, 10, 20, 0.1);
+  --color-line-soft: rgba(14, 10, 20, 0.06);
+  --color-line-strong: rgba(14, 10, 20, 0.18);
+  --surface-tint: rgba(14, 10, 20, 0.035);
+  --surface-tint-faint: rgba(14, 10, 20, 0.02);
+  --shadow-soft: 0 16px 40px rgba(20, 14, 10, 0.12);
 }
 
 * {
@@ -46,6 +77,11 @@ body {
   font-family: var(--font-sans);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] body {
+  color-scheme: light;
 }
 
 #root {
@@ -85,7 +121,7 @@ p {
 
 ::selection {
   background: var(--color-magenta);
-  color: var(--color-warm-white);
+  color: var(--on-brand-text);
 }
 
 /* Scrollbar accents */
@@ -159,7 +195,7 @@ p {
 
 .btn-primary {
   background-color: var(--color-magenta);
-  color: var(--color-warm-white);
+  color: var(--on-brand-text);
 }
 .btn-primary:hover {
   background-color: var(--color-magenta-hover);

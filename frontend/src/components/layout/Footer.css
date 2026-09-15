@@ -117,7 +117,7 @@
 }
 
 .trust-icon-box-white {
-  background-color: var(--color-warm-white);
+  background-color: var(--fixed-white);
   padding: 6px 14px;
   border-radius: 4px;
 }

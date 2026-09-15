@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import { WishlistProvider } from './context/WishlistContext'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/layout/Layout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import Home from './pages/Home'
@@ -21,6 +22,7 @@ import Wishlist from './pages/Wishlist'
 
 export default function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <CartProvider>
       <WishlistProvider>
@@ -67,5 +69,6 @@ export default function App() {
       </WishlistProvider>
       </CartProvider>
     </AuthProvider>
+    </ThemeProvider>
   )
 }

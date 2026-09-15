@@ -119,7 +119,7 @@
   top: -8px;
   right: -10px;
   background: var(--color-magenta);
-  color: var(--color-warm-white);
+  color: var(--on-brand-text);
   font-size: 0.65rem;
   font-weight: 700;
   min-width: 18px;
@@ -151,7 +151,7 @@
 }
 
 .mobile-nav.is-open {
-  max-height: 400px;
+  max-height: 480px;
 }
 
 .mobile-nav-link {
@@ -172,5 +172,17 @@
   .menu-toggle,
   .mobile-nav {
     display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .site-header-bar {
+    gap: 10px;
+  }
+  .site-logo img {
+    height: 36px;
+  }
+  .site-header-actions {
+    gap: 8px;
   }
 }

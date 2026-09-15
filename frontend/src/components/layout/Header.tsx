@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { useWishlist } from '../../context/WishlistContext'
 import AnnouncementBar from './AnnouncementBar'
+import ThemeToggle from '../ui/ThemeToggle'
 import './Header.css'
 
 const NAV_LINKS = [
@@ -53,6 +54,7 @@ export default function Header() {
           </nav>
 
           <div className="site-header-actions">
+            <ThemeToggle className="header-theme-toggle" />
             <Link to={isAuthenticated ? '/wishlist' : '/login'} className="wishlist-link" aria-label="Wishlist">
               <Heart size={20} />
               {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}

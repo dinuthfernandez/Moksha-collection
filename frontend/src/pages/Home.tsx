@@ -55,7 +55,13 @@ export default function Home() {
           aria-label="Ask about exclusive offers"
         >
           <div className="promo-image-container">
-            <img src="/assets/hero/DSC_5598.jpg.jpeg" alt="Exclusive Offers - Moksha Collections" loading="eager" />
+            <img
+              src="/assets/hero/DSC_5598.blur.jpg"
+              alt=""
+              aria-hidden="true"
+              className="promo-image-blur"
+            />
+            <img src="/assets/hero/DSC_5598.jpg.jpeg" alt="Exclusive Offers - Moksha Collections" loading="eager" className="promo-image-fg" />
             <div className="promo-overlay-content">
               <span className="promo-tag">Limited Access</span>
               <h3 className="promo-title">Exclusive Offers</h3>
