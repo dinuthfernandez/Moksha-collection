@@ -259,6 +259,23 @@
     align-items: flex-start;
     gap: 14px;
   }
+
+  @media (min-width: 769px) {
+    .round-categories-header {
+      display: grid;
+      grid-template-columns: 40% 30% 30%;
+      align-items: center;
+      gap: 0;
+    }
+
+    .round-categories-tabs {
+      justify-self: start;
+    }
+
+    .round-categories-view-all {
+      justify-self: end;
+    }
+  }
   .round-categories-view-all {
     align-self: flex-end;
     margin-top: -38px;
