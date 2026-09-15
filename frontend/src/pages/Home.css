@@ -217,7 +217,9 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--color-line);
-  background-size: cover;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-color: var(--color-onyx-elevated);
   background-position: center;
   transition: transform 0.4s var(--ease-luxury), border-color 0.4s ease;
 }
