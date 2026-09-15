@@ -1,5 +1,9 @@
 .category-landing {
-  padding: 20px 24px 90px;
+  padding-bottom: 90px;
+}
+
+.category-landing-section {
+  padding: 48px 24px 0;
 }
 
 .category-landing-grid {
