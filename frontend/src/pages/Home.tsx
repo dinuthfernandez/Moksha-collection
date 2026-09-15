@@ -17,7 +17,11 @@ const HERO_IMAGES = [
   '/assets/hero/DSC_5698.jpg.jpeg',
 ]
 
-const FRAME_COUNT = HERO_IMAGES.length
+// The six tiles are laid out row-major, but the reference animation moves
+// clockwise around the outside edge: top-left, across the top, down the right,
+// then back along the bottom.
+const HERO_ANIMATION_ORDER = [0, 1, 2, 5, 4, 3]
+const FRAME_COUNT = HERO_ANIMATION_ORDER.length
 
 export default function Home() {
   // Reproduces the brand's original hero animation: every 2s, exactly one
@@ -29,7 +33,7 @@ export default function Home() {
     return () => clearInterval(id)
   }, [])
 
-  const activeFrame = Math.floor(step / 2)
+  const activeFrame = HERO_ANIMATION_ORDER[Math.floor(step / 2)]
   const showLogoOnActiveFrame = step % 2 === 0
 
   return (
@@ -149,4 +153,3 @@ export default function Home() {
     </>
   )
 }
-
