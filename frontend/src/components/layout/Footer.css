@@ -104,10 +104,33 @@
 }
 
 .trust-icon-box {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   height: 34px;
+  min-width: 116px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: var(--color-warm-white);
+}
+
+.trust-icon-box svg {
+  width: 34px;
+  height: 24px;
+  display: block;
+  color: var(--color-warm-white);
+}
+
+.trust-icon-box svg rect,
+.trust-icon-box svg path {
+  stroke: currentColor;
+}
+
+.trust-icon-box svg rect[fill] {
+  fill: currentColor;
 }
 
 .trust-icon-label {
@@ -119,7 +142,7 @@
 .trust-icon-box-white {
   background-color: var(--fixed-white);
   padding: 6px 14px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .aramex-icon {

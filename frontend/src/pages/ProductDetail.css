@@ -1,0 +1,130 @@
+.product-detail-page {
+  padding: 20px 24px 90px;
+}
+
+.product-detail-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+@media (min-width: 860px) {
+  .product-detail-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+  }
+}
+
+.product-detail-image-wrap {
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  aspect-ratio: 4 / 5;
+}
+
+.product-detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-detail-image.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-crystal-silver);
+}
+
+.product-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.product-detail-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  color: var(--color-warm-white);
+  margin: 0;
+}
+
+.product-detail-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-magenta);
+  margin: 0;
+}
+
+.product-detail-stock {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.product-detail-stock.in-stock {
+  color: #4caf7d;
+}
+
+.product-detail-stock.out-of-stock {
+  color: var(--color-magenta);
+}
+
+.product-detail-section {
+  border-top: 1px solid var(--color-line);
+  padding-top: 14px;
+}
+
+.product-detail-section h2 {
+  font-size: 0.95rem;
+  color: var(--color-warm-white);
+  margin: 0 0 8px;
+}
+
+.product-detail-section p {
+  color: var(--color-crystal-silver);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.product-detail-specs {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+
+.product-detail-specs dt {
+  color: var(--color-crystal-silver);
+  font-size: 0.85rem;
+}
+
+.product-detail-specs dd {
+  color: var(--color-warm-white);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.product-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.product-detail-add-btn,
+.product-detail-wishlist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-detail-wishlist-btn.is-saved {
+  color: var(--color-magenta);
+  border-color: var(--color-magenta);
+}
+
+.product-detail-not-found {
+  color: var(--color-crystal-silver);
+  margin-bottom: 20px;
+}

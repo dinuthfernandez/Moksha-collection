@@ -93,6 +93,9 @@ export default function Account() {
           <Link to="/addresses" className="btn btn-outline">
             Manage Delivery Addresses
           </Link>
+          <Link to="/orders" className="btn btn-outline">
+            View My Orders
+          </Link>
           <Link to="/wishlist" className="btn btn-outline">
             View Wishlist
           </Link>

@@ -2,7 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { ApiError } from '../api/client'
-import { COUNTRIES } from '../data/countries'
+import { COUNTRIES, findCountry } from '../data/countries'
+import CountryCodeSelect from '../components/ui/CountryCodeSelect'
+import PasswordInput from '../components/ui/PasswordInput'
 import './AuthForm.css'
 
 export default function Register() {
@@ -17,6 +19,8 @@ export default function Register() {
     confirm_password: '',
     phone_country_code: '+973',
     phone: '',
+    country_code: 'BH',
+    country_name: 'Bahrain',
   })
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -78,15 +82,34 @@ export default function Register() {
           </label>
 
           <label>
+            <span>Country</span>
+            <select
+              required
+              value={form.country_code}
+              onChange={(e) => {
+                const country = findCountry(e.target.value)
+                setForm((f) => ({
+                  ...f,
+                  country_code: e.target.value,
+                  country_name: country?.name ?? f.country_name,
+                }))
+              }}
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
             <span>Phone number</span>
             <div className="phone-field">
-              <select value={form.phone_country_code} onChange={update('phone_country_code')} aria-label="Country code">
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.dialCode}>
-                    {c.dialCode} {c.code}
-                  </option>
-                ))}
-              </select>
+              <CountryCodeSelect
+                value={form.phone_country_code}
+                onChange={(dialCode) => setForm((f) => ({ ...f, phone_country_code: dialCode }))}
+              />
               <input required value={form.phone} onChange={update('phone')} placeholder="Phone number" />
             </div>
           </label>
@@ -94,11 +117,11 @@ export default function Register() {
           <div className="auth-form-row">
             <label>
               <span>Password</span>
-              <input type="password" required value={form.password} onChange={update('password')} placeholder="At least 8 characters" />
+              <PasswordInput required value={form.password} onChange={update('password')} placeholder="At least 8 characters" />
             </label>
             <label>
               <span>Confirm password</span>
-              <input type="password" required value={form.confirm_password} onChange={update('confirm_password')} placeholder="Re-enter password" />
+              <PasswordInput required value={form.confirm_password} onChange={update('confirm_password')} placeholder="Re-enter password" />
             </label>
           </div>
 

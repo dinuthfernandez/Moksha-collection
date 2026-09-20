@@ -26,6 +26,48 @@ services:
         value: "20160"
       - key: ALLOWED_ORIGINS
         sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_JWT_EXPIRES_MINUTES
+        value: "720"
+      - key: FRONTEND_BASE_URL
+        sync: false
+      - key: PASSWORD_RESET_CODE_EXPIRES_MINUTES
+        value: "15"
+      - key: INFO_SMTP_HOST
+        value: smtp.zoho.com
+      - key: INFO_SMTP_PORT
+        value: "587"
+      - key: INFO_SMTP_USERNAME
+        sync: false
+      - key: INFO_SMTP_PASSWORD
+        sync: false
+      - key: INFO_SMTP_FROM_EMAIL
+        sync: false
+      - key: INFO_SMTP_FROM_NAME
+        value: Moksha Collections
+      - key: SALES_SMTP_HOST
+        value: smtp.zoho.com
+      - key: SALES_SMTP_PORT
+        value: "587"
+      - key: SALES_SMTP_USERNAME
+        sync: false
+      - key: SALES_SMTP_PASSWORD
+        sync: false
+      - key: SALES_SMTP_FROM_EMAIL
+        sync: false
+      - key: SALES_SMTP_FROM_NAME
+        value: Moksha Collections
+      - key: ZOHO_CLIENT_ID
+        sync: false
+      - key: ZOHO_CLIENT_SECRET
+        sync: false
+      - key: ZOHO_REFRESH_TOKEN
+        sync: false
+      - key: ZOHO_ORGANIZATION_ID
+        sync: false
+      - key: ZOHO_INVENTORY_SYNC_INTERVAL_SECONDS
+        value: "3600"
 
   # --- React (Vite) frontend — static build ---
   - type: web

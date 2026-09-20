@@ -41,6 +41,8 @@ create index if not exists categories_parent_id_idx on moksha_collection.categor
 create table if not exists moksha_collection.products (
   id uuid primary key default gen_random_uuid(),
   category_id uuid references moksha_collection.categories (id) on delete set null,
+  category_slug text,
+  zoho_item_id text,
   name text not null,
   slug text not null unique,
   description text,
@@ -51,10 +53,22 @@ create table if not exists moksha_collection.products (
   is_on_sale boolean not null default false,
   is_under_5bhd boolean not null default false,
   stock_quantity integer not null default 0,
+  image_url text,
+  zoho_sku text,
+  brand text,
+  length numeric(10, 3),
+  width numeric(10, 3),
+  height numeric(10, 3),
+  weight numeric(10, 3),
+  dimension_unit text,
+  weight_unit text,
+  last_synced_at timestamptz,
   created_at timestamptz not null default now()
 );
 
 create index if not exists products_category_id_idx on moksha_collection.products (category_id);
+create index if not exists products_category_slug_idx on moksha_collection.products (category_slug);
+create index if not exists products_zoho_item_id_idx on moksha_collection.products (zoho_item_id);
 
 create table if not exists moksha_collection.product_images (
   id uuid primary key default gen_random_uuid(),
@@ -127,6 +141,8 @@ create table if not exists moksha_collection.orders (
   notes text,
   total_amount numeric(10, 3) not null default 0,
   status text not null default 'pending' check (status in ('pending', 'confirmed', 'shipped', 'completed', 'cancelled')),
+  zoho_invoice_id text,
+  zoho_invoice_number text,
   created_at timestamptz not null default now()
 );
 

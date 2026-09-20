@@ -1,0 +1,109 @@
+.admin-orders-section {
+  margin-bottom: 32px;
+}
+
+.admin-orders-section h2 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: capitalize;
+}
+
+.admin-orders-count {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-crystal-silver);
+  background: var(--color-onyx-elevated);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.admin-orders-empty {
+  color: var(--color-crystal-silver);
+  font-size: 0.85rem;
+}
+
+.admin-order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.admin-order-card {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-onyx-soft);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-order-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-order-id {
+  font-family: var(--font-display);
+  color: var(--color-warm-white);
+}
+
+.admin-order-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-onyx-elevated);
+  color: var(--color-crystal-silver);
+}
+
+.admin-order-badge.status-pending { color: #e0b13a; }
+.admin-order-badge.status-accepted { color: #3aa0e0; }
+.admin-order-badge.status-delivered { color: #3ae0a0; }
+.admin-order-badge.status-cancelled { color: #e04a4a; }
+
+.admin-order-customer {
+  font-size: 0.9rem;
+  color: var(--color-warm-white);
+}
+
+.admin-order-meta {
+  font-size: 0.78rem;
+  color: var(--color-crystal-silver);
+}
+
+.admin-order-return {
+  font-size: 0.78rem;
+  color: var(--color-magenta);
+  text-transform: capitalize;
+}
+
+.admin-order-items {
+  font-size: 0.78rem;
+  color: var(--color-crystal-silver);
+  display: grid;
+  gap: 2px;
+  padding-left: 16px;
+}
+
+.admin-order-total {
+  font-size: 0.85rem;
+  color: var(--color-warm-white);
+}
+
+.admin-order-cancel-reason {
+  font-size: 0.78rem;
+  color: #e04a4a;
+}
+
+.admin-order-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}

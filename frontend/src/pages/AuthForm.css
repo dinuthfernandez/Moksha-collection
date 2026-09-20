@@ -6,11 +6,12 @@
 
 .auth-card {
   width: 100%;
-  max-width: 460px;
-  background: var(--color-onyx-soft);
-  border: 1px solid var(--color-line);
+  max-width: 520px;
+  background: var(--color-onyx-elevated);
+  border: 1px solid var(--color-line-strong);
   border-radius: var(--radius-lg);
-  padding: 36px 32px;
+  box-shadow: var(--shadow-soft);
+  padding: 40px 40px;
 }
 
 .auth-card .section-heading {
@@ -27,7 +28,8 @@
 .auth-form-row {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 20px;
+  min-width: 0;
 }
 
 .auth-form label {
@@ -36,11 +38,15 @@
   gap: 8px;
   font-size: 0.8rem;
   color: var(--color-crystal-silver);
+  min-width: 0;
 }
 
 .auth-form input,
 .auth-form select,
 .auth-form textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: var(--color-onyx);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-sm);
@@ -59,12 +65,16 @@
 
 .phone-field {
   display: grid;
-  grid-template-columns: minmax(0, 96px) minmax(0, 1fr);
+  grid-template-columns: minmax(118px, 130px) minmax(0, 1fr);
   gap: 8px;
 }
 
 .phone-field select {
   min-width: 0;
+  padding-right: 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .auth-form-error {
@@ -95,5 +105,11 @@
 @media (min-width: 560px) {
   .auth-form-row {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 400px) {
+  .auth-card {
+    padding: 28px 20px;
   }
 }

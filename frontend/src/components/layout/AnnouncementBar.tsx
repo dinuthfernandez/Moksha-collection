@@ -43,7 +43,9 @@ export default function AnnouncementBar() {
 
   return (
     <div className="announcement-bar" role="status">
-      <span className={`announcement-text ${visible ? 'is-visible' : ''}`}>{messages[index]}</span>
+      <span className={`announcement-text ${visible ? 'is-visible' : ''}`}>
+        <span className="announcement-text-inner">{messages[index]}</span>
+      </span>
     </div>
   )
 }

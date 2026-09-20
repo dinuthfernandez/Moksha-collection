@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { createAddress, deleteAddress, getAddresses, updateAddress } from '../api/addresses'
 import type { Address, AddressPayload } from '../types'
 import { COUNTRIES, findCountry } from '../data/countries'
+import { BAHRAIN_GOVERNORATES, GCC_REGIONS, getAddressTier } from '../data/addressTiers'
+import { useAuth } from '../context/AuthContext'
+import CountryCodeSelect from '../components/ui/CountryCodeSelect'
 import EmptyState from '../components/ui/EmptyState'
 import './Addresses.css'
 
-const EMPTY_FORM: AddressPayload = {
+const BASE_EMPTY_FORM: AddressPayload = {
   label: 'Home',
   full_name: '',
   phone_country_code: '+973',
@@ -17,15 +20,22 @@ const EMPTY_FORM: AddressPayload = {
   city: '',
   state_region: '',
   postal_code: '',
+  block_number: '',
+  road_number: '',
+  building_name: '',
+  apartment_number: '',
+  district: '',
+  tax_id: '',
   delivery_notes: '',
   is_default: false,
 }
 
 export default function Addresses() {
+  const { customer } = useAuth()
   const [addresses, setAddresses] = useState<Address[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | 'new' | null>(null)
-  const [form, setForm] = useState<AddressPayload>(EMPTY_FORM)
+  const [form, setForm] = useState<AddressPayload>(BASE_EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,8 +49,19 @@ export default function Addresses() {
 
   useEffect(load, [])
 
+  const emptyFormForNewAddress = (): AddressPayload => {
+    if (!customer?.country_code) return BASE_EMPTY_FORM
+    const country = findCountry(customer.country_code)
+    return {
+      ...BASE_EMPTY_FORM,
+      country_code: customer.country_code,
+      country_name: customer.country_name ?? country?.name ?? BASE_EMPTY_FORM.country_name,
+      phone_country_code: country?.dialCode ?? BASE_EMPTY_FORM.phone_country_code,
+    }
+  }
+
   const startAdd = () => {
-    setForm(EMPTY_FORM)
+    setForm(emptyFormForNewAddress())
     setEditingId('new')
     setError(null)
   }
@@ -50,14 +71,14 @@ export default function Addresses() {
     void id
     void customer_id
     void created_at
-    setForm(rest)
+    setForm({ ...BASE_EMPTY_FORM, ...rest })
     setEditingId(address.id)
     setError(null)
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setForm(EMPTY_FORM)
+    setForm(BASE_EMPTY_FORM)
   }
 
   const onCountryChange = (code: string) => {
@@ -95,6 +116,9 @@ export default function Addresses() {
     load()
   }
 
+  const tier = getAddressTier(form.country_code)
+  const gccRegions = GCC_REGIONS[form.country_code] ?? []
+
   return (
     <div className="container addresses-page">
       <div className="section-heading">
@@ -129,13 +153,10 @@ export default function Addresses() {
           <label>
             <span>Phone number</span>
             <div className="phone-field">
-              <select value={form.phone_country_code} onChange={(e) => setForm((f) => ({ ...f, phone_country_code: e.target.value }))} aria-label="Country code">
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.dialCode}>
-                    {c.dialCode} {c.code}
-                  </option>
-                ))}
-              </select>
+              <CountryCodeSelect
+                value={form.phone_country_code}
+                onChange={(dialCode) => setForm((f) => ({ ...f, phone_country_code: dialCode }))}
+              />
               <input required value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
             </div>
           </label>
@@ -151,35 +172,199 @@ export default function Addresses() {
             </select>
           </label>
 
-          <label>
-            <span>Address line 1</span>
-            <input required value={form.address_line1} onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))} />
-          </label>
-          <label>
-            <span>Address line 2 (optional)</span>
-            <input value={form.address_line2 ?? ''} onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))} />
-          </label>
+          {tier === 'bahrain' && (
+            <>
+              <label>
+                <span>Governorate</span>
+                <select
+                  required
+                  value={form.state_region ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, state_region: e.target.value }))}
+                >
+                  <option value="" disabled>
+                    Select governorate
+                  </option>
+                  {BAHRAIN_GOVERNORATES.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <div className="address-form-row">
-            <label>
-              <span>City</span>
-              <input required value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
-            </label>
-            <label>
-              <span>State / Region (optional)</span>
-              <input value={form.state_region ?? ''} onChange={(e) => setForm((f) => ({ ...f, state_region: e.target.value }))} />
-            </label>
-          </div>
+              <div className="address-form-row">
+                <label>
+                  <span>Block Number</span>
+                  <input
+                    required
+                    value={form.block_number ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, block_number: e.target.value }))}
+                    placeholder="e.g. 317"
+                  />
+                </label>
+                <label>
+                  <span>Road / Street Number</span>
+                  <input
+                    required
+                    value={form.road_number ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, road_number: e.target.value }))}
+                    placeholder="e.g. Road 1704"
+                  />
+                </label>
+              </div>
 
-          <label>
-            <span>Postal / ZIP code (optional)</span>
-            <input value={form.postal_code ?? ''} onChange={(e) => setForm((f) => ({ ...f, postal_code: e.target.value }))} />
-          </label>
+              <div className="address-form-row">
+                <label>
+                  <span>Building / House Name &amp; Number</span>
+                  <input
+                    required
+                    value={form.building_name ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, building_name: e.target.value }))}
+                    placeholder="e.g. Building 220"
+                  />
+                </label>
+                <label>
+                  <span>Apartment / Flat / Office (optional)</span>
+                  <input
+                    value={form.apartment_number ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, apartment_number: e.target.value }))}
+                  />
+                </label>
+              </div>
 
-          <label>
-            <span>Delivery notes (optional)</span>
-            <textarea rows={3} value={form.delivery_notes ?? ''} onChange={(e) => setForm((f) => ({ ...f, delivery_notes: e.target.value }))} />
-          </label>
+              <label>
+                <span>Delivery Instructions / Landmark (optional)</span>
+                <textarea
+                  rows={3}
+                  value={form.delivery_notes ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, delivery_notes: e.target.value }))}
+                  placeholder='e.g. "Near the petrol station"'
+                />
+              </label>
+            </>
+          )}
+
+          {tier === 'gcc' && (
+            <>
+              <div className="address-form-row">
+                <label>
+                  <span>State / Province / Emirate</span>
+                  {gccRegions.length > 0 ? (
+                    <select
+                      required
+                      value={form.state_region ?? ''}
+                      onChange={(e) => setForm((f) => ({ ...f, state_region: e.target.value }))}
+                    >
+                      <option value="" disabled>
+                        Select region
+                      </option>
+                      {gccRegions.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      required
+                      value={form.state_region ?? ''}
+                      onChange={(e) => setForm((f) => ({ ...f, state_region: e.target.value }))}
+                    />
+                  )}
+                </label>
+                <label>
+                  <span>City</span>
+                  <input required value={form.city ?? ''} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
+                </label>
+              </div>
+
+              <label>
+                <span>District / Neighborhood</span>
+                <input required value={form.district ?? ''} onChange={(e) => setForm((f) => ({ ...f, district: e.target.value }))} />
+              </label>
+
+              <label>
+                <span>Street Name / Number</span>
+                <input
+                  required
+                  value={form.address_line1 ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
+                />
+              </label>
+
+              <div className="address-form-row">
+                <label>
+                  <span>Building / Villa Number / Unit No</span>
+                  <input
+                    required
+                    value={form.building_name ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, building_name: e.target.value }))}
+                  />
+                </label>
+                <label>
+                  <span>Postal Code / National Address Shortcode (optional)</span>
+                  <input
+                    value={form.postal_code ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, postal_code: e.target.value }))}
+                    placeholder="e.g. ABCD1234"
+                  />
+                </label>
+              </div>
+
+              <label>
+                <span>Delivery notes (optional)</span>
+                <textarea rows={3} value={form.delivery_notes ?? ''} onChange={(e) => setForm((f) => ({ ...f, delivery_notes: e.target.value }))} />
+              </label>
+            </>
+          )}
+
+          {tier === 'international' && (
+            <>
+              <label>
+                <span>Street Address Line 1</span>
+                <input
+                  required
+                  value={form.address_line1 ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
+                />
+              </label>
+              <label>
+                <span>Street Address Line 2 (optional)</span>
+                <input value={form.address_line2 ?? ''} onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))} />
+              </label>
+
+              <div className="address-form-row">
+                <label>
+                  <span>City / Town</span>
+                  <input required value={form.city ?? ''} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
+                </label>
+                <label>
+                  <span>State / Province / Region</span>
+                  <input
+                    required
+                    value={form.state_region ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, state_region: e.target.value }))}
+                  />
+                </label>
+              </div>
+
+              <div className="address-form-row">
+                <label>
+                  <span>Postal / ZIP Code</span>
+                  <input required value={form.postal_code ?? ''} onChange={(e) => setForm((f) => ({ ...f, postal_code: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Tax ID / VAT Number (optional)</span>
+                  <input value={form.tax_id ?? ''} onChange={(e) => setForm((f) => ({ ...f, tax_id: e.target.value }))} />
+                </label>
+              </div>
+
+              <label>
+                <span>Delivery notes (optional)</span>
+                <textarea rows={3} value={form.delivery_notes ?? ''} onChange={(e) => setForm((f) => ({ ...f, delivery_notes: e.target.value }))} />
+              </label>
+            </>
+          )}
 
           <label className="address-checkbox">
             <input type="checkbox" checked={form.is_default} onChange={(e) => setForm((f) => ({ ...f, is_default: e.target.checked }))} />
@@ -211,14 +396,31 @@ export default function Addresses() {
               <p>
                 {a.phone_country_code} {a.phone}
               </p>
-              <p>
-                {a.address_line1}
-                {a.address_line2 ? `, ${a.address_line2}` : ''}
-              </p>
-              <p>
-                {a.city}
-                {a.state_region ? `, ${a.state_region}` : ''} {a.postal_code ?? ''}
-              </p>
+              {getAddressTier(a.country_code) === 'bahrain' ? (
+                <>
+                  <p>
+                    Block {a.block_number}, Road {a.road_number}
+                  </p>
+                  <p>
+                    {a.building_name}
+                    {a.apartment_number ? `, Apt/Office ${a.apartment_number}` : ''}
+                  </p>
+                  <p>{a.state_region} Governorate</p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    {a.address_line1}
+                    {a.address_line2 ? `, ${a.address_line2}` : ''}
+                  </p>
+                  {a.district && <p>{a.district}</p>}
+                  {a.building_name && <p>{a.building_name}</p>}
+                  <p>
+                    {a.city}
+                    {a.state_region ? `, ${a.state_region}` : ''} {a.postal_code ?? ''}
+                  </p>
+                </>
+              )}
               <p>{a.country_name}</p>
               <div className="address-card-actions">
                 <button className="btn btn-outline" onClick={() => startEdit(a)}>

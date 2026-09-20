@@ -1,16 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import EmptyState from '../components/ui/EmptyState'
-import { buildWhatsAppLink } from '../utils/whatsapp'
 import './Cart.css'
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, subtotal } = useCart()
-
-  const checkoutMessage = () => {
-    const lines = items.map((i) => `• ${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity} — ${(i.price * i.quantity).toFixed(2)} BHD`)
-    return `Hello! I'd like to order:\n\n${lines.join('\n')}\n\nSubtotal: ${subtotal.toFixed(2)} BHD`
-  }
 
   return (
     <div className="container cart-page">
@@ -50,9 +44,9 @@ export default function Cart() {
               <span>Subtotal</span>
               <strong>{subtotal.toFixed(2)} BHD</strong>
             </div>
-            <a href={buildWhatsAppLink(checkoutMessage())} target="_blank" rel="noreferrer" className="btn btn-whatsapp">
-              Checkout via WhatsApp
-            </a>
+            <Link to="/checkout" className="btn btn-primary">
+              Proceed to Purchase
+            </Link>
             <Link to="/clothing" className="btn btn-outline">
               Continue Shopping
             </Link>

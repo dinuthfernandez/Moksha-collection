@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { ApiError } from '../api/client'
+import PasswordInput from '../components/ui/PasswordInput'
 import './AuthForm.css'
 
 export default function Login() {
@@ -49,8 +50,7 @@ export default function Login() {
           </label>
           <label>
             <span>Password</span>
-            <input
-              type="password"
+            <PasswordInput
               required
               value={form.password}
               onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
@@ -62,6 +62,9 @@ export default function Login() {
           </button>
         </form>
 
+        <p className="auth-switch">
+          <Link to="/forgot-password">Forgot your password?</Link>
+        </p>
         <p className="auth-switch">
           New to Moksha Collections? <Link to="/register">Create an account</Link>
         </p>

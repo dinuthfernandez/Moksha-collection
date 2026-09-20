@@ -1,0 +1,28 @@
+.admin-returns {
+  padding-bottom: 20px;
+}
+
+.admin-return-customer {
+  border: 1px solid var(--color-line-soft);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.admin-return-customer h3 {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  color: var(--color-warm-white);
+}
+
+.admin-return-customer p {
+  font-size: 0.8rem;
+  color: var(--color-crystal-silver);
+}
+
+.admin-return-customer p strong {
+  color: var(--color-warm-white);
+  font-weight: 600;
+}

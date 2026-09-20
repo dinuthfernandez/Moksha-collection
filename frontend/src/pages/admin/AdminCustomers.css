@@ -1,0 +1,121 @@
+.admin-customer-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-onyx-soft);
+  color: var(--color-crystal-silver);
+  margin-bottom: 18px;
+}
+
+.admin-customer-search input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--color-warm-white);
+  font-family: var(--font-sans);
+}
+
+.admin-customer-table {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-customer-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-onyx-soft);
+  text-align: left;
+}
+
+.admin-customer-row div strong {
+  display: block;
+  color: var(--color-warm-white);
+}
+
+.admin-customer-row div span {
+  font-size: 0.78rem;
+  color: var(--color-crystal-silver);
+}
+
+.admin-customer-row-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--color-crystal-silver);
+}
+
+.admin-customer-banned-tag {
+  color: #e04a4a;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.admin-customer-ban-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  font-size: 0.75rem;
+  color: var(--color-crystal-silver);
+}
+
+.admin-customer-ban-btn:hover {
+  color: var(--color-magenta);
+  border-color: var(--color-magenta);
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.admin-modal {
+  background: var(--color-onyx-soft);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.admin-modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.admin-modal header button {
+  font-size: 1.4rem;
+  color: var(--color-crystal-silver);
+}
+
+.admin-modal h3 {
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.admin-modal-list {
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--color-crystal-silver);
+}

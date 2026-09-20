@@ -1,10 +1,27 @@
+import asyncio
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import get_settings
-from .routers import addresses, announcements, auth, categories, contact, health, size_charts, wishlists
+from .routers import (
+    addresses,
+    admin,
+    admin_auth,
+    announcements,
+    auth,
+    categories,
+    contact,
+    health,
+    orders,
+    products,
+    settings as settings_router,
+    size_charts,
+    wishlists,
+)
+from .services.zoho_inventory import sync_loop
 
 settings = get_settings()
 
@@ -55,12 +72,31 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 app.include_router(health.router, prefix="/api")
 app.include_router(categories.router, prefix="/api")
+app.include_router(products.router, prefix="/api")
 app.include_router(size_charts.router, prefix="/api")
 app.include_router(announcements.router, prefix="/api")
 app.include_router(contact.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(addresses.router, prefix="/api")
 app.include_router(wishlists.router, prefix="/api")
+app.include_router(orders.router, prefix="/api")
+app.include_router(settings_router.router, prefix="/api")
+app.include_router(admin_auth.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
+
+
+@app.on_event("startup")
+async def startup_event():
+    settings = get_settings()
+    if all(
+        [
+            settings.zoho_client_id,
+            settings.zoho_client_secret,
+            settings.zoho_refresh_token,
+            settings.zoho_organization_id,
+        ]
+    ):
+        asyncio.create_task(sync_loop())
 
 
 @app.get("/")

@@ -40,20 +40,29 @@
   font-size: 0.9rem;
 }
 
+.address-form label {
+  min-width: 0;
+}
+
 .address-form-row {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+  min-width: 0;
 }
 
 .phone-field {
   display: grid;
-  grid-template-columns: minmax(0, 96px) minmax(0, 1fr);
+  grid-template-columns: minmax(118px, 130px) minmax(0, 1fr);
   gap: 8px;
 }
 
 .phone-field select {
   min-width: 0;
+  padding-right: 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .address-checkbox {

@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
-import { Heart, Trash2 } from 'lucide-react'
+import { Heart, ShoppingBag, Trash2 } from 'lucide-react'
 import { useWishlist } from '../context/WishlistContext'
+import { useCart } from '../context/CartContext'
 import './Wishlist.css'
 
 export default function Wishlist() {
   const { items, isLoading, remove } = useWishlist()
+  const { addItem } = useCart()
 
   return (
     <div className="container wishlist-page">
@@ -28,17 +30,34 @@ export default function Wishlist() {
         <div className="wishlist-grid">
           {items.map((item) => (
             <article className="wishlist-card" key={item.id}>
-              <div className="wishlist-card-media">
-                {item.image_url ? <img src={item.image_url} alt={item.product_name} /> : <div />}
-              </div>
-              <div className="wishlist-card-content">
-                <div>
-                  <h2>{item.product_name}</h2>
-                  {item.price != null && <p>{item.currency} {item.price.toFixed(3)}</p>}
+              <Link to={item.product_slug ? `/product/${item.product_slug}` : '#'} className="wishlist-card-media">
+                {item.image_url ? <img src={item.image_url} alt={item.product_name} /> : <div className="wishlist-card-placeholder" />}
+              </Link>
+              <div className="wishlist-card-body">
+                <Link to={item.product_slug ? `/product/${item.product_slug}` : '#'} className="wishlist-card-title">
+                  {item.product_name}
+                </Link>
+                <p className="wishlist-card-price">{item.currency} {(item.price ?? 0).toFixed(3)}</p>
+                <div className="wishlist-card-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary wishlist-add-to-cart"
+                    onClick={() =>
+                      addItem({
+                        id: item.product_id,
+                        name: item.product_name,
+                        image_url: item.image_url ?? undefined,
+                        price: item.price ?? 0,
+                        quantity: 1,
+                      })
+                    }
+                  >
+                    <ShoppingBag size={15} /> Add to Cart
+                  </button>
+                  <button type="button" className="wishlist-remove" onClick={() => void remove(item.product_id)}>
+                    <Trash2 size={16} /> Remove
+                  </button>
                 </div>
-                <button type="button" className="wishlist-remove" onClick={() => void remove(item.product_id)}>
-                  <Trash2 size={16} /> Remove
-                </button>
               </div>
             </article>
           ))}
@@ -47,3 +66,4 @@ export default function Wishlist() {
     </div>
   )
 }
+

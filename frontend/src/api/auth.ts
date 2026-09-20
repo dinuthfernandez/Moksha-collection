@@ -16,3 +16,11 @@ export function getMyProfile() {
 export function updateMyProfile(payload: CustomerUpdatePayload) {
   return api.put<Customer>('/auth/me', payload)
 }
+
+export function forgotPassword(email: string) {
+  return api.post<{ message: string }>('/auth/forgot-password', { email })
+}
+
+export function resetPassword(email: string, code: string, newPassword: string) {
+  return api.post<{ message: string }>('/auth/reset-password', { email, code, new_password: newPassword })
+}

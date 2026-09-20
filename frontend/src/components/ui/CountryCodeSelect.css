@@ -1,0 +1,78 @@
+.country-code-select {
+  position: relative;
+  min-width: 0;
+}
+
+.country-code-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--color-onyx);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--color-warm-white);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.country-code-input:focus {
+  outline: none;
+  border-color: var(--color-magenta);
+}
+
+.country-code-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: max(220px, 100%);
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--color-onyx-soft);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+}
+
+.country-code-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--color-warm-white);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.country-code-option-code {
+  color: var(--color-magenta);
+  font-weight: 600;
+  min-width: 52px;
+}
+
+.country-code-option-name {
+  color: var(--color-crystal-silver);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.country-code-option.is-highlighted,
+.country-code-option:hover {
+  background: var(--surface-tint);
+}
+
+.country-code-option.is-selected .country-code-option-name {
+  color: var(--color-warm-white);
+}
+
+.country-code-empty {
+  padding: 10px;
+  font-size: 0.85rem;
+  color: var(--color-crystal-silver);
+}

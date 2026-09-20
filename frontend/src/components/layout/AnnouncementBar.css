@@ -11,6 +11,8 @@
 }
 
 .announcement-text {
+  display: block;
+  width: 100%;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 1.4px;
@@ -18,8 +20,7 @@
   color: var(--on-brand-text);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  text-align: center;
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 0.35s var(--ease-luxury), transform 0.35s var(--ease-luxury);
@@ -30,9 +31,29 @@
   transform: translateY(0);
 }
 
-@media (max-width: 640px) {
+.announcement-text-inner {
+  display: inline-block;
+}
+
+@media (max-width: 900px) {
   .announcement-text {
     font-size: 0.62rem;
     letter-spacing: 0.6px;
+  }
+
+  /* Below tablet width, long announcements no longer fit on one line —
+     scroll the full text across instead of truncating it with an ellipsis. */
+  .announcement-text-inner {
+    padding-left: 100%;
+    animation: announcement-marquee 11s linear infinite;
+  }
+}
+
+@keyframes announcement-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
   }
 }

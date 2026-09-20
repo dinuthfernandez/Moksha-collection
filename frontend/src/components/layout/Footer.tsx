@@ -22,7 +22,6 @@ export default function Footer() {
           <Link to="/">
             <img src="/assets/logo/logo.png" alt="Moksha Collections" className="footer-logo" />
           </Link>
-          <p className="footer-tagline">Considered dresses &amp; accessories, curated in Manama.</p>
         </div>
 
         <div className="footer-col">
