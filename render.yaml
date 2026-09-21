@@ -1,13 +1,20 @@
 services:
-  # --- FastAPI backend (Python, talks to Supabase) ---
+  # --- One Render web service: FastAPI serves both the REST API (under /api)
+  # and the built React (Vite) frontend from the same process/URL. ---
   - type: web
-    name: moksha-collections-api
+    name: moksha-collections
     env: python
     plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    rootDir: .
+    buildCommand: cd frontend && npm install && npm run build && cd ../backend && pip install -r requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
+      # Baked into the frontend build — same-origin API, no separate frontend URL needed.
+      - key: VITE_API_BASE_URL
+        value: /api
+      - key: VITE_WHATSAPP_NUMBER
+        value: "97335521619"
+
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
@@ -68,20 +75,3 @@ services:
         sync: false
       - key: ZOHO_INVENTORY_SYNC_INTERVAL_SECONDS
         value: "3600"
-
-  # --- React (Vite) frontend — static build ---
-  - type: web
-    name: moksha-collections-web
-    env: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    envVars:
-      - key: VITE_API_BASE_URL
-        sync: false
-      - key: VITE_WHATSAPP_NUMBER
-        value: "97335521619"
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html

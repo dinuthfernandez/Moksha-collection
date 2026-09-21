@@ -1,9 +1,10 @@
 import asyncio
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from .config import get_settings
 from .routers import (
@@ -99,7 +100,34 @@ async def startup_event():
         asyncio.create_task(sync_loop())
 
 
-@app.get("/")
-def root():
-    return {"service": "moksha-collections-api", "status": "running"}
+# ---------------------------------------------------------------------------
+# Serve the built frontend (frontend/dist) from this same service, so the
+# whole site is one Render web service instead of a separate static site.
+# Only activates when a build actually exists — local dev (no dist/ folder)
+# keeps using the separate Vite dev server on :5173 untouched.
+# ---------------------------------------------------------------------------
+FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+if FRONTEND_DIST.is_dir():
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        if full_path == "" or full_path.startswith("api/") or full_path == "api":
+            if full_path.startswith("api"):
+                raise HTTPException(status_code=404, detail="Not found")
+        else:
+            candidate = FRONTEND_DIST / full_path
+            if candidate.is_file():
+                return FileResponse(candidate)
+
+        index_file = FRONTEND_DIST / "index.html"
+        if index_file.is_file():
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Frontend build not found")
+
+else:
+
+    @app.get("/")
+    def root():
+        return {"service": "moksha-collections-api", "status": "running"}
 

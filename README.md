@@ -64,14 +64,18 @@ All tables live in the **`moksha_collection`** schema — never `public`.
   the local dev value in `.env.example`.
 
 ## Deploying to Render
-`render.yaml` defines two independent services (Blueprint deploy):
-- `moksha-collections-api` — Python web service (FastAPI/uvicorn)
-- `moksha-collections-web` — static site (Vite build), with SPA rewrite to
-  `index.html` so client-side routing works.
+`render.yaml` defines **one** Render web service (`moksha-collections`) that
+builds the frontend, then starts FastAPI, which serves the API under `/api`
+*and* the built frontend (`frontend/dist`) from the same process/URL — see
+the bottom of `backend/app/main.py`. This only activates when
+`frontend/dist` exists; local dev (no build present) is unaffected and keeps
+using the separate Vite dev server + `--reload` backend as described above.
 
-After the first deploy, set `VITE_API_BASE_URL` on the frontend service to
-`https://<your-api-service>.onrender.com/api`, and `ALLOWED_ORIGINS` on the
-backend service to the frontend's URL, then redeploy the frontend.
+`VITE_API_BASE_URL` is set to `/api` (same-origin, relative) at build time,
+so there's no separate frontend URL to wire up — just set the backend's
+secret env vars (Supabase, JWT, Zoho, SMTP, admin password), deploy, and set
+`ALLOWED_ORIGINS`/`FRONTEND_BASE_URL` to the service's own Render URL once
+you know it.
 
 ## Future: iOS / Android
 The frontend is a plain React SPA calling a REST API — no server-side
