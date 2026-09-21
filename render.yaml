@@ -9,6 +9,11 @@ services:
     buildCommand: cd frontend && npm install && npm run build && cd ../backend && pip install -r requirements.txt
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
+      # Pin Python — pydantic-core has no prebuilt wheel for brand-new Python
+      # versions yet, which breaks the build trying to compile it from source.
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
       # Baked into the frontend build — same-origin API, no separate frontend URL needed.
       - key: VITE_API_BASE_URL
         value: /api
