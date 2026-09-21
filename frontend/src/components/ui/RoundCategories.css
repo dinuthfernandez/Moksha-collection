@@ -273,13 +273,43 @@
 /* Mobile & Tablet Adjustments */
 @media (max-width: 768px) {
   .round-categories-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .round-categories-heading {
+    flex: 1 1 100%;
+  }
+  .round-categories-tabs {
+    order: 1;
+    flex: 0 1 auto;
+    min-width: 0;
+    height: 36px;
+    gap: 4px;
+    padding: 3px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .round-categories-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .category-tab-btn {
+    height: 26px;
+    padding: 0 10px;
+    font-size: 0.72rem;
+    white-space: nowrap;
   }
   .round-categories-view-all {
-    align-self: flex-end;
-    margin-top: -38px;
+    order: 2;
+    flex: 0 0 auto;
+    align-self: center;
+    min-height: 0;
+    margin-top: 0;
+    margin-left: auto;
+    font-size: 0.78rem;
+    gap: 4px;
+    white-space: nowrap;
   }
   .round-category-item {
     width: 105px;
