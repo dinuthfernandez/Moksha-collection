@@ -21,7 +21,9 @@ export default function HeroFrame({ src, showLogo, priority = false }: HeroFrame
         fetchPriority={priority ? 'high' : 'auto'}
       />
       <div className={`slide-layer logo-layer ${showLogo ? 'active' : ''}`}>
-        <img src="/assets/logo/logo.png" alt="Moksha Collections" />
+        <div className="logo-card">
+          <img src="/assets/logo/logo.png" alt="Moksha Collections" />
+        </div>
       </div>
     </div>
   )
