@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { label: 'Home', to: '/' },
   { label: 'Clothing', to: '/clothing' },
   { label: 'Accessories', to: '/accessories' },
+  { label: 'Categories', to: '/categories' },
   { label: 'Size Charts', to: '/size-charts' },
   { label: 'About Us', to: '/about-us' },
   { label: 'Contact Us', to: '/contact-us' },

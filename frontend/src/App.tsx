@@ -10,6 +10,7 @@ import ScrollToTop from './components/ui/ScrollToTop'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute'
 import Home from './pages/Home'
+import Categories from './pages/Categories'
 import CategoryLanding from './pages/CategoryLanding'
 import CategoryDetail from './pages/CategoryDetail'
 import ProductDetail from './pages/ProductDetail'
@@ -58,6 +59,7 @@ export default function App() {
 
         <Route element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="categories" element={<Categories />} />
           <Route
             path="clothing"
             element={
