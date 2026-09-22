@@ -18,7 +18,12 @@
 .site-logo {
   display: flex;
   align-items: center;
+  justify-content: center;
   margin-right: auto;
+  background-color: #000000;
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .site-logo img {

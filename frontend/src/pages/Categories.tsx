@@ -65,7 +65,7 @@ const CATEGORIES: Category[] = [
 
 export default function Categories() {
   return (
-    <div className="page categories-page">
+    <div className="categories-page">
       <section className="categories-hero">
         <Reveal as="div" className="categories-hero-content">
           <span className="eyebrow">Shop by Category</span>
@@ -79,19 +79,18 @@ export default function Categories() {
       <section className="container categories-grid-section">
         <div className="categories-grid">
           {CATEGORIES.map((category) => (
-            <Reveal key={category.id} as="div">
-              <Link to={category.route} className="category-card">
-                <div className="category-card-image-wrapper">
-                  <img src={category.image} alt={category.name} className="category-card-image" />
-                  <div className="category-card-overlay" />
-                </div>
-                <div className="category-card-content">
+            <Reveal key={category.id} as="div" className="category-card-wrapper">
+              <Link to={category.route} className="category-card-container">
+                {/* Image Card */}
+                <div
+                  className="category-image-card"
+                  style={{ backgroundImage: `url('${category.image}')` }}
+                />
+                
+                {/* Info Card (Connected Below) */}
+                <div className="category-info-card">
                   <h3 className="category-card-title">{category.name}</h3>
-                  {category.description && <p className="category-card-description">{category.description}</p>}
-                  <div className="category-card-action">
-                    <span>Explore</span>
-                    <ArrowRight size={16} />
-                  </div>
+                  <p className="category-card-action">Shop Now</p>
                 </div>
               </Link>
             </Reveal>
