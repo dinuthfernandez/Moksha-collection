@@ -16,6 +16,7 @@ export interface Category {
 
 export interface Product {
   id: string
+  product_code?: string | null
   zoho_item_id?: string | null
   category_slug?: string | null
   name: string
@@ -39,6 +40,27 @@ export interface Product {
   weight_unit?: string | null
   last_synced_at?: string | null
   created_at?: string | null
+}
+
+export interface ProductReview {
+  id: string
+  product_id: string
+  reviewer_name: string
+  rating: number
+  comment?: string | null
+  created_at: string
+}
+
+export interface ProductReviewList {
+  items: ProductReview[]
+  total: number
+  average_rating: number
+}
+
+export interface ProductReviewPayload {
+  order_item_id: string
+  rating: number
+  comment?: string
 }
 
 export interface PaginatedProducts {
@@ -178,6 +200,9 @@ export interface DeliveryRate {
   delivery_type: DeliveryType
   rate_bhd: number
   description?: string | null
+  delivery_days_from: number
+  delivery_days_to: number
+  free_delivery_over_bhd?: number | null
 }
 
 export interface PublicSettings {
@@ -185,6 +210,27 @@ export interface PublicSettings {
   whatsapp_number?: string | null
   return_window_days: number
   delivery_rates: DeliveryRate[]
+}
+
+export interface Coupon {
+  id: string
+  name: string
+  percentage: number
+  is_active: boolean
+  valid_from: string
+  valid_to: string
+  minimum_cart_amount: number
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+export type CouponPayload = Omit<Coupon, 'id' | 'created_at' | 'updated_at'>
+
+export interface CouponOffer {
+  applied: Coupon | null
+  discount_amount: number
+  next: Coupon | null
+  amount_to_next: number
 }
 
 export interface OrderItemPayload {
@@ -208,6 +254,10 @@ export interface OrderCreateResult {
   total_amount: number
   subtotal_amount: number
   delivery_charge: number
+  discount_amount: number
+  coupon_id?: string | null
+  coupon_name?: string | null
+  coupon_percentage?: number | null
   delivery_type: DeliveryType | null
   status: string
   zoho_invoice_id?: string | null
@@ -237,6 +287,10 @@ export interface OrderDetail {
   notes?: string | null
   subtotal_amount: number
   delivery_charge: number
+  discount_amount?: number
+  coupon_id?: string | null
+  coupon_name?: string | null
+  coupon_percentage?: number | null
   delivery_type?: DeliveryType | null
   total_amount: number
   status: OrderStatus

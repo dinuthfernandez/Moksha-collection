@@ -90,7 +90,132 @@
   border-radius: var(--radius-md);
 }
 
+.admin-delivery-day-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .admin-delivery-rate-row h3 {
   font-size: 0.95rem;
   color: var(--color-warm-white);
+}
+
+.admin-coupon-form,
+.admin-coupon-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-line-soft);
+  border-radius: var(--radius-md);
+}
+
+.admin-coupon-form {
+  margin-bottom: 18px;
+  background: var(--surface-tint-faint);
+}
+
+.admin-coupon-form h3,
+.admin-coupon-form > button {
+  grid-column: 1 / -1;
+}
+
+.admin-coupon-form h3 {
+  margin: 0;
+  color: var(--color-warm-white);
+  font-size: 0.95rem;
+}
+
+.admin-coupon-form label,
+.admin-coupon-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: var(--color-crystal-silver);
+  font-size: 0.78rem;
+}
+
+.admin-coupon-form input:not([type='checkbox']),
+.admin-coupon-card input:not([type='checkbox']) {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-onyx);
+  color: var(--color-warm-white);
+  font: inherit;
+}
+
+.admin-coupon-switch-row .admin-coupon-switch-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  color: var(--color-warm-white);
+  font-size: 0.82rem;
+}
+
+.admin-coupon-switch-label input {
+  width: 38px;
+  height: 21px;
+  margin: 0;
+  accent-color: var(--color-magenta);
+  cursor: pointer;
+}
+
+.admin-coupon-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-coupon-card {
+  background: var(--color-onyx-soft);
+}
+
+.admin-coupon-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  grid-column: 1 / -1;
+}
+
+.admin-coupon-delete {
+  border: 0;
+  background: transparent;
+  color: #bc5268;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.admin-coupon-delete:hover:not(:disabled) {
+  color: #e16a82;
+}
+
+.admin-coupon-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-coupons-empty {
+  margin: 0;
+  color: var(--color-crystal-silver);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 520px) {
+  .admin-delivery-day-range {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-coupon-form,
+  .admin-coupon-card {
+    grid-template-columns: 1fr;
+    padding: 13px;
+  }
 }

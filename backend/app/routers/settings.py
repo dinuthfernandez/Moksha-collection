@@ -14,7 +14,9 @@ def get_public_settings():
     settings_result = supabase.table("admin_settings").select("*").eq("id", True).limit(1).execute()
     settings_row = settings_result.data[0] if settings_result.data else {}
 
-    rates_result = supabase.table("delivery_rates").select("delivery_type,rate_bhd,description").execute()
+    rates_result = supabase.table("delivery_rates").select(
+        "delivery_type,rate_bhd,description,delivery_days_from,delivery_days_to,free_delivery_over_bhd"
+    ).execute()
 
     return {
         "iban_number": settings_row.get("iban_number"),

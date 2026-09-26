@@ -29,6 +29,17 @@
   text-align: right;
 }
 
+.payment-discount-row strong {
+  color: #23865f;
+}
+
+.payment-grand-total {
+  padding-top: 12px;
+  border-top: 1px solid var(--color-line);
+  color: var(--color-warm-white);
+  font-weight: 700;
+}
+
 .payment-instructions {
   font-size: 0.85rem;
   color: var(--color-crystal-silver);

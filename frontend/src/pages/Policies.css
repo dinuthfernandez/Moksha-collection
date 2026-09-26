@@ -3,37 +3,90 @@
 }
 
 .policies-body {
-  max-width: 780px;
+  max-width: 860px;
   margin: 32px auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+  display: grid;
+  gap: 36px;
 }
 
-.policies-body h2 {
-  font-size: 1.1rem;
-  color: var(--color-magenta);
-  font-weight: 500;
-  margin-bottom: 8px;
-  font-family: var(--font-sans);
-  letter-spacing: 0.3px;
-}
-
-.policies-body p {
-  color: var(--color-crystal-silver);
-  line-height: 1.75;
-  font-size: 0.94rem;
-}
-
-.policies-body a {
+.policy-group > h2 {
+  margin: 0 0 14px;
   color: var(--color-warm-white);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
 }
 
-.policies-closing {
-  text-align: center;
-  font-style: italic;
-  border-top: 1px solid var(--color-line);
-  padding-top: 24px;
+.policy-accordion-list {
+  display: grid;
+  gap: 8px;
+}
+
+.policy-accordion {
+  overflow: hidden;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 7px;
+  background: var(--surface-tint-faint);
+}
+
+.policy-accordion summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 11px 46px 11px 14px;
+  color: var(--color-warm-white);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  list-style: none;
+}
+
+.policy-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.policy-accordion summary::after {
+  content: '+';
+  position: absolute;
+  right: 16px;
+  color: var(--color-magenta);
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.policy-accordion[open] summary::after {
+  content: '\2212';
+}
+
+.policy-accordion summary:focus-visible {
+  outline: 2px solid var(--color-magenta);
+  outline-offset: -3px;
+}
+
+.policy-accordion > p {
+  margin: 0;
+  padding: 14px;
+  border-top: 1px solid var(--color-line-soft);
+  color: var(--color-crystal-silver);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .policies-page {
+    padding: 16px 16px 72px;
+  }
+
+  .policies-body {
+    margin-top: 24px;
+    gap: 28px;
+  }
+
+  .policy-group > h2 {
+    font-size: 1.18rem;
+  }
 }

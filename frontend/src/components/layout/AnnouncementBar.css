@@ -10,7 +10,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.announcement-text {
+.announcement-desktop {
   display: block;
   width: 100%;
   font-size: 0.72rem;
@@ -26,34 +26,22 @@
   transition: opacity 0.35s var(--ease-luxury), transform 0.35s var(--ease-luxury);
 }
 
-.announcement-text.is-visible {
+.announcement-desktop.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-.announcement-text-inner {
-  display: inline-block;
+.announcement-mobile {
+  display: none;
 }
 
 @media (max-width: 900px) {
-  .announcement-text {
-    font-size: 0.62rem;
-    letter-spacing: 0.6px;
+  .announcement-desktop {
+    display: none;
   }
 
-  /* Below tablet width, long announcements no longer fit on one line —
-     scroll the full text across instead of truncating it with an ellipsis. */
-  .announcement-text-inner {
-    padding-left: 100%;
-    animation: announcement-marquee 11s linear infinite;
-  }
-}
-
-@keyframes announcement-marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-100%);
+  .announcement-mobile {
+    display: block;
+    width: 100%;
   }
 }

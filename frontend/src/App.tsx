@@ -9,6 +9,7 @@ import AdminLayout from './components/layout/AdminLayout'
 import ScrollToTop from './components/ui/ScrollToTop'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute'
+import BackButton from './components/ui/BackButton'
 import Home from './pages/Home'
 import Categories from './pages/Categories'
 import CategoryLanding from './pages/CategoryLanding'
@@ -27,6 +28,7 @@ import Account from './pages/Account'
 import Addresses from './pages/Addresses'
 import NotFound from './pages/NotFound'
 import Wishlist from './pages/Wishlist'
+import SearchResults from './pages/SearchResults'
 import OrderConfirmation from './pages/OrderConfirmation'
 import Payment from './pages/Payment'
 import Orders from './pages/Orders'
@@ -46,7 +48,7 @@ export default function App() {
       <WishlistProvider>
       <ScrollToTop />
       <Routes>
-        <Route path="admin/login" element={<AdminLogin />} />
+        <Route path="admin/login" element={<><BackButton fallbackTo="/" /><AdminLogin /></>} />
         <Route path="admin" element={<ProtectedAdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
@@ -59,6 +61,7 @@ export default function App() {
 
         <Route element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="search" element={<SearchResults />} />
           <Route path="categories" element={<Categories />} />
           <Route
             path="clothing"

@@ -104,6 +104,93 @@
   border-bottom: 1px solid var(--color-line);
 }
 
+.coupon-offer-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(225, 10, 140, 0.35);
+  border-radius: 7px;
+  background: rgba(225, 10, 140, 0.07);
+  color: var(--color-magenta);
+}
+
+.coupon-offer-card > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.coupon-offer-card strong {
+  display: block;
+  color: var(--color-warm-white);
+  font-size: 0.84rem;
+}
+
+.coupon-offer-card p {
+  margin: 4px 0 0;
+  color: var(--color-crystal-silver);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.cart-discount-row strong {
+  color: #23865f;
+}
+
+.cart-discounted-subtotal {
+  color: var(--color-warm-white);
+  font-weight: 600;
+}
+
+.cart-free-delivery {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+}
+
+.cart-free-delivery-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-warm-white);
+  font-size: 0.86rem;
+}
+
+.cart-free-delivery-heading svg {
+  color: var(--color-magenta);
+  flex: 0 0 auto;
+}
+
+.cart-free-delivery ul {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cart-free-delivery li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-crystal-silver);
+  font-size: 0.76rem;
+}
+
+.cart-free-delivery li strong {
+  color: var(--color-warm-white);
+  font-weight: 500;
+  text-align: right;
+}
+
+.free-delivery-status {
+  margin-top: 8px;
+  color: var(--color-magenta);
+  font-size: 0.8rem;
+}
+
 @media (min-width: 900px) {
   .cart-layout {
     grid-template-columns: 2fr 1fr;

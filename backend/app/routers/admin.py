@@ -11,6 +11,10 @@ from ..schemas import (
     AdminSettingsOut,
     CampaignIn,
     CampaignOut,
+    CouponIn,
+    CouponOut,
+    CouponIn,
+    CouponOut,
     DashboardStatsOut,
     DeliveryRateIn,
     DeliveryRateOut,
@@ -36,10 +40,13 @@ def dashboard_stats():
     customers_result = supabase.table("customers").select("id", count="exact").execute()
     orders_result = supabase.table("orders").select("id", count="exact").execute()
     returns_result = supabase.table("orders").select("id", count="exact").neq("return_status", "none").execute()
-    delivered_result = supabase.table("orders").select("subtotal_amount").eq("status", "delivered").execute()
+    delivered_result = supabase.table("orders").select("subtotal_amount,discount_amount").eq("status", "delivered").execute()
 
     # Profit estimate = total item price customers paid on delivered orders, excluding delivery charges.
-    profit_estimate = sum(float(row.get("subtotal_amount") or 0) for row in (delivered_result.data or []))
+    profit_estimate = sum(
+        max(float(row.get("subtotal_amount") or 0) - float(row.get("discount_amount") or 0), 0)
+        for row in (delivered_result.data or [])
+    )
 
     return {
         "total_customers": customers_result.count or 0,
@@ -88,7 +95,9 @@ def update_settings_row(payload: AdminSettingsIn):
 @router.get("/delivery-rates", response_model=list[DeliveryRateOut])
 def list_delivery_rates():
     supabase = get_supabase()
-    result = supabase.table("delivery_rates").select("delivery_type,rate_bhd,description").execute()
+    result = supabase.table("delivery_rates").select(
+        "delivery_type,rate_bhd,description,delivery_days_from,delivery_days_to,free_delivery_over_bhd"
+    ).execute()
     return result.data or []
 
 
@@ -97,13 +106,63 @@ def update_delivery_rate(delivery_type: Literal["bahrain", "gcc", "international
     supabase = get_supabase()
     result = (
         supabase.table("delivery_rates")
-        .update({"rate_bhd": payload.rate_bhd, "description": payload.description, "updated_at": "now()"})
+        .update(
+            {
+                "rate_bhd": payload.rate_bhd,
+                "description": payload.description,
+                "delivery_days_from": payload.delivery_days_from,
+                "delivery_days_to": payload.delivery_days_to,
+                "free_delivery_over_bhd": payload.free_delivery_over_bhd,
+                "updated_at": "now()",
+            }
+        )
         .eq("delivery_type", delivery_type)
         .execute()
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Delivery type not found")
     return result.data[0]
+
+
+# ---------------------------------------------------------------------------
+# Coupons
+# ---------------------------------------------------------------------------
+@router.get("/coupons", response_model=list[CouponOut])
+def list_coupons():
+    supabase = get_supabase()
+    result = supabase.table("coupons").select("*").order("minimum_cart_amount").execute()
+    return result.data or []
+
+
+@router.post("/coupons", response_model=CouponOut, status_code=201)
+def create_coupon(payload: CouponIn):
+    supabase = get_supabase()
+    result = supabase.table("coupons").insert(payload.model_dump(mode="json")).execute()
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Could not create coupon")
+    return result.data[0]
+
+
+@router.put("/coupons/{coupon_id}", response_model=CouponOut)
+def update_coupon(coupon_id: str, payload: CouponIn):
+    supabase = get_supabase()
+    result = (
+        supabase.table("coupons")
+        .update({**payload.model_dump(mode="json"), "updated_at": "now()"})
+        .eq("id", coupon_id)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+    return result.data[0]
+
+
+@router.delete("/coupons/{coupon_id}", status_code=204)
+def delete_coupon(coupon_id: str):
+    supabase = get_supabase()
+    result = supabase.table("coupons").delete().eq("id", coupon_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Coupon not found")
 
 
 # ---------------------------------------------------------------------------

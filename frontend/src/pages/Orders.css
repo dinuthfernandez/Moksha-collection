@@ -53,8 +53,10 @@
 
 .order-card-items li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-line-soft);
 }
 
 .order-card-items img {
@@ -64,12 +66,105 @@
   border-radius: var(--radius-sm);
 }
 
-.order-card-items li div {
+.order-item-content {
   flex: 1;
+  min-width: 0;
+}
+
+.order-item-summary {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   font-size: 0.85rem;
   color: var(--color-crystal-silver);
+}
+
+.order-item-review {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 12px;
+  padding: 12px;
+  border-left: 2px solid var(--color-magenta);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.order-review-label,
+.order-review-comment-label > span {
+  color: var(--color-crystal-silver);
+  font-size: 0.78rem;
+}
+
+.order-review-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.review-star-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a8a1a5;
+  cursor: pointer;
+}
+
+.review-star-button.is-selected,
+.review-star-button:hover {
+  color: #d59a2a;
+}
+
+.order-review-comment-label {
+  display: grid;
+  gap: 6px;
+  grid-column: 1 / -1;
+}
+
+.order-review-comment-label textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 62px;
+  resize: vertical;
+  padding: 9px 10px;
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  background: var(--color-onyx);
+  color: var(--color-warm-white);
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.order-review-submit {
+  justify-self: start;
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.order-review-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.order-review-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #c84d65;
+  font-size: 0.78rem;
+}
+
+.order-review-complete {
+  margin: 9px 0 0;
+  color: #378e68;
+  font-size: 0.78rem;
 }
 
 .order-card-total {
@@ -89,4 +184,24 @@
 .order-card-return-note {
   color: var(--color-magenta);
   font-size: 0.8rem;
+}
+
+@media (max-width: 560px) {
+  .orders-page {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .order-card {
+    padding: 14px;
+  }
+
+  .order-item-review {
+    grid-template-columns: 1fr;
+  }
+
+  .order-review-comment-label,
+  .order-review-error {
+    grid-column: 1;
+  }
 }

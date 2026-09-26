@@ -1,6 +1,7 @@
 import { NavLink, Link } from 'react-router-dom'
-import { useState } from 'react'
-import { Menu, X, ShoppingBag, User, Heart } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Menu, X, ShoppingBag, User, Heart, Search, ArrowRight } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { useWishlist } from '../../context/WishlistContext'
@@ -20,9 +21,46 @@ const NAV_LINKS = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchToggleRef = useRef<HTMLButtonElement>(null)
+  const navigate = useNavigate()
+  const location = useLocation()
   const { itemCount } = useCart()
   const { isAuthenticated, customer } = useAuth()
   const { itemCount: wishlistCount } = useWishlist()
+
+  useEffect(() => {
+    const input = searchInputRef.current
+    if (input && input === document.activeElement) input.blur()
+    setSearchOpen(false)
+  }, [location.pathname])
+
+  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const query = searchTerm.trim()
+    if (!query) {
+      searchInputRef.current?.focus()
+      return
+    }
+    setMenuOpen(false)
+    searchInputRef.current?.blur()
+    setSearchOpen(false)
+    navigate(`/search?q=${encodeURIComponent(query)}`)
+  }
+
+  const toggleSearch = () => {
+    if (searchOpen) {
+      searchInputRef.current?.blur()
+      setSearchOpen(false)
+      searchToggleRef.current?.focus()
+      return
+    }
+    setMenuOpen(false)
+    setSearchOpen(true)
+    window.setTimeout(() => searchInputRef.current?.focus(), 0)
+  }
 
   return (
     <>
@@ -55,6 +93,17 @@ export default function Header() {
           </nav>
 
           <div className="site-header-actions">
+            <button
+              type="button"
+              className={`header-search-toggle ${searchOpen ? 'is-active' : ''}`}
+              ref={searchToggleRef}
+              aria-label={searchOpen ? 'Close search' : 'Search products'}
+              aria-expanded={searchOpen}
+              onClick={toggleSearch}
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              {searchOpen ? <X size={20} /> : <Search size={20} />}
+            </button>
             <ThemeToggle className="header-theme-toggle" />
             <Link to={isAuthenticated ? '/wishlist' : '/login'} className="wishlist-link" aria-label="Wishlist">
               <Heart size={20} />
@@ -69,6 +118,30 @@ export default function Header() {
               {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
             </Link>
           </div>
+        </div>
+
+        <div className={`header-search-panel ${searchOpen ? 'is-open' : ''}`} aria-hidden={!searchOpen}>
+          <form className="header-search-form" onSubmit={submitSearch}>
+            <Search size={18} aria-hidden="true" />
+            <input
+              ref={searchInputRef}
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  setSearchOpen(false)
+                  searchToggleRef.current?.focus()
+                }
+              }}
+              placeholder="Search products or product code"
+              aria-label="Search products or product code"
+              tabIndex={searchOpen ? 0 : -1}
+            />
+            <button type="submit" aria-label="Show search results" tabIndex={searchOpen ? 0 : -1}>
+              <ArrowRight size={18} />
+            </button>
+          </form>
         </div>
 
         <div className={`mobile-nav ${menuOpen ? 'is-open' : ''}`}>

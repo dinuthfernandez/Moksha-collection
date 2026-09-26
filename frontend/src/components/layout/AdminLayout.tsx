@@ -2,6 +2,7 @@ import { Outlet, Link } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 import AdminBottomNav from './AdminBottomNav'
+import BackButton from '../ui/BackButton'
 import './AdminLayout.css'
 
 export default function AdminLayout() {
@@ -18,6 +19,7 @@ export default function AdminLayout() {
         </button>
       </header>
       <main className="admin-content">
+        <BackButton fallbackTo="/admin/dashboard" />
         <Outlet />
       </main>
       <AdminBottomNav />

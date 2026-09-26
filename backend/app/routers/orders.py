@@ -10,17 +10,26 @@ from ..schemas import OrderDetailOut, OrderIn, OrderOut
 from ..services.email import send_sales_email
 from ..services.email_templates import render_order_placed_email
 from ..services.zoho_inventory import create_invoice_for_order
+from ..services.coupons import calculate_coupon_discount, get_current_coupons, select_coupon
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
 
-def _get_delivery_rate(supabase, delivery_type: str) -> float:
+def _get_delivery_charge(supabase, delivery_type: str, subtotal_amount: float) -> float:
     result = (
-        supabase.table("delivery_rates").select("rate_bhd").eq("delivery_type", delivery_type).limit(1).execute()
+        supabase.table("delivery_rates")
+        .select("rate_bhd,free_delivery_over_bhd")
+        .eq("delivery_type", delivery_type)
+        .limit(1)
+        .execute()
     )
     if not result.data:
         return 0.0
-    return float(result.data[0].get("rate_bhd") or 0)
+    rate = result.data[0]
+    threshold = rate.get("free_delivery_over_bhd")
+    if threshold is not None and subtotal_amount >= float(threshold):
+        return 0.0
+    return float(rate.get("rate_bhd") or 0)
 
 
 def _get_return_window_days(supabase) -> int:
@@ -71,29 +80,48 @@ async def create_order(payload: OrderIn, customer: dict | None = Depends(get_opt
                 }
             )
 
-    delivery_charge = _get_delivery_rate(supabase, payload.delivery_type)
-    total_amount = subtotal_amount + delivery_charge
+    coupon_schema_available = True
+    try:
+        active_coupons = get_current_coupons(supabase)
+    except Exception:
+        # Preserve checkout for existing deployments until the coupon migration is applied.
+        active_coupons = []
+        coupon_schema_available = False
+    coupon = select_coupon(active_coupons, subtotal_amount)
+    discount_amount = calculate_coupon_discount(coupon, subtotal_amount)
+    discount_percentage = float(coupon["percentage"]) if coupon else 0.0
+    delivery_charge = _get_delivery_charge(supabase, payload.delivery_type, subtotal_amount)
+    total_amount = max(0.0, subtotal_amount - discount_amount) + delivery_charge
 
-    order_result = (
-        supabase.table("orders")
-        .insert(
+    if discount_percentage:
+        for line_item in zoho_line_items:
+            line_item["rate"] = round(float(line_item["rate"]) * (1 - discount_percentage / 100), 3)
+
+    order_values = {
+        "customer_id": customer["id"] if customer else None,
+        "customer_name": payload.customer_name,
+        "phone": payload.phone,
+        "email": payload.email,
+        "address": payload.address,
+        "city": payload.city,
+        "notes": payload.notes,
+        "delivery_type": payload.delivery_type,
+        "delivery_charge": delivery_charge,
+        "subtotal_amount": subtotal_amount,
+        "total_amount": total_amount,
+        "status": "pending",
+    }
+    if coupon_schema_available:
+        order_values.update(
             {
-                "customer_id": customer["id"] if customer else None,
-                "customer_name": payload.customer_name,
-                "phone": payload.phone,
-                "email": payload.email,
-                "address": payload.address,
-                "city": payload.city,
-                "notes": payload.notes,
-                "delivery_type": payload.delivery_type,
-                "delivery_charge": delivery_charge,
-                "subtotal_amount": subtotal_amount,
-                "total_amount": total_amount,
-                "status": "pending",
+                "discount_amount": discount_amount,
+                "coupon_id": coupon["id"] if coupon else None,
+                "coupon_name": coupon["name"] if coupon else None,
+                "coupon_percentage": discount_percentage if coupon else None,
             }
         )
-        .execute()
-    )
+
+    order_result = supabase.table("orders").insert(order_values).execute()
     if not order_result.data:
         raise HTTPException(status_code=500, detail="Could not create the order")
     order = order_result.data[0]
@@ -149,6 +177,9 @@ async def create_order(payload: OrderIn, customer: dict | None = Depends(get_opt
         "total_amount": total_amount,
         "subtotal_amount": subtotal_amount,
         "delivery_charge": delivery_charge,
+        "discount_amount": discount_amount,
+        "coupon_name": coupon["name"] if coupon else None,
+        "coupon_percentage": discount_percentage if coupon else None,
         "delivery_type": payload.delivery_type,
         "status": order["status"],
         "zoho_invoice_id": zoho_invoice_id,

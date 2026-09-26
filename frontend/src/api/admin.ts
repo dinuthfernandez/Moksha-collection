@@ -4,6 +4,8 @@ import type {
   AdminCustomerDetail,
   AdminSettings,
   Campaign,
+  Coupon,
+  CouponPayload,
   DashboardStats,
   DeliveryRate,
   OrderDetail,
@@ -19,8 +21,22 @@ export const getAdminSettings = () => adminApi.get<AdminSettings>('/admin/settin
 export const updateAdminSettings = (payload: AdminSettings) => adminApi.put<AdminSettings>('/admin/settings', payload)
 
 export const getDeliveryRates = () => adminApi.get<DeliveryRate[]>('/admin/delivery-rates')
-export const updateDeliveryRate = (deliveryType: string, payload: { rate_bhd: number; description?: string | null }) =>
+export const updateDeliveryRate = (
+  deliveryType: string,
+  payload: {
+    rate_bhd: number
+    description?: string | null
+    delivery_days_from: number
+    delivery_days_to: number
+    free_delivery_over_bhd?: number | null
+  },
+) =>
   adminApi.put<DeliveryRate>(`/admin/delivery-rates/${deliveryType}`, payload)
+
+export const getCoupons = () => adminApi.get<Coupon[]>('/admin/coupons')
+export const createCoupon = (payload: CouponPayload) => adminApi.post<Coupon>('/admin/coupons', payload)
+export const updateCoupon = (couponId: string, payload: CouponPayload) => adminApi.put<Coupon>(`/admin/coupons/${couponId}`, payload)
+export const deleteCoupon = (couponId: string) => adminApi.delete<void>(`/admin/coupons/${couponId}`)
 
 export const getAdminOrders = (status?: OrderStatus) =>
   adminApi.get<OrderDetail[]>(`/admin/orders${status ? `?status=${status}` : ''}`)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -32,6 +33,7 @@ class AnnouncementOut(BaseModel):
 
 class ProductOut(BaseModel):
     id: str
+    product_code: Optional[str] = None
     zoho_item_id: Optional[str] = None
     category_slug: Optional[str] = None
     name: str
@@ -70,6 +72,27 @@ class ProductListOut(BaseModel):
     total_pages: int
 
 
+class ProductReviewIn(BaseModel):
+    order_item_id: str = Field(min_length=1, max_length=160)
+    rating: int = Field(ge=1, le=5)
+    comment: Optional[str] = Field(default=None, max_length=1200)
+
+
+class ProductReviewOut(BaseModel):
+    id: str
+    product_id: str
+    reviewer_name: str
+    rating: int
+    comment: Optional[str] = None
+    created_at: str
+
+
+class ProductReviewListOut(BaseModel):
+    items: list[ProductReviewOut]
+    total: int
+    average_rating: float
+
+
 class OrderItemIn(BaseModel):
     product_id: str
     quantity: int = Field(default=1, ge=1)
@@ -91,6 +114,10 @@ class OrderOut(BaseModel):
     total_amount: float
     subtotal_amount: float = 0
     delivery_charge: float = 0
+    discount_amount: float = 0
+    coupon_id: Optional[str] = None
+    coupon_name: Optional[str] = None
+    coupon_percentage: Optional[float] = None
     delivery_type: Optional[str] = None
     status: str
     zoho_invoice_id: Optional[str] = None
@@ -117,6 +144,10 @@ class OrderDetailOut(BaseModel):
     notes: Optional[str] = None
     subtotal_amount: float = 0
     delivery_charge: float = 0
+    discount_amount: float = 0
+    coupon_id: Optional[str] = None
+    coupon_name: Optional[str] = None
+    coupon_percentage: Optional[float] = None
     delivery_type: Optional[str] = None
     total_amount: float
     status: str
@@ -290,11 +321,58 @@ class DeliveryRateOut(BaseModel):
     delivery_type: Literal["bahrain", "gcc", "international"]
     rate_bhd: float
     description: Optional[str] = None
+    delivery_days_from: int = 1
+    delivery_days_to: int = 3
+    free_delivery_over_bhd: Optional[float] = None
 
 
 class DeliveryRateIn(BaseModel):
     rate_bhd: float = Field(ge=0)
     description: Optional[str] = Field(default=None, max_length=500)
+    delivery_days_from: int = Field(default=1, ge=0, le=90)
+    delivery_days_to: int = Field(default=3, ge=0, le=90)
+    free_delivery_over_bhd: Optional[float] = Field(default=None, ge=0)
+
+    @field_validator("delivery_days_to")
+    @classmethod
+    def delivery_end_after_start(cls, value: int, info):
+        start = info.data.get("delivery_days_from", 1)
+        if value < start:
+            raise ValueError("Delivery end day must be greater than or equal to start day")
+        return value
+
+
+class CouponIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    percentage: float = Field(gt=0, le=100)
+    is_active: bool = True
+    valid_from: datetime
+    valid_to: datetime
+    minimum_cart_amount: float = Field(ge=0)
+
+    @field_validator("valid_to")
+    @classmethod
+    def valid_to_after_valid_from(cls, value: datetime, info):
+        valid_from = info.data.get("valid_from")
+        if valid_from and value <= valid_from:
+            raise ValueError("Valid to must be later than valid from")
+        return value
+
+
+class CouponOut(CouponIn):
+    id: str
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class PublicCouponOut(BaseModel):
+    id: str
+    name: str
+    percentage: float
+    is_active: bool = True
+    valid_from: datetime
+    valid_to: datetime
+    minimum_cart_amount: float
 
 
 class PublicSettingsOut(BaseModel):

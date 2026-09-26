@@ -41,6 +41,20 @@ export default function Payment() {
           <strong>#{order.id}</strong>
         </div>
         <div className="payment-row">
+          <span>Items subtotal</span>
+          <strong>{order.subtotal_amount.toFixed(3)} BHD</strong>
+        </div>
+        {order.discount_amount > 0 && (
+          <div className="payment-row payment-discount-row">
+            <span>{order.coupon_name ? `${order.coupon_name} discount` : 'Coupon discount'}</span>
+            <strong>−{order.discount_amount.toFixed(3)} BHD</strong>
+          </div>
+        )}
+        <div className="payment-row">
+          <span>Delivery{order.delivery_charge === 0 ? ' · Free delivery applied' : ''}</span>
+          <strong>{order.delivery_charge.toFixed(3)} BHD</strong>
+        </div>
+        <div className="payment-row payment-grand-total">
           <span>Total Amount</span>
           <strong>{order.total_amount.toFixed(3)} BHD</strong>
         </div>

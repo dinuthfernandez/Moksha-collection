@@ -72,6 +72,11 @@ export default function AdminOrders() {
                   {order.delivery_type && (
                     <p className="admin-order-meta">Delivery: {order.delivery_type} ({order.delivery_charge.toFixed(3)} BHD)</p>
                   )}
+                  {Number(order.discount_amount ?? 0) > 0 && (
+                    <p className="admin-order-meta admin-order-discount">
+                      Coupon{order.coupon_name ? `: ${order.coupon_name}` : ''} ({order.coupon_percentage ?? 0}%): −{Number(order.discount_amount).toFixed(3)} BHD
+                    </p>
+                  )}
                   {order.return_status !== 'none' && (
                     <p className="admin-order-return">Return {order.return_status}</p>
                   )}

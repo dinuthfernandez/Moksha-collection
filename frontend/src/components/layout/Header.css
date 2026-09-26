@@ -76,6 +76,92 @@
   margin-left: auto;
 }
 
+.header-search-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-warm-white);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.header-search-toggle:hover,
+.header-search-toggle.is-active {
+  color: var(--color-magenta);
+  border-color: var(--color-line-strong);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.header-search-panel {
+  position: absolute;
+  top: 100%;
+  right: max(16px, calc((100vw - 1320px) / 2));
+  width: min(460px, calc(100vw - 32px));
+  padding: 0 12px;
+  background: var(--color-black);
+  border: 1px solid transparent;
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+.header-search-panel.is-open {
+  padding: 12px;
+  border-color: var(--color-line-soft);
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.header-search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 8px;
+  color: var(--color-crystal-silver);
+  background: var(--color-onyx);
+}
+
+.header-search-form input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-warm-white);
+  font: inherit;
+}
+
+.header-search-form input::placeholder {
+  color: var(--color-crystal-silver);
+  opacity: 0.75;
+}
+
+.header-search-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 6px;
+  background: var(--color-magenta);
+  color: var(--on-brand-text);
+  cursor: pointer;
+}
+
 .cart-link {
   position: relative;
   display: inline-flex;
@@ -189,5 +275,10 @@
   }
   .site-header-actions {
     gap: 8px;
+  }
+
+  .header-search-toggle {
+    width: 34px;
+    height: 34px;
   }
 }

@@ -1,3 +1,4 @@
+import re
 from typing import Literal, Optional
 
 from fastapi import APIRouter, HTTPException, Query
@@ -16,13 +17,30 @@ def list_products(
     active_only: bool = Query(default=True),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=24, ge=1, le=200),
+    q: Optional[str] = Query(default=None, max_length=120),
+    min_price: Optional[float] = Query(default=None, ge=0),
+    max_price: Optional[float] = Query(default=None, ge=0),
 ):
+    if min_price is not None and max_price is not None and min_price > max_price:
+        raise HTTPException(status_code=422, detail="Minimum price cannot exceed maximum price")
+
     supabase = get_supabase()
     query = supabase.table("products").select("*", count="exact")
     if active_only:
         query = query.eq("is_active", True).gt("stock_quantity", 0)
     if category:
         query = query.eq("category_slug", category)
+    if q:
+        safe_term = re.sub(r"[^a-zA-Z0-9 _-]", "", q.strip())
+        if safe_term:
+            query = query.or_(
+                f"name.ilike.%{safe_term}%,description.ilike.%{safe_term}%,"
+                f"product_code.ilike.%{safe_term}%,zoho_sku.ilike.%{safe_term}%"
+            )
+    if min_price is not None:
+        query = query.gte("price", min_price)
+    if max_price is not None:
+        query = query.lte("price", max_price)
 
     start = (page - 1) * page_size
     end = start + page_size - 1

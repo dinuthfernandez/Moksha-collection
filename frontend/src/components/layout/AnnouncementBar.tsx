@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAnnouncements } from '../../api/announcements'
+import MobileAnnouncementBar from './MobileAnnouncementBar'
 import './AnnouncementBar.css'
 
 const FALLBACK_MESSAGES = [
@@ -43,9 +44,10 @@ export default function AnnouncementBar() {
 
   return (
     <div className="announcement-bar" role="status">
-      <span className={`announcement-text ${visible ? 'is-visible' : ''}`}>
-        <span className="announcement-text-inner">{messages[index]}</span>
+      <span className={`announcement-desktop ${visible ? 'is-visible' : ''}`}>
+        <span className="announcement-desktop-text">{messages[index]}</span>
       </span>
+      <MobileAnnouncementBar messages={messages} />
     </div>
   )
 }

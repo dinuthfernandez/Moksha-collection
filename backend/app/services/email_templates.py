@@ -131,6 +131,7 @@ def render_order_placed_email(order: dict) -> tuple[str, str, str]:
       {_order_items_table(order.get('items', []))}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
         <tr><td style="padding:4px 0;color:{CRYSTAL_SILVER};">Subtotal</td><td style="padding:4px 0;text-align:right;">{float(order.get('subtotal_amount', 0)):.3f} BHD</td></tr>
+        {f"<tr><td style='padding:4px 0;color:{CRYSTAL_SILVER};'>Coupon ({order.get('coupon_name')})</td><td style='padding:4px 0;text-align:right;color:#16845b;'>−{float(order.get('discount_amount', 0)):.3f} BHD</td></tr>" if float(order.get('discount_amount', 0)) > 0 else ''}
         <tr><td style="padding:4px 0;color:{CRYSTAL_SILVER};">Delivery ({order.get('delivery_type', '')})</td><td style="padding:4px 0;text-align:right;">{float(order.get('delivery_charge', 0)):.3f} BHD</td></tr>
         <tr><td style="padding:8px 0;font-weight:700;border-top:1px solid {LINE};">Total</td><td style="padding:8px 0;text-align:right;font-weight:700;border-top:1px solid {LINE};">{float(order.get('total_amount', 0)):.3f} BHD</td></tr>
       </table>

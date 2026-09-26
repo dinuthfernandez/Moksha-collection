@@ -1,0 +1,27 @@
+.announcement-mobile {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  color: var(--on-brand-text);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.announcement-mobile-text {
+  display: inline-block;
+  width: max-content;
+  padding-left: 100%;
+  animation: announcement-mobile-marquee 11s linear 1;
+}
+
+@keyframes announcement-mobile-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}

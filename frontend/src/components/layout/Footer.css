@@ -4,6 +4,10 @@
   margin-top: 80px;
 }
 
+body:has(.product-detail-action-dock.is-available) .site-footer {
+  padding-bottom: calc(24px + 144px + env(safe-area-inset-bottom, 0px));
+}
+
 .footer-main {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr 1fr;
@@ -168,6 +172,10 @@
 }
 
 @media (max-width: 520px) {
+  body:has(.product-detail-action-dock.is-available) .site-footer {
+    padding-bottom: calc(24px + 132px + env(safe-area-inset-bottom, 0px));
+  }
+
   .footer-main {
     grid-template-columns: 1fr;
     text-align: center;

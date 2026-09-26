@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { CalendarDays, Truck } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { getPublicSettings } from '../api/settings'
 import { getAddresses } from '../api/addresses'
 import { createOrder } from '../api/orders'
+import { getActiveCoupons } from '../api/coupons'
+import { calculateCouponOffer } from '../utils/coupons'
 import { ApiError } from '../api/client'
 import { getAddressTier } from '../data/addressTiers'
-import type { Address, DeliveryRate, DeliveryType } from '../types'
+import type { Address, Coupon, DeliveryRate, DeliveryType } from '../types'
 import './OrderConfirmation.css'
 
 const DELIVERY_LABELS: Record<DeliveryType, string> = {
@@ -29,12 +32,21 @@ function formatAddressLine(address: Address): string {
   return parts.join(', ')
 }
 
+function formatDeliveryDate(daysFromNow: number) {
+  if (!Number.isInteger(daysFromNow) || daysFromNow < 0 || daysFromNow > 90) return null
+  const date = new Date()
+  date.setHours(12, 0, 0, 0)
+  date.setDate(date.getDate() + daysFromNow)
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date)
+}
+
 export default function OrderConfirmation() {
   const { items, subtotal, clear } = useCart()
   const { customer } = useAuth()
   const navigate = useNavigate()
 
   const [rates, setRates] = useState<DeliveryRate[]>([])
+  const [coupons, setCoupons] = useState<Coupon[]>([])
   const [addresses, setAddresses] = useState<Address[]>([])
   const [addressesLoading, setAddressesLoading] = useState(true)
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
@@ -44,6 +56,7 @@ export default function OrderConfirmation() {
 
   useEffect(() => {
     getPublicSettings().then((settings) => setRates(settings.delivery_rates))
+    getActiveCoupons().then(setCoupons).catch(() => setCoupons([]))
     getAddresses()
       .then((data) => {
         setAddresses(data)
@@ -56,8 +69,19 @@ export default function OrderConfirmation() {
   const selectedAddress = useMemo(() => addresses.find((a) => a.id === selectedAddressId) ?? null, [addresses, selectedAddressId])
   const deliveryType: DeliveryType | null = selectedAddress ? getAddressTier(selectedAddress.country_code) : null
   const selectedRate = useMemo(() => rates.find((r) => r.delivery_type === deliveryType), [rates, deliveryType])
-  const deliveryCharge = selectedRate?.rate_bhd ?? 0
-  const total = subtotal + deliveryCharge
+  const freeDeliveryUnlocked = Boolean(
+    selectedRate?.free_delivery_over_bhd != null && subtotal >= selectedRate.free_delivery_over_bhd,
+  )
+  const deliveryCharge = selectedRate ? (freeDeliveryUnlocked ? 0 : selectedRate.rate_bhd) : 0
+  const deliveryDateRange = selectedRate
+    ? (() => {
+        const from = formatDeliveryDate(selectedRate.delivery_days_from)
+        const to = formatDeliveryDate(selectedRate.delivery_days_to)
+        return from && to && selectedRate.delivery_days_to >= selectedRate.delivery_days_from ? `${from} – ${to}` : null
+      })()
+    : null
+  const couponOffer = useMemo(() => calculateCouponOffer(subtotal, coupons), [subtotal, coupons])
+  const total = Math.max(0, subtotal - couponOffer.discount_amount) + deliveryCharge
 
   const onConfirm = async () => {
     if (!customer) {
@@ -162,14 +186,47 @@ export default function OrderConfirmation() {
         <div className="order-confirmation-summary">
           {selectedRate && (
             <div className="delivery-rate-note">
-              <strong>{DELIVERY_LABELS[selectedRate.delivery_type]} delivery — {selectedRate.rate_bhd.toFixed(3)} BHD</strong>
+              <strong><Truck size={16} aria-hidden="true" /> {DELIVERY_LABELS[selectedRate.delivery_type]} delivery — {selectedRate.rate_bhd.toFixed(3)} BHD</strong>
               {selectedRate.description && <p>{selectedRate.description}</p>}
+              {selectedRate.free_delivery_over_bhd != null && (
+                <p className="free-delivery-status" role="status">
+                  {freeDeliveryUnlocked
+                    ? 'Free delivery unlocked'
+                    : `Add ${(selectedRate.free_delivery_over_bhd - subtotal).toFixed(3)} BHD more for free delivery`}
+                </p>
+              )}
+              <div className="checkout-delivery-estimate">
+                <CalendarDays size={15} aria-hidden="true" />
+                <span>{deliveryDateRange ? `Estimated delivery: ${deliveryDateRange}` : 'Delivery date estimate unavailable'}</span>
+              </div>
             </div>
           )}
           <div className="cart-summary-row">
             <span>Subtotal</span>
             <strong>{subtotal.toFixed(3)} BHD</strong>
           </div>
+          {couponOffer.applied ? (
+            <>
+              <div className="checkout-coupon-banner" role="status">
+                <span>{couponOffer.applied.name} applied · {couponOffer.applied.percentage}% off</span>
+                <strong>You save {couponOffer.discount_amount.toFixed(3)} BHD</strong>
+              </div>
+              <div className="cart-summary-row checkout-discount-row">
+                <span>Coupon discount</span>
+                <strong>−{couponOffer.discount_amount.toFixed(3)} BHD</strong>
+              </div>
+              {couponOffer.next && (
+                <p className="checkout-next-coupon">
+                  Add {couponOffer.amount_to_next.toFixed(3)} BHD more to unlock {couponOffer.next.percentage}% off.
+                </p>
+              )}
+            </>
+          ) : couponOffer.next ? (
+            <div className="checkout-coupon-banner checkout-next-tier" role="status">
+              <span>{couponOffer.next.percentage}% off available</span>
+              <strong>Add {couponOffer.amount_to_next.toFixed(3)} BHD more to unlock {couponOffer.next.name}.</strong>
+            </div>
+          ) : null}
           <div className="cart-summary-row">
             <span>Delivery {deliveryType ? `(${DELIVERY_LABELS[deliveryType]})` : ''}</span>
             <strong>{deliveryCharge.toFixed(3)} BHD</strong>
