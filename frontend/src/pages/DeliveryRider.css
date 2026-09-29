@@ -1,0 +1,283 @@
+.rider-page {
+  min-height: 100vh;
+  padding: 18px 16px calc(36px + env(safe-area-inset-bottom));
+  background: var(--color-onyx);
+  color: var(--color-warm-white);
+}
+
+.rider-header,
+.rider-content {
+  width: min(100%, 620px);
+  margin: 0 auto;
+}
+
+.rider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 54px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.rider-header img {
+  display: block;
+  width: 132px;
+  height: 42px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.rider-header span {
+  color: var(--color-crystal-silver);
+  font-size: 0.82rem;
+}
+
+.rider-content {
+  display: grid;
+  gap: 16px;
+  padding-top: 22px;
+}
+
+.rider-workspace,
+.rider-overview,
+.rider-actions {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+  align-content: start;
+}
+
+.rider-order-heading h1 {
+  margin: 7px 0 3px;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 400;
+}
+
+.rider-order-heading p,
+.rider-reschedule-form p {
+  margin: 0;
+  color: var(--color-crystal-silver);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.rider-status {
+  display: inline-block;
+  color: #53b6cf;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.rider-status-delivered { color: #3ae0a0; }
+.rider-status-cancelled { color: #e04a4a; }
+
+.rider-details,
+.rider-reschedule-form,
+.rider-cancel-form {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-onyx-soft);
+}
+
+.rider-detail-row {
+  display: grid;
+  gap: 5px;
+}
+
+.rider-detail-row > span,
+.rider-reschedule-form label > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-crystal-silver);
+  font-size: 0.78rem;
+}
+
+.rider-detail-row strong {
+  font-size: 0.96rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.rider-address-row strong {
+  font-size: 1.04rem;
+}
+
+.rider-call-button,
+.rider-delivered-button,
+.rider-reschedule-button,
+.rider-cancel-button,
+.rider-cancel-confirm-button,
+.rider-cancel-back-button {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.rider-call-button,
+.rider-delivered-button {
+  background: var(--color-whatsapp);
+  color: #fff;
+}
+
+.rider-reschedule-form h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.rider-reschedule-form h2 svg { color: #e0b13a; }
+
+.rider-reschedule-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.rider-reschedule-form input,
+.rider-reschedule-form textarea,
+.rider-cancel-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  background: var(--color-onyx);
+  color: var(--color-warm-white);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.rider-reschedule-form textarea,
+.rider-cancel-form textarea { resize: vertical; }
+
+.rider-cancel-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.rider-cancel-form label > span {
+  color: var(--color-crystal-silver);
+  font-size: 0.78rem;
+}
+
+.rider-cancel-form label b { color: #ff7373; }
+
+.rider-cancel-form-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.rider-reschedule-button {
+  background: var(--color-magenta);
+  color: var(--on-brand-text);
+}
+
+.rider-cancel-button {
+  border-color: var(--color-line);
+  background: transparent;
+  color: #ff7373;
+}
+
+.rider-cancel-confirm-button {
+  background: #a92a3c;
+  color: #fff;
+}
+
+.rider-cancel-back-button {
+  border-color: var(--color-line);
+  background: transparent;
+  color: var(--color-crystal-silver);
+}
+
+.rider-call-button:disabled,
+.rider-delivered-button:disabled,
+.rider-reschedule-button:disabled,
+.rider-cancel-button:disabled,
+.rider-cancel-confirm-button:disabled,
+.rider-cancel-back-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.rider-attempt-note,
+.rider-finished,
+.rider-state {
+  display: grid;
+  gap: 6px;
+  color: var(--color-crystal-silver);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.rider-attempt-note {
+  padding: 12px 14px;
+  border-left: 3px solid #e0b13a;
+  background: rgba(224, 177, 58, 0.08);
+}
+
+.rider-attempt-note strong,
+.rider-finished strong { color: var(--color-warm-white); }
+
+.rider-finished { padding: 14px; border-radius: 6px; background: var(--color-onyx-soft); }
+.rider-finished-delivered { border-left: 3px solid #3ae0a0; }
+.rider-finished-cancelled { border-left: 3px solid #e04a4a; }
+
+.rider-state {
+  width: min(100%, 620px);
+  margin: 70px auto;
+  text-align: center;
+  justify-items: center;
+}
+
+.rider-state h1 { margin: 0; color: var(--color-warm-white); font-size: 1.3rem; }
+.rider-error { margin: 0; color: #ff7373; font-size: 0.82rem; }
+
+@media (min-width: 700px) {
+  .rider-page { padding: 24px 22px 40px; }
+  .rider-header,
+  .rider-content { width: min(100%, 900px); }
+  .rider-content { gap: 20px; padding-top: 26px; }
+  .rider-workspace { grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); gap: 18px; }
+  .rider-details,
+  .rider-reschedule-form,
+  .rider-cancel-form { padding: 20px; }
+}
+
+@media (max-width: 699px) {
+  .rider-page { padding: 12px 12px calc(24px + env(safe-area-inset-bottom)); }
+  .rider-header { min-height: 50px; }
+  .rider-content { gap: 14px; padding-top: 18px; }
+  .rider-order-heading h1 { font-size: 1.35rem; }
+  .rider-details,
+  .rider-reschedule-form,
+  .rider-cancel-form { gap: 12px; padding: 15px; }
+  .rider-actions { gap: 12px; }
+  .rider-call-button,
+  .rider-delivered-button,
+  .rider-reschedule-button,
+  .rider-cancel-button,
+  .rider-cancel-confirm-button,
+  .rider-cancel-back-button { min-height: 46px; font-size: 0.84rem; }
+}

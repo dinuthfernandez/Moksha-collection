@@ -43,6 +43,7 @@
 
 .order-status-badge.status-pending { color: #e0b13a; }
 .order-status-badge.status-accepted { color: #3aa0e0; }
+.order-status-badge.status-shipped { color: #53b6cf; }
 .order-status-badge.status-delivered { color: #3ae0a0; }
 .order-status-badge.status-cancelled { color: #e04a4a; }
 
@@ -179,6 +180,24 @@
 .order-card-cancel-reason {
   color: #e04a4a;
   font-size: 0.8rem;
+}
+
+.order-card-delivery-update {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border-left: 2px solid #53b6cf;
+  background: rgba(83, 182, 207, 0.08);
+  color: var(--color-crystal-silver);
+  font-size: 0.8rem;
+}
+
+.order-card-delivery-update strong {
+  color: var(--color-warm-white);
+}
+
+.order-cancel-button {
+  justify-self: start;
 }
 
 .order-card-return-note {

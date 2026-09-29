@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -20,12 +22,12 @@ from ..schemas import (
     DeliveryRateOut,
     OrderDetailOut,
     OrderStatusUpdateIn,
+    RiderLinkOut,
     ReturnOrderOut,
 )
 from ..services.email import send_campaign_email, send_sales_email
 from ..services.email_templates import render_order_completed_email
-from ..services.zoho_inventory import ZohoInventoryClient
-from ..config import get_settings
+from ..services.order_inventory import restock_order_items
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(get_current_admin)])
 
@@ -174,7 +176,9 @@ def _load_order_detail(supabase, order: dict) -> dict:
 
 
 @router.get("/orders", response_model=list[OrderDetailOut])
-def list_orders(status: Optional[Literal["pending", "accepted", "delivered", "cancelled"]] = Query(default=None)):
+def list_orders(
+    status: Optional[Literal["pending", "accepted", "shipped", "delivered", "cancelled"]] = Query(default=None),
+):
     supabase = get_supabase()
     query = supabase.table("orders").select("*")
     if status:
@@ -183,42 +187,19 @@ def list_orders(status: Optional[Literal["pending", "accepted", "delivered", "ca
     return [_load_order_detail(supabase, order) for order in (result.data or [])]
 
 
-def _restock_order_items(supabase, order_id: str) -> None:
-    """Adds each ordered item's quantity back to stock, locally and in Zoho — used
-    when an order is cancelled and when a return is marked complete."""
-    items_result = supabase.table("order_items").select("*").eq("order_id", order_id).execute()
-    settings = get_settings()
-    zoho_configured = all(
-        [settings.zoho_client_id, settings.zoho_client_secret, settings.zoho_refresh_token, settings.zoho_organization_id]
-    )
-    zoho_client = (
-        ZohoInventoryClient(
-            client_id=settings.zoho_client_id,
-            client_secret=settings.zoho_client_secret,
-            refresh_token=settings.zoho_refresh_token,
-            organization_id=settings.zoho_organization_id,
-        )
-        if zoho_configured
-        else None
-    )
+@router.post("/orders/{order_id}/delivery-link", response_model=RiderLinkOut)
+def create_delivery_link(order_id: str):
+    supabase = get_supabase()
+    order_result = supabase.table("orders").select("id,status").eq("id", order_id).limit(1).execute()
+    if not order_result.data:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order_result.data[0].get("status") != "shipped":
+        raise HTTPException(status_code=409, detail="A rider link is available only for shipped orders")
 
-    for item in items_result.data or []:
-        product_id = item.get("product_id")
-        if not product_id:
-            continue
-        product_result = supabase.table("products").select("stock_quantity,zoho_item_id").eq("id", product_id).limit(1).execute()
-        if not product_result.data:
-            continue
-        product = product_result.data[0]
-        new_stock = (product.get("stock_quantity") or 0) + int(item.get("quantity") or 0)
-        supabase.table("products").update({"stock_quantity": new_stock}).eq("id", product_id).execute()
-
-        if zoho_client and product.get("zoho_item_id"):
-            try:
-                zoho_client.adjust_stock(product["zoho_item_id"], int(item.get("quantity") or 0))
-            except Exception:
-                # Local stock is already restored; the Zoho side can be reconciled on the next sync.
-                pass
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    supabase.table("order_delivery_tokens").insert({"order_id": order_id, "token_hash": token_hash}).execute()
+    return {"token": token}
 
 
 @router.put("/orders/{order_id}/status", response_model=OrderDetailOut)
@@ -229,13 +210,24 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateIn):
         raise HTTPException(status_code=404, detail="Order not found")
     order = existing.data[0]
 
+    allowed_transitions = {
+        "pending": {"accepted", "cancelled"},
+        "accepted": {"shipped", "cancelled"},
+        "shipped": {"delivered"},
+    }
+    if payload.status not in allowed_transitions.get(order.get("status"), set()):
+        raise HTTPException(status_code=409, detail=f"Order cannot move from {order.get('status')} to {payload.status}")
+
     updates: dict = {"status": payload.status, "updated_at": "now()"}
     if payload.status == "cancelled":
-        updates["cancel_reason"] = payload.cancel_reason
-        # Cancelling an order restocks the reduced quantities, locally and in Zoho.
-        _restock_order_items(supabase, order_id)
+        updates["cancel_reason"] = payload.cancel_reason or "Cancelled by admin"
+        updates["cancelled_by"] = "admin"
 
-    result = supabase.table("orders").update(updates).eq("id", order_id).execute()
+    result = supabase.table("orders").update(updates).eq("id", order_id).eq("status", order["status"]).execute()
+    if not result.data:
+        raise HTTPException(status_code=409, detail="Order status changed. Refresh and try again")
+    if payload.status == "cancelled":
+        restock_order_items(supabase, order_id)
     updated_order = _load_order_detail(supabase, result.data[0])
 
     if payload.status == "delivered" and updated_order.get("email"):
@@ -291,7 +283,7 @@ def complete_return(order_id: str):
         raise HTTPException(status_code=400, detail="This order has no pending return request")
 
     # Completing a return means the item is physically back — restock it, locally and in Zoho.
-    _restock_order_items(supabase, order_id)
+    restock_order_items(supabase, order_id)
 
     result = (
         supabase.table("orders")

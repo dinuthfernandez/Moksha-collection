@@ -14,9 +14,17 @@ export function getCategoryBySlug(slug: string) {
   return api.get<Category>(`/categories/${slug}`)
 }
 
-export function getProducts(category?: 'clothing' | 'accessories', page = 1, pageSize = 24) {
+export function getProducts(
+  category?: 'clothing' | 'accessories',
+  page = 1,
+  pageSize = 24,
+  query?: string,
+  categorySlug?: string,
+) {
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
   if (category) params.set('category', category)
+  if (query) params.set('q', query)
+  if (categorySlug) params.set('category_slug', categorySlug)
   return api.get<PaginatedProducts>(`/products?${params.toString()}`)
 }
 

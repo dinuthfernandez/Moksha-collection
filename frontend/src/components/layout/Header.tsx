@@ -12,7 +12,6 @@ import './Header.css'
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
   { label: 'Clothing', to: '/clothing' },
-  { label: 'Accessories', to: '/accessories' },
   { label: 'Categories', to: '/categories' },
   { label: 'Size Charts', to: '/size-charts' },
   { label: 'About Us', to: '/about-us' },
@@ -65,7 +64,7 @@ export default function Header() {
   return (
     <>
       <header className="site-header">
-        <AnnouncementBar />
+        {location.pathname === '/' && <AnnouncementBar />}
         <div className="site-header-bar container">
           <button
             className="menu-toggle"
@@ -81,7 +80,25 @@ export default function Header() {
           </Link>
 
           <nav className="site-nav" aria-label="Primary">
-            {NAV_LINKS.map((link) => (
+            {NAV_LINKS.slice(0, 2).map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) => 'site-nav-link' + (isActive ? ' is-active' : '')}
+              >
+                {link.label}
+              </NavLink>
+            ))}
+            <NavLink
+              to="/accessories"
+              className={({ isActive }) => 'site-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
+            >
+              <span className="azhak-nav-badge">
+                <img src="/assets/logo/azhak-logo.png" alt="" aria-hidden="true" className="azhak-nav-logo" />
+              </span>
+              Accessories
+            </NavLink>
+            {NAV_LINKS.slice(2).map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -145,7 +162,27 @@ export default function Header() {
         </div>
 
         <div className={`mobile-nav ${menuOpen ? 'is-open' : ''}`}>
-          {NAV_LINKS.map((link) => (
+          {NAV_LINKS.slice(0, 2).map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) => 'mobile-nav-link' + (isActive ? ' is-active' : '')}
+              onClick={() => setMenuOpen(false)}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+          <NavLink
+            to="/accessories"
+            className={({ isActive }) => 'mobile-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
+            onClick={() => setMenuOpen(false)}
+          >
+            <span className="azhak-nav-badge">
+              <img src="/assets/logo/azhak-logo.png" alt="" aria-hidden="true" className="azhak-nav-logo" />
+            </span>
+            Accessories
+          </NavLink>
+          {NAV_LINKS.slice(2).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}

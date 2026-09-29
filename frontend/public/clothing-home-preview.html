@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6f1">
+  <title>Moksha Collections | Clothing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f8f6f1;
+      --paper-deep: #efebe3;
+      --ink: #211e1b;
+      --muted: #77716a;
+      --line: #e5e0d7;
+      --pink: #d92c91;
+      --taupe: #a38c70;
+      --serif: 'Playfair Display', Georgia, serif;
+      --sans: 'DM Sans', sans-serif;
+      --page-width: 1320px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 82px; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+    body.menu-open { overflow: hidden; }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    ::selection { background: var(--pink); color: #fff; }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-height: 74px;
+      border-bottom: 1px solid var(--line);
+      background: rgb(248 246 241 / 94%);
+      backdrop-filter: blur(16px);
+    }
+    .header-inner {
+      width: min(100% - 64px, var(--page-width));
+      min-height: 74px;
+      margin: auto;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 28px;
+    }
+    .brand {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+    }
+    .brand-mark {
+      width: 43px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 5px;
+      background: #0e0a14;
+    }
+    .brand-mark img { width: 40px; height: 32px; object-fit: contain; }
+    .brand-name { display: flex; flex-direction: column; gap: 1px; }
+    .brand-name strong { font-family: var(--serif); font-size: 1.05rem; font-weight: 500; }
+    .brand-name span { color: var(--muted); font-size: 0.58rem; letter-spacing: 1.5px; text-transform: uppercase; }
+    .desktop-nav { display: flex; align-items: center; gap: 34px; }
+    .desktop-nav a, .header-tools a { font-size: 0.78rem; font-weight: 500; transition: color 160ms ease; }
+    .desktop-nav a:hover, .header-tools a:hover { color: var(--pink); }
+    .header-tools { justify-self: end; display: flex; align-items: center; gap: 19px; }
+    .header-tools .bag-link { display: inline-flex; align-items: center; gap: 7px; }
+    .bag-link svg { width: 17px; height: 17px; }
+    .menu-toggle, .mobile-nav { display: none; }
+
+    .hero {
+      min-height: min(720px, calc(100svh - 74px));
+      min-height: max(520px, min(720px, calc(100svh - 74px)));
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+      isolation: isolate;
+      background: #332e29;
+      color: #fff;
+    }
+    .hero-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 35%; }
+    .hero-scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(21 18 16 / 68%), rgb(21 18 16 / 16%) 72%), linear-gradient(0deg, rgb(21 18 16 / 36%), transparent 58%); }
+    .hero-copy { width: min(100% - 64px, var(--page-width)); margin: 0 auto; padding: 80px 0 78px; animation: rise-in 650ms cubic-bezier(.16,1,.3,1) both; }
+    .eyebrow { display: block; margin-bottom: 18px; color: #f1d8e9; font-size: 0.68rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+    .hero h1 { max-width: 690px; margin: 0; font-family: var(--serif); font-size: clamp(3rem, 6vw, 5.5rem); font-weight: 400; line-height: 1.04; }
+    .hero-copy p { max-width: 470px; margin: 21px 0 28px; color: rgb(255 255 255 / 84%); font-size: 0.96rem; line-height: 1.7; }
+    .hero-actions { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .button-primary { min-height: 47px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 0 22px; border: 1px solid var(--pink); border-radius: 3px; background: var(--pink); color: #fff; font-size: 0.73rem; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; transition: background 180ms ease, border-color 180ms ease; }
+    .button-primary:hover { border-color: #b51f74; background: #b51f74; }
+    .button-text { display: inline-flex; align-items: center; gap: 8px; color: #fff; font-size: 0.78rem; font-weight: 600; }
+    .button-text svg { width: 16px; height: 16px; transition: transform 180ms ease; }
+    .button-text:hover svg { transform: translateX(4px); }
+
+    .container { width: min(100% - 64px, var(--page-width)); margin-inline: auto; }
+    .section { padding-block: 92px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    .section-kicker { margin: 0 0 9px; color: var(--taupe); font-size: 0.66rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; }
+    .section-head h2, .story-copy h2 { margin: 0; font-family: var(--serif); font-size: clamp(2rem, 3.1vw, 2.8rem); font-weight: 400; line-height: 1.12; }
+    .section-head > p { max-width: 310px; margin: 0 0 2px; color: var(--muted); font-size: 0.84rem; line-height: 1.65; }
+
+    .category-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+    .category-card { position: relative; min-width: 0; aspect-ratio: 4 / 5; overflow: hidden; background: var(--paper-deep); }
+    .category-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 550ms cubic-bezier(.16,1,.3,1); }
+    .category-card:hover img { transform: scale(1.035); }
+    .category-card::after { content: ''; position: absolute; inset: 35% 0 0; background: linear-gradient(transparent, rgb(22 19 17 / 62%)); pointer-events: none; }
+    .category-card-copy { position: absolute; z-index: 1; inset: auto 17px 18px; color: white; }
+    .category-card-copy span { display: block; margin-bottom: 6px; color: rgb(255 255 255 / 76%); font-size: 0.62rem; letter-spacing: 1.1px; text-transform: uppercase; }
+    .category-card-copy h3 { margin: 0; font-family: var(--serif); font-size: 1.28rem; font-weight: 400; }
+    .category-card-copy svg { position: absolute; right: 0; bottom: 0; width: 17px; height: 17px; }
+
+    .arrival-section { background: var(--paper-deep); }
+    .arrival-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+    .arrival-card { min-width: 0; }
+    .arrival-image { aspect-ratio: 4 / 5; overflow: hidden; background: #e4dfd6; }
+    .arrival-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 500ms cubic-bezier(.16,1,.3,1); }
+    .arrival-card:hover .arrival-image img { transform: scale(1.03); }
+    .arrival-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 12px; }
+    .arrival-meta span:first-child { overflow: hidden; color: var(--ink); font-size: 0.81rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+    .arrival-meta span:last-child { flex: 0 0 auto; color: var(--muted); font-size: 0.68rem; }
+
+    .story { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); align-items: center; gap: 8%; padding-block: 100px; }
+    .story-copy { max-width: 520px; }
+    .story-copy p { margin: 18px 0 0; color: var(--muted); font-size: 0.9rem; line-height: 1.8; }
+    .story-image { aspect-ratio: 5 / 4; overflow: hidden; background: var(--paper-deep); }
+    .story-image img { width: 100%; height: 100%; object-fit: cover; }
+
+    .newsletter { padding: 68px 24px; background: #211e1b; color: #fff; text-align: center; }
+    .newsletter .section-kicker { color: #e4bdd7; }
+    .newsletter h2 { margin: 0; font-family: var(--serif); font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 400; }
+    .newsletter p { max-width: 430px; margin: 13px auto 22px; color: rgb(255 255 255 / 70%); font-size: 0.82rem; line-height: 1.65; }
+    .newsletter a { display: inline-flex; align-items: center; gap: 9px; padding-bottom: 5px; border-bottom: 1px solid #d4b39b; color: #fff; font-size: 0.75rem; font-weight: 600; }
+    .newsletter a svg { width: 15px; height: 15px; }
+
+    .site-footer { padding: 34px 0 24px; }
+    .footer-inner { width: min(100% - 64px, var(--page-width)); margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .footer-brand { font-family: var(--serif); font-size: 1rem; }
+    .footer-nav { display: flex; flex-wrap: wrap; gap: 22px; color: var(--muted); font-size: 0.72rem; }
+    .footer-bottom { width: min(100% - 64px, var(--page-width)); margin: 22px auto 0; padding-top: 17px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.66rem; }
+
+    @keyframes rise-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 900px) {
+      .header-inner, .container, .hero-copy, .footer-inner, .footer-bottom { width: min(100% - 40px, var(--page-width)); }
+      .desktop-nav { gap: 18px; }
+      .category-grid, .arrival-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .story { gap: 6%; }
+    }
+    @media (max-width: 680px) {
+      html { scroll-padding-top: 66px; }
+      .site-header, .header-inner { min-height: 64px; }
+      .header-inner { width: calc(100% - 32px); grid-template-columns: 1fr auto; gap: 12px; }
+      .brand-mark { width: 38px; height: 33px; }
+      .brand-mark img { width: 36px; height: 29px; }
+      .brand-name strong { font-size: 0.95rem; }
+      .desktop-nav { display: none; }
+      .header-tools { gap: 0; }
+      .header-tools .bag-link span { display: none; }
+      .menu-toggle { width: 38px; height: 38px; display: grid; place-items: center; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+      .menu-toggle svg { width: 21px; height: 21px; }
+      .mobile-nav { position: absolute; top: 100%; left: 0; right: 0; display: flex; flex-direction: column; max-height: 0; overflow: hidden; border-bottom: 1px solid transparent; background: var(--paper); transition: max-height 260ms ease, border-color 180ms ease; }
+      .mobile-nav.is-open { max-height: 320px; border-color: var(--line); }
+      .mobile-nav a { padding: 14px 20px; border-top: 1px solid var(--line); font-size: 0.83rem; }
+      .hero { min-height: 570px; min-height: 76svh; }
+      .hero-photo { object-position: 58% center; }
+      .hero-scrim { background: linear-gradient(90deg, rgb(21 18 16 / 56%), rgb(21 18 16 / 8%) 100%), linear-gradient(0deg, rgb(21 18 16 / 42%), transparent 62%); }
+      .hero-copy { width: calc(100% - 40px); padding: 54px 0 48px; }
+      .hero h1 { max-width: 440px; font-size: clamp(2.8rem, 12vw, 4.1rem); }
+      .hero-copy p { max-width: 380px; font-size: 0.86rem; }
+      .section { padding-block: 62px; }
+      .section-head { align-items: flex-start; flex-direction: column; gap: 12px; margin-bottom: 22px; }
+      .section-head > p { max-width: 390px; }
+      .category-grid { gap: 10px; }
+      .category-card-copy { inset: auto 11px 12px; }
+      .category-card-copy h3 { font-size: 1.05rem; }
+      .category-card-copy span { font-size: 0.55rem; }
+      .arrival-grid { gap: 22px 10px; }
+      .arrival-meta { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .story { grid-template-columns: 1fr; gap: 25px; padding-block: 65px; }
+      .story-image { order: -1; }
+      .newsletter { padding: 56px 22px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; gap: 16px; }
+      .footer-nav { gap: 14px 19px; }
+      .footer-inner, .footer-bottom { width: calc(100% - 40px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="Moksha Collections home">
+        <span class="brand-mark"><img src="/assets/logo/logo.png" alt=""></span>
+        <span class="brand-name"><strong>Moksha</strong><span>Collections</span></span>
+      </a>
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="#categories">Collections</a>
+        <a href="#new-arrivals">New arrivals</a>
+        <a href="#story">Our approach</a>
+      </nav>
+      <div class="header-tools">
+        <a class="bag-link" href="/cart" aria-label="Shopping bag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 8h14l1 13H4L5 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg>
+          <span>Bag</span>
+        </a>
+        <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+      <nav class="mobile-nav" aria-label="Mobile navigation">
+        <a href="#categories">Collections</a>
+        <a href="#new-arrivals">New arrivals</a>
+        <a href="#story">Our approach</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <img class="hero-photo" src="/assets/hero/DSC_5738.jpg.webp" alt="Moksha Collections clothing look">
+      <div class="hero-scrim" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <span class="eyebrow">The considered clothing edit</span>
+        <h1 id="hero-title">Moksha Collections</h1>
+        <p>Contemporary clothing chosen for its cut, finish, and the quiet confidence it brings to the everyday.</p>
+        <div class="hero-actions">
+          <a class="button-primary" href="#categories">Explore clothing <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+          <a class="button-text" href="#story">Our approach <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container" id="categories" aria-labelledby="categories-title">
+      <div class="section-head">
+        <div><p class="section-kicker">A considered wardrobe</p><h2 id="categories-title">Shop the collections</h2></div>
+        <p>Distinct edits, thoughtfully selected. Find the pieces that feel like you.</p>
+      </div>
+      <div class="category-grid">
+        <a class="category-card" href="/clothing/kurti">
+          <img src="/assets/category/DSC_5516.jpg.webp" alt="Kurti collection">
+          <span class="category-card-copy"><span>01 · Everyday</span><h3>Kurtis</h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+        </a>
+        <a class="category-card" href="/clothing/saree">
+          <img src="/assets/category/DSC_5685.jpg.webp" alt="Saree collection">
+          <span class="category-card-copy"><span>02 · Occasion</span><h3>Sarees</h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+        </a>
+        <a class="category-card" href="/clothing/co-ord-sets">
+          <img src="/assets/category/DSC_5742.jpg.webp" alt="Co-ord sets collection">
+          <span class="category-card-copy"><span>03 · Matching sets</span><h3>Co-ord sets</h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+        </a>
+        <a class="category-card" href="/clothing/western-outfits">
+          <img src="/assets/category/DSC_5704.jpg.webp" alt="Western clothing collection">
+          <span class="category-card-copy"><span>04 · Modern silhouettes</span><h3>Western wear</h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="section arrival-section" id="new-arrivals" aria-labelledby="arrivals-title">
+      <div class="container">
+        <div class="section-head">
+          <div><p class="section-kicker">Just added</p><h2 id="arrivals-title">The latest edit</h2></div>
+          <p>Fresh silhouettes, familiar ease. A first look at the pieces we’re wearing now.</p>
+        </div>
+        <div class="arrival-grid">
+          <a class="arrival-card" href="/clothing/kurti"><div class="arrival-image"><img src="/assets/category/DSC_5679.jpg.webp" alt="Kurti in the new edit"></div><span class="arrival-meta"><span>Soft structure</span><span>Explore kurtis</span></span></a>
+          <a class="arrival-card" href="/clothing/saree"><div class="arrival-image"><img src="/assets/category/DSC_5696.jpg.webp" alt="Saree in the new edit"></div><span class="arrival-meta"><span>Fluid drape</span><span>Explore sarees</span></span></a>
+          <a class="arrival-card" href="/clothing/kaftan-collection"><div class="arrival-image"><img src="/assets/category/DSC_5650.jpg.webp" alt="Kaftan in the new edit"></div><span class="arrival-meta"><span>Unhurried ease</span><span>Explore kaftans</span></span></a>
+          <a class="arrival-card" href="/clothing/frock"><div class="arrival-image"><img src="/assets/category/DSC_5607.jpg.webp" alt="Dress in the new edit"></div><span class="arrival-meta"><span>Everyday detail</span><span>Explore dresses</span></span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="story container" id="story" aria-labelledby="story-title">
+      <div class="story-copy">
+        <p class="section-kicker">Our approach</p>
+        <h2 id="story-title">A wardrobe edited with intention.</h2>
+        <p>We believe a wardrobe should be edited, not accumulated. Each piece is chosen for its shape, finish, and the way it moves with real life.</p>
+        <p>From our home in Manama, we serve clients across the Gulf with personal styling guidance and an unhurried standard of service.</p>
+      </div>
+      <div class="story-image"><img src="/assets/category/DSC_5696.jpg.webp" alt="A considered Moksha Collections look"></div>
+    </section>
+
+    <section class="newsletter" aria-labelledby="concierge-title">
+      <p class="section-kicker">Personal service</p>
+      <h2 id="concierge-title">A little help finding your fit?</h2>
+      <p>Our WhatsApp concierge can help with styling, availability, and your order.</p>
+      <a href="https://wa.me/97335521619">Message our concierge <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <a href="#top" class="footer-brand">Moksha Collections</a>
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="/clothing">Clothing</a><a href="/accessories">Accessories</a><a href="/about-us">About</a><a href="/contact-us">Contact</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">© 2026 Moksha Collections · Manama, Bahrain</div>
+  </footer>
+
+  <script>
+    const menuButton = document.querySelector('.menu-toggle')
+    const mobileNav = document.querySelector('.mobile-nav')
+    menuButton.addEventListener('click', () => {
+      const open = menuButton.getAttribute('aria-expanded') !== 'true'
+      menuButton.setAttribute('aria-expanded', String(open))
+      menuButton.setAttribute('aria-label', open ? 'Close menu' : 'Open menu')
+      mobileNav.classList.toggle('is-open', open)
+      document.body.classList.toggle('menu-open', open)
+    })
+    mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
+      mobileNav.classList.remove('is-open')
+      menuButton.setAttribute('aria-expanded', 'false')
+      menuButton.setAttribute('aria-label', 'Open menu')
+      document.body.classList.remove('menu-open')
+    }))
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // Fetch wrapper for admin-only endpoints, using a separate token from the customer session
 // so an admin browsing the storefront and the admin panel in the same browser don't collide.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 const ADMIN_TOKEN_STORAGE_KEY = 'moksha-admin-token'
 let adminToken: string | null = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)

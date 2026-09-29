@@ -30,6 +30,7 @@ export interface Product {
   is_under_5bhd: boolean
   stock_quantity: number
   image_url?: string | null
+  color_options?: string[] | null
   zoho_sku?: string | null
   brand?: string | null
   length?: number | null
@@ -129,6 +130,7 @@ export interface AuthResponse {
 export interface RegisterPayload {
   email: string
   password: string
+  color_options?: string[] | null
   first_name: string
   last_name: string
   phone_country_code: string
@@ -265,7 +267,7 @@ export interface OrderCreateResult {
   created_at?: string | null
 }
 
-export type OrderStatus = 'pending' | 'accepted' | 'delivered' | 'cancelled'
+export type OrderStatus = 'pending' | 'accepted' | 'shipped' | 'delivered' | 'cancelled'
 export type ReturnStatus = 'none' | 'requested' | 'completed'
 
 export interface OrderItemDetail {
@@ -298,10 +300,27 @@ export interface OrderDetail {
   return_requested_at?: string | null
   return_completed_at?: string | null
   cancel_reason?: string | null
+  cancelled_by?: 'customer' | 'admin' | 'rider' | null
+  delivery_attempt_at?: string | null
+  delivery_attempt_note?: string | null
+  expected_delivery_date?: string | null
   zoho_invoice_id?: string | null
   zoho_invoice_number?: string | null
   created_at?: string | null
   items: OrderItemDetail[]
+}
+
+export interface RiderOrder {
+  id: string
+  customer_name: string
+  phone: string
+  address?: string | null
+  city?: string | null
+  status: 'shipped' | 'delivered' | 'cancelled'
+  cancel_reason?: string | null
+  delivery_attempt_at?: string | null
+  delivery_attempt_note?: string | null
+  expected_delivery_date?: string | null
 }
 
 // Order detail enriched with the underlying account's contact info, used on the admin Return Orders page.

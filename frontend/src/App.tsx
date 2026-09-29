@@ -13,6 +13,7 @@ import BackButton from './components/ui/BackButton'
 import Home from './pages/Home'
 import Categories from './pages/Categories'
 import CategoryLanding from './pages/CategoryLanding'
+import Azhak from './pages/Azhak'
 import CategoryDetail from './pages/CategoryDetail'
 import ProductDetail from './pages/ProductDetail'
 import SizeCharts from './pages/SizeCharts'
@@ -32,6 +33,7 @@ import SearchResults from './pages/SearchResults'
 import OrderConfirmation from './pages/OrderConfirmation'
 import Payment from './pages/Payment'
 import Orders from './pages/Orders'
+import DeliveryRider from './pages/DeliveryRider'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminOrders from './pages/admin/AdminOrders'
@@ -48,6 +50,7 @@ export default function App() {
       <WishlistProvider>
       <ScrollToTop />
       <Routes>
+        <Route path="delivery/:token" element={<DeliveryRider />} />
         <Route path="admin/login" element={<><BackButton fallbackTo="/" /><AdminLogin /></>} />
         <Route path="admin" element={<ProtectedAdminRoute />}>
           <Route element={<AdminLayout />}>
@@ -68,23 +71,12 @@ export default function App() {
             element={
               <CategoryLanding
                 type="clothing"
-                title="Clothing"
-                description="Contemporary dresses and separates, chosen for their cut and finish."
               />
             }
           />
           <Route path="clothing/:slug" element={<CategoryDetail />} />
           <Route path="product/:slug" element={<ProductDetail />} />
-          <Route
-            path="accessories"
-            element={
-              <CategoryLanding
-                type="accessories"
-                title="Accessories"
-                description="Considered finishing pieces, from statement jewellery to everyday essentials."
-              />
-            }
-          />
+          <Route path="accessories" element={<Azhak />} />
           <Route path="accessories/:slug" element={<CategoryDetail />} />
           <Route path="size-charts" element={<SizeCharts />} />
           <Route path="about-us" element={<AboutUs />} />

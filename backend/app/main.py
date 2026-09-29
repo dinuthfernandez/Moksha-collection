@@ -20,6 +20,7 @@ from .routers import (
     orders,
     products,
     reviews,
+    rider,
     settings as settings_router,
     size_charts,
     wishlists,
@@ -85,6 +86,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(addresses.router, prefix="/api")
 app.include_router(wishlists.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
+app.include_router(rider.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(admin_auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")

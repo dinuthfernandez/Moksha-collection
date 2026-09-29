@@ -285,11 +285,10 @@ export default function ProductDetail() {
                 <Heart size={18} fill={saved ? 'currentColor' : 'none'} />
                 {saved ? 'Saved to Wishlist' : 'Add to Wishlist'}
               </button>
+              <a className="btn btn-outline product-detail-size-chart" href="/size-charts" target="_blank" rel="noopener noreferrer">
+                Size charts <ExternalLink size={16} aria-hidden="true" />
+              </a>
           </div>
-
-          <a className="btn btn-outline product-detail-size-chart" href="/size-charts" target="_blank" rel="noopener noreferrer">
-            Size charts <ExternalLink size={16} aria-hidden="true" />
-          </a>
           <section className="product-delivery-info" aria-label="Delivery information">
             {isAuthenticated && defaultAddress && (
               <div className="product-default-address">

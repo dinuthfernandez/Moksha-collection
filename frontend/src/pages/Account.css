@@ -4,12 +4,13 @@
 
 .account-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   margin-top: 24px;
 }
 
 .account-card {
+  min-width: 0;
   background: var(--color-onyx-soft);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
@@ -25,6 +26,7 @@
 }
 
 .account-card label {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -34,6 +36,9 @@
 
 .account-card input,
 .account-card select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   background: var(--color-onyx);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-sm);
@@ -49,7 +54,7 @@
 
 .account-form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -95,7 +100,25 @@
 
 @media (min-width: 900px) {
   .account-grid {
-    grid-template-columns: 1.4fr 1fr;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     align-items: start;
+  }
+}
+
+@media (min-width: 760px) and (max-width: 899px) {
+  .account-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(260px, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 600px) {
+  .account-card {
+    padding: 20px;
+  }
+
+  .account-form-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 }

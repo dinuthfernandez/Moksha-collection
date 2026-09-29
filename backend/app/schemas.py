@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -155,6 +155,10 @@ class OrderDetailOut(BaseModel):
     return_requested_at: Optional[str] = None
     return_completed_at: Optional[str] = None
     cancel_reason: Optional[str] = None
+    cancelled_by: Optional[Literal["customer", "admin", "rider"]] = None
+    delivery_attempt_at: Optional[str] = None
+    delivery_attempt_note: Optional[str] = None
+    expected_delivery_date: Optional[date] = None
     zoho_invoice_id: Optional[str] = None
     zoho_invoice_number: Optional[str] = None
     created_at: Optional[str] = None
@@ -162,8 +166,35 @@ class OrderDetailOut(BaseModel):
 
 
 class OrderStatusUpdateIn(BaseModel):
-    status: Literal["accepted", "delivered", "cancelled"]
+    status: Literal["accepted", "shipped", "delivered", "cancelled"]
     cancel_reason: Optional[str] = Field(default=None, max_length=500)
+
+
+class CustomerOrderCancelIn(BaseModel):
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+
+class RiderLinkOut(BaseModel):
+    token: str
+
+
+class RiderOrderOut(BaseModel):
+    id: str
+    customer_name: str
+    phone: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    status: Literal["shipped", "delivered", "cancelled"]
+    cancel_reason: Optional[str] = None
+    delivery_attempt_at: Optional[str] = None
+    delivery_attempt_note: Optional[str] = None
+    expected_delivery_date: Optional[date] = None
+
+
+class RiderOrderUpdateIn(BaseModel):
+    action: Literal["delivered", "attempt_failed", "cancelled"]
+    expected_delivery_date: Optional[date] = None
+    note: Optional[str] = Field(default=None, max_length=500)
 
 
 class ReturnOrderOut(OrderDetailOut):

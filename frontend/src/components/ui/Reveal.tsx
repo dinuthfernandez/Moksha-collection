@@ -5,10 +5,11 @@ interface RevealProps {
   as?: ElementType
   className?: string
   delay?: number
+  id?: string
 }
 
 // Fades/slides sections up into place the first time they enter the viewport.
-export default function Reveal({ children, as: Tag = 'div', className = '', delay = 0 }: RevealProps) {
+export default function Reveal({ children, as: Tag = 'div', className = '', delay = 0, id }: RevealProps) {
   const ref = useRef<HTMLElement | null>(null)
   const [visible, setVisible] = useState(false)
 
@@ -31,6 +32,7 @@ export default function Reveal({ children, as: Tag = 'div', className = '', dela
   return (
     <Tag
       ref={ref}
+      id={id}
       className={`reveal ${visible ? 'is-visible' : ''} ${className}`}
       style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
     >

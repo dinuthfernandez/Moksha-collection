@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useLocation, useParams, Link } from 'react-router-dom'
 import { getCategoryBySlug, getProducts } from '../api/categories'
 import type { Category, Product } from '../types'
 import './CategoryDetail.css'
@@ -13,6 +13,7 @@ export default function CategoryDetail() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
+  const { pathname } = useLocation()
 
   useEffect(() => {
     setPage(1)
@@ -22,9 +23,10 @@ export default function CategoryDetail() {
     if (!slug) return
     let mounted = true
     setLoading(true)
+    const rootCategory = slug === 'accessories' || slug === 'clothing' ? slug : undefined
     Promise.all([
-      getCategoryBySlug(slug),
-      getProducts(slug === 'accessories' || slug === 'clothing' ? slug : undefined, page, PAGE_SIZE),
+      getCategoryBySlug(slug).catch(() => null),
+      getProducts(rootCategory, page, PAGE_SIZE, undefined, rootCategory ? undefined : slug),
     ])
       .then(([categoryData, productData]) => {
         if (!mounted) return
@@ -51,12 +53,19 @@ export default function CategoryDetail() {
   }
 
   if (loading) return <div className="container category-detail" />
+  const isAccessoriesDetail = pathname.startsWith('/accessories/')
+  const fallbackName = (slug ?? 'collection')
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+  const backPath = category?.type ? `/${category.type}` : isAccessoriesDetail ? '/accessories' : '/'
+  const backLabel = category?.type === 'accessories' || isAccessoriesDetail ? 'Accessories' : 'Clothing'
 
   return (
     <div className="container category-detail">
       <div className="section-heading">
-        <span className="eyebrow">{category?.type === 'accessories' ? 'Accessories' : 'Clothing'}</span>
-        <h1 className="section-title">{category?.name ?? 'Collection'}</h1>
+        <span className="eyebrow">{category?.type === 'accessories' || isAccessoriesDetail ? 'Accessories' : 'Clothing'}</span>
+        <h1 className="section-title">{category?.name ?? fallbackName}</h1>
       </div>
 
       {products.length === 0 ? (
@@ -96,8 +105,8 @@ export default function CategoryDetail() {
       )}
 
       <div className="category-detail-back">
-        <Link to={category?.type ? `/${category.type}` : '/'} className="btn btn-outline">
-          Back to {category?.type === 'accessories' ? 'Accessories' : 'Clothing'}
+        <Link to={backPath} className="btn btn-outline">
+          Back to {backLabel}
         </Link>
       </div>
     </div>

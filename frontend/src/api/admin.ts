@@ -42,6 +42,8 @@ export const getAdminOrders = (status?: OrderStatus) =>
   adminApi.get<OrderDetail[]>(`/admin/orders${status ? `?status=${status}` : ''}`)
 export const updateOrderStatus = (orderId: string, status: OrderStatus, cancelReason?: string) =>
   adminApi.put<OrderDetail>(`/admin/orders/${orderId}/status`, { status, cancel_reason: cancelReason })
+export const createRiderDeliveryLink = (orderId: string) =>
+  adminApi.post<{ token: string }>(`/admin/orders/${orderId}/delivery-link`)
 
 export const getReturns = () => adminApi.get<ReturnOrder[]>('/admin/returns')
 export const completeReturn = (orderId: string) => adminApi.put<OrderDetail>(`/admin/returns/${orderId}/complete`, {})

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
-import { getMyOrders, requestOrderReturn } from '../api/orders'
+import { cancelMyOrder, getMyOrders, requestOrderReturn } from '../api/orders'
 import { getMyReviewedOrderItems, submitProductReview } from '../api/reviews'
 import { ApiError } from '../api/client'
 import type { OrderDetail, OrderItemDetail } from '../types'
 import './Orders.css'
 
-const STATUS_LABELS: Record<string, string> = {
+const STATUS_LABELS: Record<OrderDetail['status'], string> = {
   pending: 'Pending',
   accepted: 'Accepted',
+  shipped: 'Shipped',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
 }
@@ -106,6 +107,20 @@ export default function Orders() {
     }
   }
 
+  const onCancel = async (orderId: string) => {
+    if (!window.confirm('Cancel this order? This is only available before it ships.')) return
+    setBusyId(orderId)
+    setError(null)
+    try {
+      await cancelMyOrder(orderId)
+      await load()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not cancel this order.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <div className="container orders-page">
       <div className="section-heading">
@@ -158,12 +173,27 @@ export default function Orders() {
               <p className="order-card-cancel-reason">Cancelled: {order.cancel_reason}</p>
             )}
 
+            {order.delivery_attempt_note && (
+              <div className="order-card-delivery-update" role="status">
+                <strong>Delivery update</strong>
+                <span>{order.delivery_attempt_note}</span>
+                {order.expected_delivery_date && (
+                  <span>New delivery date: {new Date(`${order.expected_delivery_date}T12:00:00`).toLocaleDateString()}</span>
+                )}
+              </div>
+            )}
+
             {order.return_status === 'requested' && <p className="order-card-return-note">Return requested — awaiting pickup.</p>}
             {order.return_status === 'completed' && <p className="order-card-return-note">Return completed.</p>}
 
             {order.status === 'delivered' && order.return_status === 'none' && (
               <button type="button" className="btn btn-outline" disabled={busyId === order.id} onClick={() => onReturn(order.id)}>
                 {busyId === order.id ? 'Requesting…' : 'Return Order'}
+              </button>
+            )}
+            {(order.status === 'pending' || order.status === 'accepted') && (
+              <button type="button" className="btn btn-outline order-cancel-button" disabled={busyId === order.id} onClick={() => onCancel(order.id)}>
+                {busyId === order.id ? 'Cancelling…' : 'Cancel Order'}
               </button>
             )}
           </article>

@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from ..config import get_settings
 from ..database import get_supabase
 from ..deps import get_current_customer, get_optional_customer
-from ..schemas import OrderDetailOut, OrderIn, OrderOut
+from ..schemas import CustomerOrderCancelIn, OrderDetailOut, OrderIn, OrderOut
 from ..services.email import send_sales_email
 from ..services.email_templates import render_order_placed_email
 from ..services.zoho_inventory import create_invoice_for_order
 from ..services.coupons import calculate_coupon_discount, get_current_coupons, select_coupon
+from ..services.order_inventory import restock_order_items
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -204,6 +205,48 @@ def list_my_orders(customer: dict = Depends(get_current_customer)):
         .execute()
     )
     return [_load_order_detail(supabase, order) for order in (result.data or [])]
+
+
+@router.post("/{order_id}/cancel", response_model=OrderDetailOut)
+def cancel_my_order(
+    order_id: str,
+    payload: CustomerOrderCancelIn,
+    customer: dict = Depends(get_current_customer),
+):
+    supabase = get_supabase()
+    result = (
+        supabase.table("orders")
+        .select("*")
+        .eq("id", order_id)
+        .eq("customer_id", customer["id"])
+        .limit(1)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order = result.data[0]
+    if order.get("status") not in {"pending", "accepted"}:
+        raise HTTPException(status_code=409, detail="Orders can only be cancelled before they are shipped")
+
+    updated = (
+        supabase.table("orders")
+        .update(
+            {
+                "status": "cancelled",
+                "cancelled_by": "customer",
+                "cancel_reason": payload.reason or "Cancelled by customer",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        .eq("id", order_id)
+        .eq("status", order["status"])
+        .execute()
+    )
+    if not updated.data:
+        raise HTTPException(status_code=409, detail="Order status changed. Refresh and try again")
+    restock_order_items(supabase, order_id)
+    return _load_order_detail(supabase, updated.data[0])
 
 
 @router.post("/{order_id}/return", response_model=OrderDetailOut)

@@ -2,6 +2,25 @@
   padding-bottom: 90px;
 }
 
+.category-landing .category-hero-carousel {
+  padding-bottom: 40px;
+}
+
+.clothing-shop-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.clothing-shop-sections .category-landing-section {
+  padding-top: 28px;
+  padding-bottom: 24px;
+}
+
+.clothing-shop-sections .clothing-catalog-section {
+  margin-top: 0;
+}
+
 .category-landing-section {
   padding: 48px 24px 0;
 }
@@ -97,6 +116,21 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 18px;
+}
+
+@media (max-width: 760px) {
+  .category-landing .category-hero-carousel {
+    padding-bottom: 28px;
+  }
+
+  .clothing-shop-sections {
+    gap: 24px;
+  }
+
+  .clothing-shop-sections .category-landing-section {
+    padding-top: 22px;
+    padding-bottom: 18px;
+  }
 }
 
 @media (min-width: 768px) {

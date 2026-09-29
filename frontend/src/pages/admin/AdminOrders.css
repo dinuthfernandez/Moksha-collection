@@ -64,6 +64,7 @@
 
 .admin-order-badge.status-pending { color: #e0b13a; }
 .admin-order-badge.status-accepted { color: #3aa0e0; }
+.admin-order-badge.status-shipped { color: #53b6cf; }
 .admin-order-badge.status-delivered { color: #3ae0a0; }
 .admin-order-badge.status-cancelled { color: #e04a4a; }
 
@@ -97,8 +98,57 @@
 }
 
 .admin-order-cancel-reason {
-  font-size: 0.78rem;
+  display: grid;
+  gap: 4px;
+  padding: 10px 11px;
+  border-left: 2px solid #e04a4a;
+  background: rgba(224, 74, 74, 0.07);
   color: #e04a4a;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-order-delivery-update {
+  display: grid;
+  gap: 6px;
+  padding: 11px 12px;
+  border-left: 2px solid #53b6cf;
+  background: rgba(83, 182, 207, 0.07);
+  color: var(--color-crystal-silver);
+  font-size: 0.78rem;
+}
+
+.admin-order-cancel-reason p,
+.admin-order-delivery-update p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.admin-order-cancel-reason strong,
+.admin-order-delivery-update > strong {
+  color: var(--color-warm-white);
+}
+
+.admin-order-extended-date {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--color-crystal-silver);
+}
+
+.admin-order-extended-date svg { color: #53b6cf; }
+.admin-order-extended-date strong { color: var(--color-warm-white); }
+
+.admin-order-delivery-update time {
+  color: var(--color-crystal-silver);
+  font-size: 0.7rem;
+}
+
+.admin-orders-message {
+  margin: -8px 0 20px;
+  color: var(--color-magenta);
+  font-size: 0.85rem;
 }
 
 .admin-order-actions {
@@ -106,4 +156,9 @@
   gap: 8px;
   margin-top: 6px;
   flex-wrap: wrap;
+}
+
+.admin-share-rider-link {
+  align-items: center;
+  gap: 7px;
 }

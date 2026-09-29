@@ -7,12 +7,13 @@ import BackButton from '../ui/BackButton'
 // Universal shell used by every route — header/footer are never hardcoded per-page.
 export default function Layout() {
   const { pathname } = useLocation()
+  const isAccessoriesCatalog = pathname === '/accessories'
 
   return (
     <>
       <Header />
-      <main className="page">
-        {pathname !== '/' && <BackButton fallbackTo="/" fixedBelowHeader />}
+      <main className={`page${pathname === '/' ? ' home-page' : ''}${isAccessoriesCatalog ? ' accessories-page-shell' : ''}`}>
+        {pathname !== '/' && !isAccessoriesCatalog && <BackButton fallbackTo="/" fixedBelowHeader />}
         <Outlet />
       </main>
       <Footer />

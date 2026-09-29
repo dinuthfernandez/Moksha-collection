@@ -14,6 +14,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 @router.get("", response_model=ProductListOut)
 def list_products(
     category: Optional[Literal["clothing", "accessories"]] = None,
+    category_slug: Optional[str] = Query(default=None, max_length=120),
     active_only: bool = Query(default=True),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=24, ge=1, le=200),
@@ -28,7 +29,9 @@ def list_products(
     query = supabase.table("products").select("*", count="exact")
     if active_only:
         query = query.eq("is_active", True).gt("stock_quantity", 0)
-    if category:
+    if category_slug:
+        query = query.eq("category_slug", category_slug)
+    elif category:
         query = query.eq("category_slug", category)
     if q:
         safe_term = re.sub(r"[^a-zA-Z0-9 _-]", "", q.strip())
