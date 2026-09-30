@@ -450,8 +450,28 @@ class ZohoOfflineSaleLineIn(BaseModel):
     item_id: str = Field(min_length=1, max_length=120)
     name: Optional[str] = Field(default=None, max_length=300)
     sku: Optional[str] = Field(default=None, max_length=120)
-    # Zoho's webhook placeholders substitute everything as strings (e.g. "2").
+    # Zoho's webhook placeholders substitute everything as strings, sometimes
+    # decimal-formatted (e.g. "2", "2.0", "2.00") — coerce before strict validation.
     quantity_sold: int = Field(gt=0, le=100000)
+
+    @field_validator("item_id", mode="before")
+    @classmethod
+    def _coerce_item_id(cls, value):
+        if isinstance(value, float) and value.is_integer():
+            return str(int(value))
+        if isinstance(value, (int, float)):
+            return str(value)
+        return value
+
+    @field_validator("quantity_sold", mode="before")
+    @classmethod
+    def _coerce_quantity_sold(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+        try:
+            return int(round(float(value)))
+        except (TypeError, ValueError):
+            return value
 
 
 class ZohoOfflineSaleIn(BaseModel):
@@ -460,6 +480,15 @@ class ZohoOfflineSaleIn(BaseModel):
     invoice_id: str = Field(min_length=1, max_length=160)
     invoice_number: Optional[str] = Field(default=None, max_length=160)
     line_items: list[ZohoOfflineSaleLineIn] = Field(min_length=1, max_length=100)
+
+    @field_validator("invoice_id", mode="before")
+    @classmethod
+    def _coerce_invoice_id(cls, value):
+        if isinstance(value, float) and value.is_integer():
+            return str(int(value))
+        if isinstance(value, (int, float)):
+            return str(value)
+        return value
 
 
 class AdminCustomerOut(BaseModel):
