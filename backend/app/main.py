@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -65,7 +66,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content={"detail": exc.errors()}, headers=_cors_headers(request))
+    # A malformed request body (e.g. invalid JSON) puts raw bytes into exc.errors(),
+    # which the default JSON encoder can't serialize — decode those before responding.
+    safe_errors = jsonable_encoder(exc.errors(), custom_encoder={bytes: lambda value: value.decode("utf-8", "replace")})
+    return JSONResponse(status_code=422, content={"detail": safe_errors}, headers=_cors_headers(request))
 
 
 @app.exception_handler(Exception)
