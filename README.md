@@ -63,22 +63,34 @@ the request body or a public post.
 
 Use `POST http://127.0.0.1:8000/api/webhooks/zoho/offline-sale` locally or
 `POST https://moksha-collections.onrender.com/api/webhooks/zoho/offline-sale`
-after deployment. Send a unique invoice/sale ID as `event_id` and each Zoho
-Inventory item ID with its sold quantity:
+after deployment. This matches the "Notify Website Stock Out" webhook
+configured on the Invoice module in Zoho Inventory (Settings → Automation →
+Workflow Actions → Webhooks), which sends:
 
 ```json
 {
-  "event_id": "unique-sale-id-from-zoho",
-  "items": [
-    { "item_id": "zoho-item-id", "quantity": 1 }
+  "source": "${Invoices.Source}",
+  "invoice_id": "${Invoices.Invoice ID}",
+  "invoice_number": "${Invoices.Invoice Number}",
+  "line_items": [
+    {
+      "item_id": "${Invoices.LineItems.Item ID}",
+      "name": "${Invoices.LineItems.Item Name}",
+      "sku": "${Invoices.LineItems.SKU}",
+      "quantity_sold": "${Invoices.LineItems.Quantity}"
+    }
   ]
 }
 ```
 
 The endpoint immediately reduces matching Supabase stock. Repeated deliveries
-with the same `event_id` are ignored, so automation retries do not deduct stock
-twice. Zoho's own sale changes its inventory; the regular inventory sync later
-reconciles the website count to Zoho.
+for the same `invoice_id` are ignored, so Zoho retrying the webhook does not
+deduct stock twice. Zoho's own sale changes its inventory; the regular
+inventory sync later reconciles the website count to Zoho.
+
+Zoho's webhook editor must also send the header `X-Webhook-Secret` with the
+same value as `ZOHO_OFFLINE_SALE_WEBHOOK_SECRET`, or every delivery is
+rejected with `401`.
 
 ## Accounts, login & delivery addresses
 - Customers register/log in with email + password (bcrypt-hashed, JWT session

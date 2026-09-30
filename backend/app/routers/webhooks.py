@@ -23,8 +23,11 @@ def notify_zoho_offline_sale(
     result = get_supabase().rpc(
         "apply_zoho_offline_sale",
         {
-            "p_event_id": payload.event_id,
-            "p_items": [item.model_dump() for item in payload.items],
+            "p_event_id": payload.invoice_id,
+            "p_items": [
+                {"item_id": line.item_id, "quantity": line.quantity_sold}
+                for line in payload.line_items
+            ],
         },
     ).execute()
     return result.data

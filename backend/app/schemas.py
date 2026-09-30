@@ -448,12 +448,18 @@ class AnalyticsClearIn(BaseModel):
 
 class ZohoOfflineSaleLineIn(BaseModel):
     item_id: str = Field(min_length=1, max_length=120)
-    quantity: int = Field(gt=0, le=100000)
+    name: Optional[str] = Field(default=None, max_length=300)
+    sku: Optional[str] = Field(default=None, max_length=120)
+    # Zoho's webhook placeholders substitute everything as strings (e.g. "2").
+    quantity_sold: int = Field(gt=0, le=100000)
 
 
 class ZohoOfflineSaleIn(BaseModel):
-    event_id: str = Field(min_length=1, max_length=160)
-    items: list[ZohoOfflineSaleLineIn] = Field(min_length=1, max_length=100)
+    # Matches the JSON body configured on the "Notify Website Stock Out" Zoho webhook.
+    source: Optional[str] = Field(default=None, max_length=120)
+    invoice_id: str = Field(min_length=1, max_length=160)
+    invoice_number: Optional[str] = Field(default=None, max_length=160)
+    line_items: list[ZohoOfflineSaleLineIn] = Field(min_length=1, max_length=100)
 
 
 class AdminCustomerOut(BaseModel):
