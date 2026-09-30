@@ -104,6 +104,7 @@ export interface CartItem {
   quantity: number
   size?: string
   color?: string
+  hold_expires_at?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -241,6 +242,7 @@ export interface OrderItemPayload {
 }
 
 export interface OrderCreatePayload {
+  reservation_token: string
   customer_name: string
   phone: string
   email?: string

@@ -122,14 +122,19 @@ export default function Azhak() {
   const allCategories = categories.length > 0 ? categories : FALLBACK_CATEGORIES
   const visibleCategories = allCategories.slice(0, visibleCategoryCount)
 
-  const handleAddToBag = (product: Product) => {
-    addItem({
+  const handleAddToBag = async (product: Product) => {
+    const reserved = await addItem({
       id: product.id,
       name: product.name,
       image_url: product.image_url ?? undefined,
       price: product.price,
       quantity: 1,
     })
+    if (!reserved) {
+      setToast('Could not reserve this item. Please try again.')
+      window.setTimeout(() => setToast(''), 2600)
+      return
+    }
     setToast(`${product.name} added to your bag`)
     window.setTimeout(() => setToast(''), 2200)
   }

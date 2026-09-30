@@ -1,15 +1,20 @@
 import asyncio
 import json
+import threading
 import time
 from datetime import datetime, timezone
 from typing import Any
 from urllib import parse, request
 from urllib.error import HTTPError
+from uuid import uuid4
 
 from ..config import get_settings
 from ..database import get_supabase
 
 WEBSITE_CONTACT_NAME = "Online Customer"
+_ADJUSTMENT_DEFAULTS_TTL_SECONDS = 300
+_adjustment_defaults_lock = threading.Lock()
+_adjustment_defaults_by_org: dict[str, tuple[float, dict[str, str]]] = {}
 
 
 def build_online_customer_contact_name(customer_name: str) -> str:
@@ -117,6 +122,7 @@ class ZohoInventoryClient:
                     "organization_id": self.organization_id,
                     "page": page,
                     "per_page": page_size,
+                    "filter_by": "Status.All",
                 },
             )
 
@@ -133,31 +139,85 @@ class ZohoInventoryClient:
 
         return items
 
+    def validate_connection(self) -> None:
+        result = self._request_json(
+            "/items",
+            {"organization_id": self.organization_id, "page": 1, "per_page": 1},
+        )
+        if result.get("code") not in (0, "0"):
+            raise RuntimeError("Zoho Inventory connection check failed")
+
     def adjust_stock(self, zoho_item_id: str, delta_quantity: int) -> None:
-        """Reduce or increase Zoho Inventory stock for a specific item after a website order."""
-        if not zoho_item_id:
+        """Create a Zoho Inventory quantity adjustment for a website stock change."""
+        if not zoho_item_id or not delta_quantity:
             return
 
-        payload = {
-            "organization_id": self.organization_id,
+        defaults = self._get_inventory_adjustment_defaults()
+        item = self._request_json(
+            f"/items/{zoho_item_id}",
+            {"organization_id": self.organization_id},
+        ).get("item") or {}
+        line_item = {
             "item_id": zoho_item_id,
-            "quantity": delta_quantity,
+            "name": item.get("name") or item.get("item_name") or "Website product",
+            "quantity_adjusted": delta_quantity,
+            "adjustment_account_id": defaults["adjustment_account_id"],
         }
-        token = self.get_access_token()
-        headers = {
-            "Authorization": f"Zoho-oauthtoken {token}",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-        }
-        data = parse.urlencode(payload).encode("utf-8")
-        req = request.Request(
-            f"https://www.zohoapis.com/inventory/v1/items/{zoho_item_id}/stock",
-            data=data,
-            headers=headers,
+        if item.get("unit"):
+            line_item["unit"] = item["unit"]
+
+        result = self._request_json(
+            "/inventoryadjustments",
+            {"organization_id": self.organization_id},
             method="POST",
+            json_body={
+                "date": datetime.now(timezone.utc).date().isoformat(),
+                "reason": defaults["reason"],
+                "reason_id": defaults["reason_id"],
+                "adjustment_type": "quantity",
+                "adjustment_account_id": defaults["adjustment_account_id"],
+                "description": "Website cart stock reservation or release",
+                "reference_number": f"WEB-{uuid4().hex[:16].upper()}",
+                "line_items": [line_item],
+            },
         )
-        with request.urlopen(req, timeout=30):
-            pass
+        if result.get("code") not in (0, "0") or not result.get("inventory_adjustment"):
+            raise RuntimeError(f"Zoho inventory adjustment failed: {result.get('message', 'unknown error')}")
+
+    def _get_inventory_adjustment_defaults(self) -> dict[str, str]:
+        now = time.monotonic()
+        with _adjustment_defaults_lock:
+            cached = _adjustment_defaults_by_org.get(self.organization_id)
+            if cached and now - cached[0] < _ADJUSTMENT_DEFAULTS_TTL_SECONDS:
+                return cached[1]
+
+            summaries = self._request_json(
+                "/inventoryadjustments",
+                {"organization_id": self.organization_id, "page": 1, "per_page": 1},
+            ).get("inventory_adjustments") or []
+            if not summaries or not summaries[0].get("inventory_adjustment_id"):
+                raise RuntimeError("Zoho has no previous inventory adjustment to supply its adjustment reason and account")
+
+            adjustment = self._request_json(
+                f"/inventoryadjustments/{summaries[0]['inventory_adjustment_id']}",
+                {"organization_id": self.organization_id},
+            ).get("inventory_adjustment") or {}
+            line_items = adjustment.get("line_items") or []
+            adjustment_account_id = adjustment.get("adjustment_account_id") or (
+                line_items[0].get("adjustment_account_id") if line_items else None
+            )
+            reason_id = adjustment.get("reason_id")
+            reason = adjustment.get("reason")
+            if not adjustment_account_id or not reason_id or not reason:
+                raise RuntimeError("Zoho's previous inventory adjustment is missing its reason or adjustment account")
+
+            defaults = {
+                "adjustment_account_id": str(adjustment_account_id),
+                "reason_id": str(reason_id),
+                "reason": str(reason),
+            }
+            _adjustment_defaults_by_org[self.organization_id] = (now, defaults)
+            return defaults
 
     def find_contact_id_by_name(self, contact_name: str) -> str | None:
         """Looks up an existing Zoho contact by its exact display name."""
@@ -226,6 +286,27 @@ class ZohoInventoryClient:
         if not invoice:
             raise RuntimeError(f"Zoho invoice creation failed: {result}")
         return invoice
+
+
+def validate_zoho_inventory_connection() -> None:
+    settings = get_settings()
+    if not all(
+        [
+            settings.zoho_client_id,
+            settings.zoho_client_secret,
+            settings.zoho_refresh_token,
+            settings.zoho_organization_id,
+        ]
+    ):
+        raise RuntimeError("Zoho Inventory credentials are not configured")
+
+    client = ZohoInventoryClient(
+        client_id=settings.zoho_client_id,
+        client_secret=settings.zoho_client_secret,
+        refresh_token=settings.zoho_refresh_token,
+        organization_id=settings.zoho_organization_id,
+    )
+    client.validate_connection()
 
 
 def _slugify(value: str, fallback: str) -> str:
@@ -317,6 +398,10 @@ def _extract_item_id(item: dict[str, Any]) -> str | None:
     return None
 
 
+def _is_online_store_enabled(item: dict[str, Any]) -> bool:
+    return item.get("show_in_storefront") is True
+
+
 def _extract_brand(item: dict[str, Any]) -> str | None:
     for key in ("brand", "manufacturer"):
         value = item.get(key)
@@ -342,42 +427,37 @@ def _extract_weight(item: dict[str, Any]) -> float | None:
 
 
 def _extract_category_slug(item: dict[str, Any]) -> str | None:
-    accessory_keywords = (
-        "accessor",
-        "jewel",
-        "bag",
-        "clutch",
-        "belt",
-        "earring",
-        "ear chain",
-        "ear cuff",
-        "necklace",
-        "pendant",
-        "bangle",
-        "bracelet",
-        "anklet",
-        "ring",
-        "scarf",
-        "stole",
-        "hair",
-        "sunglass",
-        "watch",
-        "brooch",
-        "purse",
-        "wallet",
-        "cap",
-        "hat",
+    catalog_keys = (
+        "cf_catalog",
+        "cf_catalog_unformatted",
+        "cf_catalog_formatted",
+        "cf_product_category",
+        "cf_product_category_unformatted",
+        "cf_product_category_formatted",
+        "catalog",
+        "category_slug",
     )
-    for key in ("group_name", "category_slug", "category", "product_category", "item_group"):
-        value = item.get(key)
+    values = [item.get(key) for key in catalog_keys]
+    custom_field_hash = item.get("custom_field_hash")
+    if isinstance(custom_field_hash, dict):
+        values.extend(custom_field_hash.get(key) for key in catalog_keys)
+
+    custom_fields = item.get("custom_fields")
+    if isinstance(custom_fields, list):
+        values.extend(
+            field.get("value")
+            for field in custom_fields
+            if isinstance(field, dict)
+            and str(field.get("label") or "").strip().casefold() in {"catalog", "product category"}
+        )
+
+    for value in values:
         if isinstance(value, dict):
-            value = value.get("name") or value.get("slug") or value.get("category")
-        if value not in (None, ""):
-            normalized = str(value).lower().strip()
-            if any(keyword in normalized for keyword in accessory_keywords):
-                return "accessories"
-            return "clothing"
-    return "clothing"
+            value = value.get("value") or value.get("name") or value.get("label")
+        normalized = str(value or "").strip().casefold()
+        if normalized in {"clothing", "accessories"}:
+            return normalized
+    return None
 
 
 async def sync_products_to_supabase() -> int:
@@ -417,7 +497,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
     while True:
         batch = (
             supabase.table("products")
-            .select("id,zoho_item_id,slug")
+            .select("id,zoho_item_id,slug,is_active")
             .range(offset, offset + page_size - 1)
             .execute()
         )
@@ -430,9 +510,14 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
     existing_map = {row.get("zoho_item_id"): row for row in existing_rows if row.get("zoho_item_id")}
     existing_slug_map = {row.get("slug"): row for row in existing_rows if row.get("slug")}
     used_slugs = set(existing_slug_map.keys())
+    zoho_item_ids = {_extract_item_id(item) for item in items}
+    zoho_item_ids.discard(None)
+    online_items = [item for item in items if _is_online_store_enabled(item)]
+    online_item_ids = {_extract_item_id(item) for item in online_items}
+    online_item_ids.discard(None)
 
     synced_count = 0
-    for item in items:
+    for item in online_items:
         item_id = _extract_item_id(item)
         if not item_id:
             continue
@@ -480,16 +565,20 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
             supabase.table("products").insert(record).execute()
         synced_count += 1
 
-    # Items no longer returned by Zoho (deleted/archived there) are deactivated
-    # so they disappear from the website without losing their historical row.
-    seen_item_ids = {_extract_item_id(item) for item in items if _extract_item_id(item)}
-    removed_item_ids = [
+    # Keep Zoho items that are still present but not online; physically remove deleted items.
+    disabled_item_ids = [
         zoho_item_id
         for zoho_item_id, row in existing_map.items()
-        if zoho_item_id not in seen_item_ids and row.get("id")
+        if zoho_item_id in zoho_item_ids and zoho_item_id not in online_item_ids and row.get("is_active")
     ]
-    for zoho_item_id in removed_item_ids:
-        supabase.table("products").update({"is_active": False}).eq("zoho_item_id", zoho_item_id).execute()
+    deleted_item_ids = [zoho_item_id for zoho_item_id in existing_map if zoho_item_id not in zoho_item_ids]
+
+    for start in range(0, len(disabled_item_ids), 100):
+        item_id_batch = disabled_item_ids[start : start + 100]
+        supabase.table("products").update({"is_active": False}).in_("zoho_item_id", item_id_batch).execute()
+    for start in range(0, len(deleted_item_ids), 100):
+        item_id_batch = deleted_item_ids[start : start + 100]
+        supabase.table("products").delete().in_("zoho_item_id", item_id_batch).execute()
 
     return synced_count
 

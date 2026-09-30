@@ -9,7 +9,7 @@ from ..deps import get_current_customer, get_optional_customer
 from ..schemas import CustomerOrderCancelIn, OrderDetailOut, OrderIn, OrderOut
 from ..services.email import send_sales_email
 from ..services.email_templates import render_order_placed_email
-from ..services.zoho_inventory import create_invoice_for_order
+from ..services.zoho_inventory import create_invoice_for_order, validate_zoho_inventory_connection
 from ..services.coupons import calculate_coupon_discount, get_current_coupons, select_coupon
 from ..services.order_inventory import restock_order_items
 
@@ -40,8 +40,28 @@ def _get_return_window_days(supabase) -> int:
     return int(result.data[0].get("return_window_days") or 7)
 
 
+@router.get("/zoho-status")
+async def get_zoho_status():
+    try:
+        await asyncio.to_thread(validate_zoho_inventory_connection)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Checkout is unavailable because Zoho Inventory cannot be reached. Please try again shortly.",
+        ) from exc
+    return {"available": True}
+
+
 @router.post("", response_model=OrderOut, status_code=201)
 async def create_order(payload: OrderIn, customer: dict | None = Depends(get_optional_customer)):
+    try:
+        await asyncio.to_thread(validate_zoho_inventory_connection)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Order placement is unavailable because Zoho Inventory cannot be reached. Please try again shortly.",
+        ) from exc
+
     supabase = get_supabase()
 
     product_ids = [item.product_id for item in payload.items]
@@ -52,14 +72,28 @@ async def create_order(payload: OrderIn, customer: dict | None = Depends(get_opt
     if missing:
         raise HTTPException(status_code=404, detail=f"Product(s) not found: {', '.join(missing)}")
 
+    reservations = (
+        supabase.table("cart_stock_reservations")
+        .select("product_id,quantity")
+        .eq("cart_id", str(payload.reservation_token))
+        .eq("status", "active")
+        .gt("expires_at", datetime.now(timezone.utc).isoformat())
+        .execute()
+        .data
+        or []
+    )
+    reserved_by_product = {row["product_id"]: int(row["quantity"]) for row in reservations}
+    requested_by_product: dict[str, int] = {}
+    for item in payload.items:
+        requested_by_product[item.product_id] = requested_by_product.get(item.product_id, 0) + item.quantity
+    if reserved_by_product != requested_by_product:
+        raise HTTPException(status_code=409, detail="Your cart reservation expired or changed. Return to your cart and try again.")
+
     subtotal_amount = 0.0
     order_items_records = []
     zoho_line_items = []
     for item in payload.items:
         product = products_by_id[item.product_id]
-        if product.get("stock_quantity", 0) < item.quantity:
-            raise HTTPException(status_code=400, detail=f"'{product['name']}' does not have enough stock")
-
         price = float(product.get("price") or 0)
         subtotal_amount += price * item.quantity
         order_items_records.append(
@@ -130,10 +164,16 @@ async def create_order(payload: OrderIn, customer: dict | None = Depends(get_opt
     for record in order_items_records:
         supabase.table("order_items").insert({**record, "order_id": order["id"]}).execute()
 
-    for item in payload.items:
-        product = products_by_id[item.product_id]
-        new_stock = max(product.get("stock_quantity", 0) - item.quantity, 0)
-        supabase.table("products").update({"stock_quantity": new_stock}).eq("id", product["id"]).execute()
+    try:
+        consumed = supabase.rpc(
+            "consume_cart_stock_reservations", {"p_cart_id": str(payload.reservation_token)}
+        ).execute().data
+        consumed_count = consumed[0] if isinstance(consumed, list) and consumed else consumed
+        if consumed_count != len(reserved_by_product):
+            raise RuntimeError("Cart reservations changed during checkout")
+    except Exception as exc:
+        supabase.table("orders").delete().eq("id", order["id"]).execute()
+        raise HTTPException(status_code=409, detail="Your cart reservation expired. Please review your cart and try again.") from exc
 
     zoho_invoice_id = None
     zoho_invoice_number = None

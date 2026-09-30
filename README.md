@@ -53,6 +53,33 @@ All tables live in the **`moksha_collection`** schema — never `public`.
    accounts and international delivery-address tables used by the login/
    register system.
 
+## Offline Zoho sales webhook
+Run `backend/sql/016_zoho_offline_sale_webhook.sql` in Supabase before enabling
+the offline-sale webhook. Set `ZOHO_OFFLINE_SALE_WEBHOOK_SECRET` to the same
+long random value in the local backend `.env`, Render environment, and the
+automation's `X-Webhook-Secret` header. Generate one with
+`python -c "import secrets; print(secrets.token_urlsafe(48))"`; don't put it in
+the request body or a public post.
+
+Use `POST http://127.0.0.1:8000/api/webhooks/zoho/offline-sale` locally or
+`POST https://moksha-collections.onrender.com/api/webhooks/zoho/offline-sale`
+after deployment. Send a unique invoice/sale ID as `event_id` and each Zoho
+Inventory item ID with its sold quantity:
+
+```json
+{
+  "event_id": "unique-sale-id-from-zoho",
+  "items": [
+    { "item_id": "zoho-item-id", "quantity": 1 }
+  ]
+}
+```
+
+The endpoint immediately reduces matching Supabase stock. Repeated deliveries
+with the same `event_id` are ignored, so automation retries do not deduct stock
+twice. Zoho's own sale changes its inventory; the regular inventory sync later
+reconciles the website count to Zoho.
+
 ## Accounts, login & delivery addresses
 - Customers register/log in with email + password (bcrypt-hashed, JWT session
   token, 14-day expiry). See `backend/app/routers/auth.py`.

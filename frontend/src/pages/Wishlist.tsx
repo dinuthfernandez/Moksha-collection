@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react'
 import { useWishlist } from '../context/WishlistContext'
@@ -7,6 +8,18 @@ import './Wishlist.css'
 export default function Wishlist() {
   const { items, isLoading, remove } = useWishlist()
   const { addItem } = useCart()
+  const [cartMessage, setCartMessage] = useState<string | null>(null)
+
+  const handleAddToCart = async (item: (typeof items)[number]) => {
+    const reserved = await addItem({
+      id: item.product_id,
+      name: item.product_name,
+      image_url: item.image_url ?? undefined,
+      price: item.price ?? 0,
+      quantity: 1,
+    })
+    setCartMessage(reserved ? `${item.product_name} reserved in your cart for 24 hours.` : 'Could not reserve stock. Please try again.')
+  }
 
   return (
     <div className="container wishlist-page">
@@ -15,6 +28,7 @@ export default function Wishlist() {
         <h1 className="section-title">Wishlist</h1>
         <p className="section-subtitle">Keep the pieces you love close until you are ready.</p>
       </div>
+      {cartMessage && <p role="status">{cartMessage}</p>}
 
       {isLoading && <div className="wishlist-empty">Loading your wishlist…</div>}
       {!isLoading && items.length === 0 && (
@@ -42,15 +56,7 @@ export default function Wishlist() {
                   <button
                     type="button"
                     className="btn btn-primary wishlist-add-to-cart"
-                    onClick={() =>
-                      addItem({
-                        id: item.product_id,
-                        name: item.product_name,
-                        image_url: item.image_url ?? undefined,
-                        price: item.price ?? 0,
-                        quantity: 1,
-                      })
-                    }
+                    onClick={() => void handleAddToCart(item)}
                   >
                     <ShoppingBag size={15} /> Add to Cart
                   </button>

@@ -11,8 +11,10 @@ from .routers import (
     addresses,
     admin,
     admin_auth,
+    analytics,
     announcements,
     auth,
+    cart,
     categories,
     contact,
     coupons,
@@ -23,8 +25,10 @@ from .routers import (
     rider,
     settings as settings_router,
     size_charts,
+    webhooks,
     wishlists,
 )
+from .services.cart_reservations import cart_reservation_expiry_loop
 from .services.zoho_inventory import sync_loop
 
 settings = get_settings()
@@ -75,6 +79,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 
 app.include_router(health.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
+app.include_router(webhooks.router, prefix="/api")
 app.include_router(categories.router, prefix="/api")
 app.include_router(products.router, prefix="/api")
 app.include_router(reviews.router, prefix="/api")
@@ -83,6 +89,7 @@ app.include_router(announcements.router, prefix="/api")
 app.include_router(contact.router, prefix="/api")
 app.include_router(coupons.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+app.include_router(cart.router, prefix="/api")
 app.include_router(addresses.router, prefix="/api")
 app.include_router(wishlists.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
@@ -104,6 +111,7 @@ async def startup_event():
         ]
     ):
         asyncio.create_task(sync_loop())
+        asyncio.create_task(cart_reservation_expiry_loop())
 
 
 # ---------------------------------------------------------------------------

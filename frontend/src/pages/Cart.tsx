@@ -16,13 +16,16 @@ const DELIVERY_LABELS: Record<DeliveryRate['delivery_type'], string> = {
 }
 
 export default function Cart() {
-  const { items, removeItem, updateQuantity, subtotal } = useCart()
+  const { items, removeItem, updateQuantity, subtotal, reservationBusy, reservationError, retryReservations } = useCart()
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [deliveryRates, setDeliveryRates] = useState<DeliveryRate[]>([])
+  const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
     getActiveCoupons().then(setCoupons).catch(() => setCoupons([]))
     getPublicSettings().then((settings) => setDeliveryRates(settings.delivery_rates)).catch(() => setDeliveryRates([]))
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(timer)
   }, [])
 
   const couponOffer = calculateCouponOffer(subtotal, coupons)
@@ -36,6 +39,17 @@ export default function Cart() {
         <h1 className="section-title">Shopping Cart</h1>
       </div>
 
+      {reservationError && (
+        <div className="cart-reservation-error" role="alert">
+          <span>{reservationError}</span>
+          {items.length > 0 && (
+            <button type="button" className="btn btn-outline" onClick={() => void retryReservations()} disabled={reservationBusy}>
+              Retry reservation
+            </button>
+          )}
+        </div>
+      )}
+
       {items.length === 0 ? (
         <EmptyState title="Your Cart Is Empty" message="Browse Clothing or Accessories to find something you'll love." />
       ) : (
@@ -48,14 +62,25 @@ export default function Cart() {
                   <h3>{item.name}</h3>
                   {item.size && <span>Size: {item.size}</span>}
                   {item.color && <span>Color: {item.color}</span>}
+                  {item.hold_expires_at && (
+                    <span className="cart-reservation-countdown" role="timer">
+                      {(() => {
+                        const seconds = Math.max(0, Math.ceil((Date.parse(item.hold_expires_at!) - now) / 1000))
+                        const hours = Math.floor(seconds / 3600)
+                        const minutes = Math.floor((seconds % 3600) / 60)
+                        const remainder = seconds % 60
+                        return `Locked for you · ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+                      })()}
+                    </span>
+                  )}
                   <div className="cart-item-qty">
-                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)}>-</button>
+                    <button disabled={reservationBusy} onClick={() => void updateQuantity(item.id, item.quantity - 1)}>-</button>
                     <span>{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
+                    <button disabled={reservationBusy} onClick={() => void updateQuantity(item.id, item.quantity + 1)}>+</button>
                   </div>
                 </div>
                 <div className="cart-item-price">{(item.price * item.quantity).toFixed(2)} BHD</div>
-                <button className="cart-item-remove" onClick={() => removeItem(item.id)} aria-label="Remove">
+                <button className="cart-item-remove" disabled={reservationBusy} onClick={() => void removeItem(item.id)} aria-label="Remove">
                   &times;
                 </button>
               </li>
@@ -123,8 +148,15 @@ export default function Cart() {
                 </div>
               </>
             )}
-            <Link to="/checkout" className="btn btn-primary">
-              Proceed to Purchase
+            <Link
+              to="/checkout"
+              className={`btn btn-primary ${reservationBusy || reservationError ? 'cart-checkout-disabled' : ''}`}
+              aria-disabled={reservationBusy || Boolean(reservationError)}
+              onClick={(event) => {
+                if (reservationBusy || reservationError) event.preventDefault()
+              }}
+            >
+              {reservationBusy ? 'Reserving stock…' : 'Proceed to Purchase'}
             </Link>
             <Link to="/clothing" className="btn btn-outline">
               Continue Shopping

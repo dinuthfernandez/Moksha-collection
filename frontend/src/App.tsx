@@ -40,6 +40,7 @@ import AdminOrders from './pages/admin/AdminOrders'
 import AdminReturns from './pages/admin/AdminReturns'
 import AdminCampaigns from './pages/admin/AdminCampaigns'
 import AdminCustomers from './pages/admin/AdminCustomers'
+import AdminAnalytics from './pages/admin/AdminAnalytics'
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="returns" element={<AdminReturns />} />
             <Route path="campaigns" element={<AdminCampaigns />} />
             <Route path="customers" element={<AdminCustomers />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
           </Route>
         </Route>
 

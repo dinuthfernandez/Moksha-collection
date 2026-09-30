@@ -1,13 +1,20 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { setCartReservation } from '../api/cart'
+import { ApiError } from '../api/client'
 import type { CartItem } from '../types'
 
 const STORAGE_KEY = 'moksha-cart'
+const RESERVATION_ID_KEY = 'moksha-cart-reservation-id'
 
 interface CartContextValue {
   items: CartItem[]
-  addItem: (item: CartItem) => void
-  removeItem: (id: string) => void
-  updateQuantity: (id: string, quantity: number) => void
+  reservationToken: string
+  reservationBusy: boolean
+  reservationError: string | null
+  addItem: (item: CartItem) => Promise<boolean>
+  removeItem: (id: string) => Promise<boolean>
+  updateQuantity: (id: string, quantity: number) => Promise<boolean>
+  retryReservations: () => Promise<boolean>
   clear: () => void
   itemCount: number
   subtotal: number
@@ -15,42 +22,137 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
+function createReservationToken(): string {
+  const saved = localStorage.getItem(RESERVATION_ID_KEY)
+  if (saved) return saved
+  const token = crypto.randomUUID()
+  localStorage.setItem(RESERVATION_ID_KEY, token)
+  return token
+}
+
+function loadCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    const items = raw ? (JSON.parse(raw) as CartItem[]) : []
+    return items.filter((item) => !item.hold_expires_at || Date.parse(item.hold_expires_at) > Date.now())
+  } catch {
+    return []
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      return raw ? (JSON.parse(raw) as CartItem[]) : []
-    } catch {
-      return []
-    }
-  })
+  const [items, setItems] = useState<CartItem[]>(loadCart)
+  const [reservationToken] = useState(createReservationToken)
+  const [reservationBusy, setReservationBusy] = useState(false)
+  const [reservationError, setReservationError] = useState<string | null>(null)
+  const itemsRef = useRef(items)
+  const mutationQueue = useRef<Promise<void>>(Promise.resolve())
+  const pendingMutations = useRef(0)
+
+  const commitItems = (nextItems: CartItem[]) => {
+    itemsRef.current = nextItems
+    setItems(nextItems)
+  }
+
+  const reserveProductQuantity = async (cartItems: CartItem[], productId: string) => {
+    const quantity = cartItems
+      .filter((item) => item.id === productId)
+      .reduce((total, item) => total + item.quantity, 0)
+    const reservation = await setCartReservation(reservationToken, productId, quantity)
+    return cartItems.map((item) => item.id === productId
+      ? { ...item, hold_expires_at: reservation.expires_at ?? undefined }
+      : item)
+  }
+
+  const enqueueMutation = (operation: () => Promise<void>): Promise<boolean> => {
+    pendingMutations.current += 1
+    setReservationBusy(true)
+    const result = mutationQueue.current.then(operation).then(() => {
+      setReservationError(null)
+      return true
+    }).catch((error: unknown) => {
+      setReservationError(error instanceof ApiError ? error.message : 'Could not reserve cart stock. Please retry.')
+      return false
+    }).finally(() => {
+      pendingMutations.current -= 1
+      setReservationBusy(pendingMutations.current > 0)
+    })
+    mutationQueue.current = result.then(() => undefined)
+    return result
+  }
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
-  const addItem = (item: CartItem) => {
-    setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id && i.size === item.size && i.color === item.color)
-      if (existing) {
-        return prev.map((i) => (i === existing ? { ...i, quantity: i.quantity + item.quantity } : i))
+  const addItem = (item: CartItem) => enqueueMutation(async () => {
+    const current = itemsRef.current
+    const existing = current.find((entry) => entry.id === item.id && entry.size === item.size && entry.color === item.color)
+    const next = existing
+      ? current.map((entry) => entry === existing ? { ...entry, quantity: entry.quantity + item.quantity } : entry)
+      : [...current, item]
+    commitItems(await reserveProductQuantity(next, item.id))
+  })
+
+  const removeItem = (id: string) => enqueueMutation(async () => {
+    const next = itemsRef.current.filter((item) => item.id !== id)
+    await reserveProductQuantity(next, id)
+    commitItems(next)
+  })
+
+  const updateQuantity = (id: string, quantity: number) => enqueueMutation(async () => {
+    const next = itemsRef.current.map((item) => item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item)
+    commitItems(await reserveProductQuantity(next, id))
+  })
+
+  const retryReservations = () => enqueueMutation(async () => {
+    let next = itemsRef.current
+    const productIds = [...new Set(next.map((item) => item.id))]
+    for (const productId of productIds) {
+      next = await reserveProductQuantity(next, productId)
+    }
+    commitItems(next)
+  })
+
+  useEffect(() => {
+    if (itemsRef.current.length > 0) void retryReservations()
+  }, [])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const now = Date.now()
+      const current = itemsRef.current
+      const expired = current.some((item) => item.hold_expires_at && Date.parse(item.hold_expires_at) <= now)
+      if (expired) {
+        commitItems(current.filter((item) => !item.hold_expires_at || Date.parse(item.hold_expires_at) > now))
+        setReservationError('A cart hold expired and the item was removed. Add it again to reserve current stock.')
       }
-      return [...prev, item]
-    })
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  const clear = () => {
+    commitItems([])
+    setReservationError(null)
   }
 
-  const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id))
-
-  const updateQuantity = (id: string, quantity: number) =>
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i)))
-
-  const clear = () => setItems([])
-
-  const itemCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items])
-  const subtotal = useMemo(() => items.reduce((sum, i) => sum + i.quantity * i.price, 0), [items])
+  const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
+  const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.quantity * item.price, 0), [items])
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clear, itemCount, subtotal }}>
+    <CartContext.Provider value={{
+      items,
+      reservationToken,
+      reservationBusy,
+      reservationError,
+      addItem,
+      removeItem,
+      updateQuantity,
+      retryReservations,
+      clear,
+      itemCount,
+      subtotal,
+    }}>
       {children}
     </CartContext.Provider>
   )

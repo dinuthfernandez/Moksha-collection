@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, PackageSearch, Undo2, Megaphone, Users } from 'lucide-react'
+import { LayoutDashboard, PackageSearch, Undo2, Megaphone, Users, ChartNoAxesCombined } from 'lucide-react'
 import './AdminBottomNav.css'
 
 const LINKS = [
@@ -8,6 +8,7 @@ const LINKS = [
   { label: 'Returns', to: '/admin/returns', icon: Undo2 },
   { label: 'Campaigns', to: '/admin/campaigns', icon: Megaphone },
   { label: 'Customers', to: '/admin/customers', icon: Users },
+  { label: 'Analytics', to: '/admin/analytics', icon: ChartNoAxesCombined },
 ]
 
 export default function AdminBottomNav() {

@@ -11,6 +11,7 @@ from ..schemas import (
     AdminCustomerOut,
     AdminSettingsIn,
     AdminSettingsOut,
+    AnalyticsClearIn,
     CampaignIn,
     CampaignOut,
     CouponIn,
@@ -56,6 +57,57 @@ def dashboard_stats():
         "total_returns": returns_result.count or 0,
         "profit_estimate": round(profit_estimate, 3),
     }
+
+
+@router.get("/analytics")
+def get_website_analytics():
+    supabase = get_supabase()
+    totals: dict[str, int] = {}
+    last_visits: dict[str, str] = {}
+    total = 0
+    offset = 0
+    page_size = 1000
+
+    while True:
+        result = (
+            supabase.table("website_analytics_visits")
+            .select("source,created_at")
+            .order("created_at", desc=True)
+            .range(offset, offset + page_size - 1)
+            .execute()
+        )
+        rows = result.data or []
+        for row in rows:
+            source = row["source"]
+            totals[source] = totals.get(source, 0) + 1
+            total += 1
+            last_visits.setdefault(source, row["created_at"])
+        if len(rows) < page_size:
+            break
+        offset += page_size
+
+    sources = ("facebook", "instagram", "youtube", "whatsapp", "tiktok", "linkedin", "email", "google", "direct", "other")
+    return {
+        "total_visits": total,
+        "channels": [
+            {"source": source, "visits": totals.get(source, 0), "last_visit": last_visits.get(source)}
+            for source in sources
+        ],
+    }
+
+
+@router.post("/analytics/clear")
+def clear_website_analytics(payload: AnalyticsClearIn):
+    if payload.confirmation != "CLEAR ANALYTICS":
+        raise HTTPException(status_code=400, detail='Type "CLEAR ANALYTICS" to confirm')
+    result = (
+        get_supabase()
+        .table("website_analytics_visits")
+        .delete(count="exact")
+        .gte("created_at", "1970-01-01T00:00:00+00:00")
+        .execute()
+    )
+    return {"deleted": result.count or len(result.data or [])}
 
 
 # ---------------------------------------------------------------------------

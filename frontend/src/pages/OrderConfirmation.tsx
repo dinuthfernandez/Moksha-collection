@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { getPublicSettings } from '../api/settings'
 import { getAddresses } from '../api/addresses'
-import { createOrder } from '../api/orders'
+import { createOrder, getZohoCheckoutStatus } from '../api/orders'
 import { getActiveCoupons } from '../api/coupons'
 import { calculateCouponOffer } from '../utils/coupons'
 import { ApiError } from '../api/client'
@@ -41,7 +41,7 @@ function formatDeliveryDate(daysFromNow: number) {
 }
 
 export default function OrderConfirmation() {
-  const { items, subtotal, clear } = useCart()
+  const { items, subtotal, clear, reservationToken, reservationBusy, reservationError } = useCart()
   const { customer } = useAuth()
   const navigate = useNavigate()
 
@@ -53,6 +53,8 @@ export default function OrderConfirmation() {
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [zohoStatus, setZohoStatus] = useState<'checking' | 'available' | 'unavailable'>('checking')
+  const [zohoCheckAttempt, setZohoCheckAttempt] = useState(0)
 
   useEffect(() => {
     getPublicSettings().then((settings) => setRates(settings.delivery_rates))
@@ -65,6 +67,17 @@ export default function OrderConfirmation() {
       })
       .finally(() => setAddressesLoading(false))
   }, [])
+
+  useEffect(() => {
+    let mounted = true
+    setZohoStatus('checking')
+    getZohoCheckoutStatus()
+      .then(() => mounted && setZohoStatus('available'))
+      .catch(() => mounted && setZohoStatus('unavailable'))
+    return () => {
+      mounted = false
+    }
+  }, [zohoCheckAttempt])
 
   const selectedAddress = useMemo(() => addresses.find((a) => a.id === selectedAddressId) ?? null, [addresses, selectedAddressId])
   const deliveryType: DeliveryType | null = selectedAddress ? getAddressTier(selectedAddress.country_code) : null
@@ -92,10 +105,19 @@ export default function OrderConfirmation() {
       setError('Please select a delivery address.')
       return
     }
+    if (zohoStatus !== 'available') {
+      setError('Checkout is paused until the Zoho Inventory connection is available.')
+      return
+    }
+    if (reservationBusy || reservationError) {
+      setError(reservationError || 'Please wait while your cart stock is reserved.')
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {
       const order = await createOrder({
+        reservation_token: reservationToken,
         customer_name: selectedAddress.full_name,
         phone: `${selectedAddress.phone_country_code}${selectedAddress.phone}`,
         email: customer.email,
@@ -235,9 +257,30 @@ export default function OrderConfirmation() {
             <span>Total</span>
             <strong>{total.toFixed(3)} BHD</strong>
           </div>
+          {zohoStatus === 'checking' && (
+            <p className="checkout-zoho-status" role="status">Checking inventory connection…</p>
+          )}
+          {zohoStatus === 'unavailable' && (
+            <div className="checkout-zoho-error" role="alert">
+              <p>Checkout is paused because we can’t reach inventory right now.</p>
+              <button type="button" className="btn btn-outline" onClick={() => setZohoCheckAttempt((attempt) => attempt + 1)}>
+                Retry connection
+              </button>
+            </div>
+          )}
           {error && <p className="auth-form-error">{error}</p>}
-          <button type="button" className="btn btn-primary" onClick={onConfirm} disabled={submitting || !selectedAddress}>
-            {submitting ? 'Placing order…' : 'Confirm & Continue to Payment'}
+          {reservationError && (
+            <p className="auth-form-error" role="alert">
+              {reservationError} Return to your cart to retry the reservation.
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={onConfirm}
+            disabled={submitting || !selectedAddress || zohoStatus !== 'available' || reservationBusy || Boolean(reservationError)}
+          >
+            {zohoStatus === 'checking' ? 'Checking inventory…' : submitting ? 'Placing order…' : 'Confirm & Continue to Payment'}
           </button>
         </div>
       </div>

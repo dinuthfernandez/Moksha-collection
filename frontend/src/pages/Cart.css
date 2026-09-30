@@ -52,6 +52,30 @@
   font-size: 0.8rem;
 }
 
+.cart-reservation-countdown {
+  color: var(--color-magenta) !important;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cart-reservation-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(225, 10, 140, 0.45);
+  border-radius: var(--radius-sm);
+  color: var(--color-warm-white);
+  font-size: 0.84rem;
+}
+
+.cart-checkout-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .cart-item-qty {
   display: flex;
   align-items: center;
@@ -66,6 +90,12 @@
   border: 1px solid var(--color-line);
   background: transparent;
   color: var(--color-warm-white);
+}
+
+.cart-item-qty button:disabled,
+.cart-item-remove:disabled {
+  opacity: 0.45;
+  cursor: wait;
 }
 
 .cart-item-price {

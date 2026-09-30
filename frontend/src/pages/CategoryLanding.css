@@ -27,9 +27,23 @@
 
 .category-landing-section .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   margin-top: 28px;
+}
+
+@media (min-width: 640px) {
+  .category-landing-section .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 34px 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .category-landing-section .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 38px 24px;
+  }
 }
 
 .category-landing-section .product-card {
@@ -130,6 +144,10 @@
   .clothing-shop-sections .category-landing-section {
     padding-top: 22px;
     padding-bottom: 18px;
+  }
+
+  .category-landing-section .product-grid {
+    gap: 12px;
   }
 }
 

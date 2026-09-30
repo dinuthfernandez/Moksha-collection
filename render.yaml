@@ -78,5 +78,7 @@ services:
         sync: false
       - key: ZOHO_ORGANIZATION_ID
         sync: false
+      - key: ZOHO_OFFLINE_SALE_WEBHOOK_SECRET
+        sync: false
       - key: ZOHO_INVENTORY_SYNC_INTERVAL_SECONDS
         value: "3600"

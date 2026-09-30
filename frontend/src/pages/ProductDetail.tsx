@@ -56,7 +56,7 @@ export default function ProductDetail() {
   const [deliveryRates, setDeliveryRates] = useState<DeliveryRate[]>([])
   const [reviewSummary, setReviewSummary] = useState<{ average_rating: number; total: number }>({ average_rating: 0, total: 0 })
 
-  const { addItem } = useCart()
+  const { addItem, reservationError, reservationBusy } = useCart()
   const { isSaved, toggle } = useWishlist()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
 
@@ -175,14 +175,15 @@ export default function ProductDetail() {
       ].filter((line): line is string => Boolean(line?.trim()))
     : []
 
-  const handleAddToCart = () => {
-    addItem({
+  const handleAddToCart = async () => {
+    const reserved = await addItem({
       id: product.id,
       name: product.name,
       image_url: product.image_url ?? undefined,
       price: product.price,
       quantity,
     })
+    if (!reserved) return
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -271,10 +272,11 @@ export default function ProductDetail() {
             aria-hidden={showFixedActions}
           >
               <ProductQuantitySelector quantity={quantity} max={maxQuantity} onChange={setQuantity} />
-              <button className="btn btn-primary product-detail-add-btn" onClick={handleAddToCart} disabled={!inStock} tabIndex={showFixedActions ? -1 : 0}>
+              <button className="btn btn-primary product-detail-add-btn" onClick={handleAddToCart} disabled={!inStock || reservationBusy} tabIndex={showFixedActions ? -1 : 0}>
                 <ShoppingBag size={18} />
                 {added ? 'Added to Cart' : 'Add to Cart'}
               </button>
+              {reservationError && <p className="auth-form-error" role="alert">{reservationError}</p>}
               <button
                 className={`btn btn-outline product-detail-wishlist-btn ${saved ? 'is-saved' : ''}`}
                 onClick={handleWishlistToggle}

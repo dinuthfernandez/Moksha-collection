@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from typing import Literal, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -98,7 +99,13 @@ class OrderItemIn(BaseModel):
     quantity: int = Field(default=1, ge=1)
 
 
+class CartReservationIn(BaseModel):
+    cart_id: UUID
+    quantity: int = Field(ge=0)
+
+
 class OrderIn(BaseModel):
+    reservation_token: UUID
     customer_name: str = Field(min_length=1, max_length=120)
     phone: str = Field(min_length=4, max_length=20)
     email: Optional[str] = Field(default=None, max_length=200)
@@ -428,6 +435,25 @@ class DashboardStatsOut(BaseModel):
     total_orders: int
     total_returns: int
     profit_estimate: float
+
+
+class AnalyticsVisitIn(BaseModel):
+    visit_id: UUID
+    source: Literal["facebook", "instagram", "youtube", "whatsapp", "tiktok", "linkedin", "email", "google", "direct", "other"]
+
+
+class AnalyticsClearIn(BaseModel):
+    confirmation: str = Field(min_length=1, max_length=40)
+
+
+class ZohoOfflineSaleLineIn(BaseModel):
+    item_id: str = Field(min_length=1, max_length=120)
+    quantity: int = Field(gt=0, le=100000)
+
+
+class ZohoOfflineSaleIn(BaseModel):
+    event_id: str = Field(min_length=1, max_length=160)
+    items: list[ZohoOfflineSaleLineIn] = Field(min_length=1, max_length=100)
 
 
 class AdminCustomerOut(BaseModel):
