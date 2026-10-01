@@ -24,21 +24,21 @@ class Settings(BaseSettings):
     admin_password: str = "admin"
     admin_jwt_expires_minutes: int = 60 * 12  # 12 hours
 
-    # info@ — transactional emails: welcome, password reset code, password reset confirmation.
-    info_smtp_host: str = ""
-    info_smtp_port: int = 587
-    info_smtp_username: str = ""
-    info_smtp_password: str = ""
-    info_smtp_from_email: str = ""
-    info_smtp_from_name: str = "Moksha Collections"
+    # Dedicated Zoho Mail OAuth app for info@ transactional emails.
+    info_zoho_client_id: str = ""
+    info_zoho_client_secret: str = ""
+    info_zoho_refresh_token: str = ""
+    info_zoho_accounts_url: str = "https://accounts.zoho.com"
+    info_zoho_mail_api_url: str = "https://mail.zoho.com"
+    info_zoho_from_email: str = ""
 
-    # sales@ — order lifecycle emails and marketing campaigns (not yet provisioned).
-    sales_smtp_host: str = ""
-    sales_smtp_port: int = 587
-    sales_smtp_username: str = ""
-    sales_smtp_password: str = ""
-    sales_smtp_from_email: str = ""
-    sales_smtp_from_name: str = "Moksha Collections"
+    # Dedicated Zoho Mail OAuth app for sales@ order and campaign emails.
+    sales_zoho_client_id: str = ""
+    sales_zoho_client_secret: str = ""
+    sales_zoho_refresh_token: str = ""
+    sales_zoho_accounts_url: str = "https://accounts.zoho.com"
+    sales_zoho_mail_api_url: str = "https://mail.zoho.com"
+    sales_zoho_from_email: str = ""
 
     password_reset_code_expires_minutes: int = 15
 
