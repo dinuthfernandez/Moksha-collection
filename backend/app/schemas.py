@@ -544,6 +544,13 @@ class AdminCustomerDetailOut(AdminCustomerOut):
 class CampaignIn(BaseModel):
     subject: str = Field(min_length=1, max_length=200)
     body: str = Field(min_length=1, max_length=20000)
+    sender: Literal["info", "sales"] = "sales"
+    cta_label: str | None = Field(default=None, max_length=60)
+    cta_url: str | None = Field(default=None, max_length=500)
+
+
+class CampaignTestIn(CampaignIn):
+    to_email: str = "fdodinuth@gmail.com"
 
 
 class CampaignOut(BaseModel):

@@ -5,6 +5,8 @@ inboxes (Gmail/Outlook/Zoho strip <style> blocks and external fonts), with a
 Georgia/Inter fallback stack standing in for Playfair Display / Inter.
 """
 
+from html import escape
+
 from ..config import get_settings
 
 ONYX = "#0e0a14"
@@ -64,6 +66,31 @@ def _button(label: str, url: str) -> str:
         </td>
       </tr>
     </table>"""
+
+
+def render_campaign_email(
+    subject: str,
+    body: str,
+    first_name: str | None = None,
+    cta_label: str | None = None,
+    cta_url: str | None = None,
+) -> tuple[str, str, str]:
+    """Branded marketing email; the admin's plain text is escaped and split into paragraphs."""
+    greeting = f"Hi {escape(first_name)}," if first_name else "Hello,"
+    paragraphs = [p.strip() for p in body.replace("\r\n", "\n").split("\n\n") if p.strip()]
+    body_html = "".join(
+        f'<p style="margin:0 0 16px;">{escape(p).replace(chr(10), "<br />")}</p>' for p in paragraphs
+    )
+    safe_url = cta_url if cta_url and cta_url.lower().startswith(("http://", "https://")) else None
+    button = _button(escape(cta_label or "Shop Now"), escape(safe_url, quote=True)) if safe_url else ""
+    html_body = f"""
+      <h1 style="font-family:Georgia,'Playfair Display',serif;font-weight:400;font-size:22px;margin:0 0 18px;color:{ONYX};">{escape(subject)}</h1>
+      <p style="margin:0 0 16px;">{greeting}</p>
+      {body_html}
+      {button}
+    """
+    text = f"{greeting}\n\n{body}" + (f"\n\n{cta_label or 'Shop Now'}: {safe_url}" if safe_url else "")
+    return subject, _shell(subject, html_body), text
 
 
 def render_welcome_email(first_name: str) -> tuple[str, str, str]:

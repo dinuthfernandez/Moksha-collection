@@ -194,7 +194,20 @@ def send_sales_email(to_email: str, subject: str, html: str, text: str | None = 
     _get_sales_mail_client().send(to_email, subject, html, text)
 
 
-def send_campaign_email(to_email: str, subject: str, body: str) -> None:
-    """Plain-text marketing email sent from sales@ to a customer on the Campaigns page."""
-    html = f"<html><body style=\"font-family:sans-serif;white-space:pre-wrap;\">{body}</body></html>"
-    send_sales_email(to_email, subject, html, body)
+def send_campaign_email(
+    to_email: str,
+    subject: str,
+    body: str,
+    sender: str = "sales",
+    first_name: str | None = None,
+    cta_label: str | None = None,
+    cta_url: str | None = None,
+) -> None:
+    """Branded marketing email sent from info@ or sales@ on the Campaigns page."""
+    from .email_templates import render_campaign_email
+
+    subject, html, text = render_campaign_email(subject, body, first_name, cta_label, cta_url)
+    if sender == "info":
+        send_info_email(to_email, subject, html, text)
+    else:
+        send_sales_email(to_email, subject, html, text)

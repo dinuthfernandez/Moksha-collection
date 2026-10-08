@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import secrets
 from typing import Literal, Optional
 
@@ -14,6 +15,7 @@ from ..schemas import (
     AnalyticsClearIn,
     CampaignIn,
     CampaignOut,
+    CampaignTestIn,
     CouponIn,
     CouponOut,
     DashboardStatsOut,
@@ -29,6 +31,7 @@ from ..services.email_templates import render_order_completed_email
 from ..services.order_inventory import load_order_items, restock_order_items
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(get_current_admin)])
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -401,19 +404,36 @@ def list_campaigns():
     return result.data or []
 
 
+@router.post("/campaigns/test")
+def send_campaign_test(payload: CampaignTestIn):
+    try:
+        send_campaign_email(
+            payload.to_email, f"[TEST] {payload.subject}", payload.body, payload.sender,
+            "there", payload.cta_label, payload.cta_url,
+        )
+    except Exception as exc:
+        logger.exception("Campaign test email failed")
+        raise HTTPException(status_code=502, detail=f"Could not send test email: {exc}") from exc
+    return {"message": f"Test email sent to {payload.to_email} from {payload.sender}@"}
+
+
 @router.post("/campaigns", response_model=CampaignOut, status_code=201)
 def send_campaign(payload: CampaignIn):
     supabase = get_supabase()
-    customers_result = supabase.table("customers").select("email").eq("is_banned", False).execute()
-    emails = [row["email"] for row in (customers_result.data or []) if row.get("email")]
+    customers_result = supabase.table("customers").select("email,first_name").eq("is_banned", False).execute()
+    recipients = [row for row in (customers_result.data or []) if row.get("email")]
 
     sent_count = 0
-    for email in emails:
+    for row in recipients:
         try:
-            send_campaign_email(email, payload.subject, payload.body)
+            send_campaign_email(
+                row["email"], payload.subject, payload.body, payload.sender,
+                row.get("first_name"), payload.cta_label, payload.cta_url,
+            )
             sent_count += 1
         except Exception:
             # Keep sending to the rest of the list even if one recipient fails.
+            logger.warning("Campaign email failed for a recipient", exc_info=True)
             continue
 
     result = (

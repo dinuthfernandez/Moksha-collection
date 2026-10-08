@@ -56,5 +56,14 @@ export const setCustomerBan = (customerId: string, isBanned: boolean) =>
   adminApi.put<AdminCustomer>(`/admin/customers/${customerId}/ban?is_banned=${isBanned}`)
 
 export const getCampaigns = () => adminApi.get<Campaign[]>('/admin/campaigns')
-export const sendCampaign = (subject: string, body: string) =>
-  adminApi.post<Campaign>('/admin/campaigns', { subject, body })
+export type CampaignSender = 'info' | 'sales'
+export interface CampaignDraft {
+  subject: string
+  body: string
+  sender: CampaignSender
+  cta_label?: string
+  cta_url?: string
+}
+export const sendCampaign = (draft: CampaignDraft) => adminApi.post<Campaign>('/admin/campaigns', draft)
+export const sendCampaignTest = (draft: CampaignDraft, toEmail: string) =>
+  adminApi.post<{ message: string }>('/admin/campaigns/test', { ...draft, to_email: toEmail })
