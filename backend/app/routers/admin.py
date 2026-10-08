@@ -345,7 +345,11 @@ def complete_return(order_id: str):
         raise HTTPException(status_code=409, detail="This return was already processed")
 
     # Completing a return means the item is physically back — restock it, locally and in Zoho.
-    restock_order_items(supabase, order_id)
+    try:
+        restock_order_items(supabase, order_id)
+    except Exception:
+        supabase.table("orders").update({"return_status": "requested", "return_completed_at": None}).eq("id", order_id).execute()
+        raise HTTPException(status_code=500, detail="Could not restock the items; return not completed")
     return _load_order_detail(supabase, result.data[0])
 
 
