@@ -11,7 +11,7 @@ export default function AdminLayout() {
   return (
     <div className="admin-shell">
       <header className="admin-topbar">
-        <Link to="/admin/dashboard" className="admin-topbar-brand">
+        <Link to="/mokshacollectionadminpanel/dashboard" className="admin-topbar-brand">
           Moksha Admin
         </Link>
         <button type="button" className="admin-logout" onClick={logout}>
@@ -19,7 +19,7 @@ export default function AdminLayout() {
         </button>
       </header>
       <main className="admin-content">
-        <BackButton fallbackTo="/admin/dashboard" />
+        <BackButton fallbackTo="/mokshacollectionadminpanel/dashboard" />
         <Outlet />
       </main>
       <AdminBottomNav />

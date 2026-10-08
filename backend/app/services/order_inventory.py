@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 from ..config import get_settings
 from .cache import invalidate_catalog
@@ -68,3 +69,32 @@ def restock_order_items(supabase, order_id: str) -> None:
                 zoho_client.adjust_stock(product["zoho_item_id"], quantity)
             except Exception:
                 logger.exception("Zoho restock failed for order %s item %s", order_id, product_id)
+
+    if zoho_client:
+        _void_order_invoice(supabase, zoho_client, order_id)
+
+
+def _void_order_invoice(supabase, zoho_client: ZohoInventoryClient, order_id: str) -> None:
+    """Mark the order's Zoho invoice as void once; failures never block the restock."""
+    try:
+        order = supabase.table("orders").select("zoho_invoice_id").eq("id", order_id).limit(1).execute().data
+        invoice_id = order[0].get("zoho_invoice_id") if order else None
+        if not invoice_id:
+            return
+        try:
+            voided = (
+                supabase.table("orders").select("zoho_invoice_voided_at").eq("id", order_id).limit(1).execute().data
+            )
+            if voided and voided[0].get("zoho_invoice_voided_at"):
+                return
+        except Exception:
+            pass  # column not created yet; fall through and void
+        zoho_client.void_invoice(invoice_id)
+        try:
+            supabase.table("orders").update({"zoho_invoice_voided_at": datetime.now(timezone.utc).isoformat()}).eq(
+                "id", order_id
+            ).execute()
+        except Exception:
+            logger.warning("Could not record invoice void time for order %s", order_id)
+    except Exception:
+        logger.exception("Zoho invoice void failed for order %s", order_id)

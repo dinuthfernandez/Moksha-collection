@@ -27,6 +27,23 @@ from ..services.email_templates import (
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+MAX_RESET_ATTEMPTS = 5
+RESET_LOCK_HOURS = 1
+
+
+def _is_reset_locked(customer: dict) -> bool:
+    locked_until = customer.get("reset_locked_until")
+    if not locked_until:
+        return False
+    return datetime.fromisoformat(locked_until.replace("Z", "+00:00")) > datetime.now(timezone.utc)
+
+
+def _reset_locked_error() -> HTTPException:
+    return HTTPException(
+        status_code=429,
+        detail="Too many wrong attempts. Password reset is locked for 1 hour — please try again later.",
+    )
+
 
 @router.post("/register", response_model=TokenOut, status_code=201)
 def register(payload: RegisterIn):
@@ -135,11 +152,19 @@ def update_me(payload: CustomerUpdateIn, customer: dict = Depends(get_current_cu
 @router.post("/forgot-password", response_model=ForgotPasswordOut)
 def forgot_password(payload: ForgotPasswordIn):
     supabase = get_supabase()
-    result = supabase.table("customers").select("id,first_name,email").eq("email", payload.email.lower()).limit(1).execute()
+    result = (
+        supabase.table("customers")
+        .select("id,first_name,email,reset_locked_until")
+        .eq("email", payload.email.lower())
+        .limit(1)
+        .execute()
+    )
     if not result.data:
         raise HTTPException(status_code=404, detail="No account was found with this email address")
 
     customer = result.data[0]
+    if _is_reset_locked(customer):
+        raise _reset_locked_error()
     settings = get_settings()
     code = generate_reset_code()
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.password_reset_code_expires_minutes)
@@ -166,12 +191,18 @@ def forgot_password(payload: ForgotPasswordIn):
 def reset_password(payload: ResetPasswordIn):
     supabase = get_supabase()
     customer_result = (
-        supabase.table("customers").select("id,first_name,email").eq("email", payload.email.lower()).limit(1).execute()
+        supabase.table("customers")
+        .select("id,first_name,email,reset_failed_attempts,reset_locked_until")
+        .eq("email", payload.email.lower())
+        .limit(1)
+        .execute()
     )
     invalid = HTTPException(status_code=400, detail="Invalid or expired reset code")
     if not customer_result.data:
         raise invalid
     customer = customer_result.data[0]
+    if _is_reset_locked(customer):
+        raise _reset_locked_error()
 
     codes_result = (
         supabase.table("password_reset_codes")
@@ -190,11 +221,27 @@ def reset_password(payload: ResetPasswordIn):
     if datetime.now(timezone.utc) > expires_at:
         raise HTTPException(status_code=400, detail="This reset code has expired — request a new one")
     if not verify_password(payload.code, reset_code["code_hash"]):
-        raise invalid
+        attempts = int(customer.get("reset_failed_attempts") or 0) + 1
+        if attempts >= MAX_RESET_ATTEMPTS:
+            locked_until = datetime.now(timezone.utc) + timedelta(hours=RESET_LOCK_HOURS)
+            supabase.table("customers").update(
+                {"reset_failed_attempts": 0, "reset_locked_until": locked_until.isoformat()}
+            ).eq("id", customer["id"]).execute()
+            supabase.table("password_reset_codes").delete().eq("customer_id", customer["id"]).is_("used_at", "null").execute()
+            raise _reset_locked_error()
+        supabase.table("customers").update({"reset_failed_attempts": attempts}).eq("id", customer["id"]).execute()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid or expired reset code. {MAX_RESET_ATTEMPTS - attempts} attempt(s) left.",
+        )
 
-    supabase.table("customers").update({"password_hash": hash_password(payload.new_password)}).eq(
-        "id", customer["id"]
-    ).execute()
+    supabase.table("customers").update(
+        {
+            "password_hash": hash_password(payload.new_password),
+            "reset_failed_attempts": 0,
+            "reset_locked_until": None,
+        }
+    ).eq("id", customer["id"]).execute()
     supabase.table("password_reset_codes").update({"used_at": datetime.now(timezone.utc).isoformat()}).eq(
         "id", reset_code["id"]
     ).execute()

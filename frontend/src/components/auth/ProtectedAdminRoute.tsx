@@ -5,6 +5,6 @@ import BrandLoader from '../ui/BrandLoader'
 export default function ProtectedAdminRoute() {
   const { isAuthenticated, isLoading } = useAdminAuth()
   if (isLoading) return <BrandLoader />
-  if (!isAuthenticated) return <Navigate to="/admin/login" replace />
+  if (!isAuthenticated) return <Navigate to="/mokshacollectionadminpanel/login" replace />
   return <Outlet />
 }

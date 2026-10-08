@@ -253,6 +253,13 @@ class ZohoInventoryClient:
     def get_or_create_contact_id(self, contact_name: str) -> str:
         return self.find_contact_id_by_name(contact_name) or self.create_contact(contact_name)
 
+    def void_invoice(self, invoice_id: str) -> None:
+        self._request_json(
+            f"/invoices/{invoice_id}/status/void",
+            {"organization_id": self.organization_id},
+            method="POST",
+        )
+
     def create_invoice(
         self,
         contact_id: str,

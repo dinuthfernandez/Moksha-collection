@@ -85,8 +85,8 @@ function AppShell() {
       <Suspense fallback={<BrandLoader label="Loading" />}>
       <Routes>
         <Route path="delivery/:token" element={<DeliveryRider />} />
-        <Route path="admin/login" element={<><BackButton fallbackTo="/" /><AdminLogin /></>} />
-        <Route path="admin" element={<ProtectedAdminRoute />}>
+        <Route path="mokshacollectionadminpanel/login" element={<><BackButton fallbackTo="/" /><AdminLogin /></>} />
+        <Route path="mokshacollectionadminpanel" element={<ProtectedAdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />

@@ -1,12 +1,13 @@
 import asyncio
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from ..deps import get_current_customer
 from ..schemas import CartReservationIn
 from ..services.cart_reservations import ReservationError, set_cart_product_reservation
 
-router = APIRouter(prefix="/cart", tags=["cart"])
+router = APIRouter(prefix="/cart", tags=["cart"], dependencies=[Depends(get_current_customer)])
 
 
 @router.put("/reservations/{product_id}")

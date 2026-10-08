@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..config import get_settings
 from ..database import get_supabase
-from ..deps import get_current_customer, get_optional_customer
+from ..deps import get_current_customer
 from ..schemas import CustomerOrderCancelIn, OrderDetailOut, OrderIn, OrderOut
 from ..services.email import send_sales_email
 from ..services.email_templates import render_order_placed_email
@@ -53,7 +53,7 @@ async def get_zoho_status():
 
 
 @router.post("", response_model=OrderOut, status_code=201)
-async def create_order(payload: OrderIn, customer: dict | None = Depends(get_optional_customer)):
+async def create_order(payload: OrderIn, customer: dict = Depends(get_current_customer)):
     try:
         await asyncio.to_thread(validate_zoho_inventory_connection)
     except Exception as exc:
@@ -133,7 +133,7 @@ async def create_order(payload: OrderIn, customer: dict | None = Depends(get_opt
             line_item["rate"] = round(float(line_item["rate"]) * (1 - discount_percentage / 100), 3)
 
     order_values = {
-        "customer_id": customer["id"] if customer else None,
+        "customer_id": customer["id"],
         "customer_name": payload.customer_name,
         "phone": payload.phone,
         "email": payload.email,

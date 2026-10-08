@@ -18,7 +18,7 @@ export default function AdminLogin() {
     setSubmitting(true)
     try {
       await login(password)
-      navigate('/admin/dashboard')
+      navigate('/mokshacollectionadminpanel/dashboard')
     } catch (err) {
       setError(err instanceof AdminApiError ? err.message : 'Something went wrong. Please try again.')
     } finally {

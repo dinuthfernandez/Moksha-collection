@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { setCartReservation } from '../api/cart'
-import { ApiError } from '../api/client'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ApiError, getAuthToken } from '../api/client'
 import type { CartItem } from '../types'
 
 const STORAGE_KEY = 'moksha-cart'
@@ -41,6 +42,8 @@ function loadCart(): CartItem[] {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [items, setItems] = useState<CartItem[]>(loadCart)
   const [reservationToken] = useState(createReservationToken)
   const [reservationBusy, setReservationBusy] = useState(false)
@@ -99,7 +102,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const addItem = (item: CartItem) => applyOptimistically(item.id, (current) => {
+  const addItem = (item: CartItem) => {
+    if (!getAuthToken()) {
+      navigate('/login', { state: { from: location.pathname } })
+      return Promise.resolve(false)
+    }
+    return addItemToCart(item)
+  }
+
+  const addItemToCart = (item: CartItem) => applyOptimistically(item.id, (current) => {
     const existing = current.find((entry) => entry.id === item.id && entry.size === item.size && entry.color === item.color)
     return existing
       ? current.map((entry) => entry === existing ? { ...entry, quantity: entry.quantity + item.quantity } : entry)
@@ -121,7 +132,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    if (itemsRef.current.length > 0) void retryReservations()
+    if (itemsRef.current.length > 0 && getAuthToken()) void retryReservations()
   }, [])
 
   useEffect(() => {
