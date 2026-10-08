@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,6 +24,7 @@ from ..services.email_templates import (
     render_welcome_email,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -154,7 +156,8 @@ def forgot_password(payload: ForgotPasswordIn):
         )
         send_info_email(customer["email"], subject, html, text)
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Could not send the reset code email: {exc}") from exc
+        logger.exception("Password reset email failed")
+        raise HTTPException(status_code=502, detail="Could not send the reset code email. Please try again shortly.") from exc
 
     return {"message": "A 6-digit reset code has been sent to your email"}
 

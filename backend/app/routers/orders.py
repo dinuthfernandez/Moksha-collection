@@ -322,7 +322,10 @@ def request_return(order_id: str, customer: dict = Depends(get_current_customer)
         supabase.table("orders")
         .update({"return_status": "requested", "return_requested_at": datetime.now(timezone.utc).isoformat()})
         .eq("id", order_id)
+        .eq("return_status", "none")
         .execute()
     )
+    if not update_result.data:
+        raise HTTPException(status_code=400, detail="A return has already been requested for this order")
     return _load_order_detail(supabase, update_result.data[0])
 

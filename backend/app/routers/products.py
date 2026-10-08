@@ -1,9 +1,10 @@
 import re
 from typing import Literal, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..database import get_supabase
+from ..deps import get_current_admin
 from ..schemas import ProductListOut, ProductOut, ProductStockAdjustIn
 from ..services.cache import cached, invalidate_catalog
 from ..services.zoho_inventory import ZohoInventoryClient
@@ -94,7 +95,7 @@ def get_product(slug: str):
     return cached(f"product:{slug}", 60, load)
 
 
-@router.post("/sync")
+@router.post("/sync", dependencies=[Depends(get_current_admin)])
 async def trigger_sync():
     settings = get_settings()
     if not all(
@@ -114,7 +115,7 @@ async def trigger_sync():
     return {"status": "ok", "synced": synced}
 
 
-@router.post("/stock-adjust")
+@router.post("/stock-adjust", dependencies=[Depends(get_current_admin)])
 def adjust_stock(payload: ProductStockAdjustIn):
     settings = get_settings()
     if not all(

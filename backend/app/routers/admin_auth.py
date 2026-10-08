@@ -1,3 +1,5 @@
+import hmac
+
 from fastapi import APIRouter, HTTPException
 
 from ..config import get_settings
@@ -10,6 +12,6 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 @router.post("/login", response_model=AdminTokenOut)
 def admin_login(payload: AdminLoginIn):
     settings = get_settings()
-    if payload.password != settings.admin_password:
+    if not hmac.compare_digest(payload.password.encode("utf-8"), settings.admin_password.encode("utf-8")):
         raise HTTPException(status_code=401, detail="Incorrect admin password")
     return {"access_token": create_admin_token()}

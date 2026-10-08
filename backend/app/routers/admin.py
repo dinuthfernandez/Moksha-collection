@@ -16,8 +16,6 @@ from ..schemas import (
     CampaignOut,
     CouponIn,
     CouponOut,
-    CouponIn,
-    CouponOut,
     DashboardStatsOut,
     DeliveryRateIn,
     DeliveryRateOut,
