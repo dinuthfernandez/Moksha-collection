@@ -35,36 +35,47 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     }
   }, [customer])
 
-  const value = useMemo<WishlistContextValue>(
-    () => ({
+  const value = useMemo<WishlistContextValue>(() => {
+    const addOptimistic = async (item: WishlistItemPayload) => {
+      if (items.some((existing) => existing.product_id === item.product_id)) return
+      const temp: WishlistItem = {
+        ...item,
+        id: `temp-${item.product_id}`,
+        customer_id: customer?.id ?? '',
+        created_at: new Date().toISOString(),
+      }
+      setItems((current) => [temp, ...current])
+      try {
+        const saved = await addWishlistItem(item)
+        setItems((current) => current.map((existing) => existing.id === temp.id ? saved : existing))
+      } catch (error) {
+        setItems((current) => current.filter((existing) => existing.id !== temp.id))
+        throw error
+      }
+    }
+    const removeOptimistic = async (productId: string) => {
+      const previous = items.find((item) => item.product_id === productId)
+      setItems((current) => current.filter((item) => item.product_id !== productId))
+      try {
+        await removeWishlistItem(productId)
+      } catch (error) {
+        if (previous) setItems((current) => [previous, ...current])
+        throw error
+      }
+    }
+    return {
       items,
       itemCount: items.length,
       isLoading,
       isSaved: (productId) => items.some((item) => item.product_id === productId),
-      add: async (item) => {
-        const saved = await addWishlistItem(item)
-        setItems((current) => current.some((existing) => existing.product_id === saved.product_id)
-          ? current
-          : [saved, ...current])
-      },
-      remove: async (productId) => {
-        await removeWishlistItem(productId)
-        setItems((current) => current.filter((item) => item.product_id !== productId))
-      },
-      toggle: async (item) => {
-        if (items.some((existing) => existing.product_id === item.product_id)) {
-          await removeWishlistItem(item.product_id)
-          setItems((current) => current.filter((existing) => existing.product_id !== item.product_id))
-        } else {
-          const saved = await addWishlistItem(item)
-          setItems((current) => current.some((existing) => existing.product_id === saved.product_id)
-            ? current
-            : [saved, ...current])
-        }
-      },
-    }),
-    [isLoading, items],
-  )
+      add: addOptimistic,
+      remove: removeOptimistic,
+      toggle: (item) =>
+        items.some((existing) => existing.product_id === item.product_id)
+          ? removeOptimistic(item.product_id)
+          : addOptimistic(item),
+    }
+  }, [isLoading, items, customer])
 
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>
 }

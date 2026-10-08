@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { CalendarDays, Share2 } from 'lucide-react'
 import { createRiderDeliveryLink, getAdminOrders, updateOrderStatus } from '../../api/admin'
 import type { OrderDetail, OrderStatus } from '../../types'
+import { withVariant } from '../../utils/variant'
 import './AdminOrders.css'
 
 type OrderSection = OrderStatus | 'customer-cancelled'
@@ -129,7 +130,7 @@ export default function AdminOrders() {
                   <ul className="admin-order-items">
                     {order.items.map((item) => (
                       <li key={item.id}>
-                        {item.product_name ?? 'Item'} × {item.quantity} — {(item.price * item.quantity).toFixed(3)} BHD
+                        {withVariant(item.product_name ?? 'Item', item)}{item.product_code ? ` [${item.product_code}]` : ''} × {item.quantity} — {(item.price * item.quantity).toFixed(3)} BHD
                       </li>
                     ))}
                   </ul>

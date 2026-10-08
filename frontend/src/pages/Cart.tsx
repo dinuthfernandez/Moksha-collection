@@ -6,6 +6,7 @@ import { getActiveCoupons } from '../api/coupons'
 import { getPublicSettings } from '../api/settings'
 import { calculateCouponOffer } from '../utils/coupons'
 import type { Coupon, DeliveryRate } from '../types'
+import { formatVariant } from '../utils/variant'
 import EmptyState from '../components/ui/EmptyState'
 import './Cart.css'
 
@@ -57,11 +58,12 @@ export default function Cart() {
           <ul className="cart-items">
             {items.map((item) => (
               <li key={`${item.id}-${item.size}-${item.color}`} className="cart-item">
-                {item.image_url && <img src={item.image_url} alt={item.name} />}
+                {item.image_url && <img src={item.image_url} alt={item.name} loading="lazy" decoding="async" />}
                 <div className="cart-item-info">
                   <h3>{item.name}</h3>
-                  {item.size && <span>Size: {item.size}</span>}
-                  {item.color && <span>Color: {item.color}</span>}
+                  {(item.size || item.color) && (
+                    <span>Sizes &amp; Colors: {formatVariant(item)}</span>
+                  )}
                   {item.hold_expires_at && (
                     <span className="cart-reservation-countdown" role="timer">
                       {(() => {

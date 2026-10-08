@@ -5,6 +5,7 @@ from fastapi import APIRouter, Header, HTTPException
 from ..config import get_settings
 from ..database import get_supabase
 from ..schemas import ZohoOfflineSaleIn
+from ..services.cache import invalidate_catalog
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -30,4 +31,5 @@ def notify_zoho_offline_sale(
             ],
         },
     ).execute()
+    invalidate_catalog()
     return result.data

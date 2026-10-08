@@ -37,6 +37,12 @@ class ProductOut(BaseModel):
     product_code: Optional[str] = None
     zoho_item_id: Optional[str] = None
     category_slug: Optional[str] = None
+    subcategory_name: Optional[str] = None
+    subcategory_slug: Optional[str] = None
+    website_serial: Optional[str] = None
+    color: Optional[str] = None
+    size: Optional[str] = None
+    is_primary_variant: bool = True
     name: str
     slug: str
     description: Optional[str] = None
@@ -58,6 +64,26 @@ class ProductOut(BaseModel):
     weight_unit: Optional[str] = None
     last_synced_at: Optional[str] = None
     created_at: Optional[str] = None
+    variants: list["ProductVariantOut"] = Field(default_factory=list)
+
+
+class ProductVariantOut(BaseModel):
+    """A sibling product sharing the same website_serial (same design, different
+    color/size) — used by the storefront's variant switcher on the product page."""
+
+    id: str
+    slug: str
+    name: str
+    color: Optional[str] = None
+    size: Optional[str] = None
+    image_url: Optional[str] = None
+    price: float = 0
+    stock_quantity: int = 0
+    is_primary_variant: bool = True
+    product_code: Optional[str] = None
+
+
+ProductOut.model_rebuild()
 
 
 class ProductStockAdjustIn(BaseModel):
@@ -137,6 +163,9 @@ class OrderItemOut(BaseModel):
     product_id: Optional[str] = None
     product_name: Optional[str] = None
     product_image_url: Optional[str] = None
+    size: Optional[str] = None
+    color: Optional[str] = None
+    product_code: Optional[str] = None
     quantity: int
     price: float
 
@@ -302,6 +331,9 @@ class WishlistItemIn(BaseModel):
 
 
 class WishlistItemOut(WishlistItemIn):
+    size: Optional[str] = None
+    color: Optional[str] = None
+    stock_quantity: Optional[int] = None
     id: str
     customer_id: str
     created_at: str

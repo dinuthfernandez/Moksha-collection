@@ -60,8 +60,13 @@
 
 .phone-field {
   display: grid;
-  grid-template-columns: minmax(0, 96px) minmax(0, 1fr);
+  grid-template-columns: minmax(110px, 130px) minmax(0, 1fr);
   gap: 8px;
+}
+
+.phone-field .country-code-input {
+  padding-left: 12px;
+  padding-right: 8px;
 }
 
 .phone-field select {

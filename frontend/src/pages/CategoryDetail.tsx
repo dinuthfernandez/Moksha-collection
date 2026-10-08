@@ -1,3 +1,4 @@
+import BrandLoader from '../components/ui/BrandLoader'
 import { useEffect, useState } from 'react'
 import { useLocation, useParams, Link } from 'react-router-dom'
 import { getCategoryBySlug, getProducts } from '../api/categories'
@@ -52,7 +53,7 @@ export default function CategoryDetail() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  if (loading) return <div className="container category-detail" />
+  if (loading) return <BrandLoader fullScreen={false} />
   const isAccessoriesDetail = pathname.startsWith('/accessories/')
   const fallbackName = (slug ?? 'collection')
     .split('-')
@@ -78,7 +79,7 @@ export default function CategoryDetail() {
             {products.map((product) => (
               <Link key={product.id} to={`/product/${product.slug}`} className="product-card">
                 <div className="product-card-image-wrap">
-                  {product.image_url ? <img src={product.image_url} alt={product.name} className="product-card-image" /> : <div className="product-card-image placeholder">No Image</div>}
+                  {product.image_url ? <img src={product.image_url} alt={product.name} className="product-card-image" loading="lazy" decoding="async" /> : <div className="product-card-image placeholder">No Image</div>}
                 </div>
                 <div className="product-card-body">
                   <h2>{product.name}</h2>

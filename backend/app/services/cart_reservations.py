@@ -3,6 +3,7 @@ import logging
 
 from ..config import get_settings
 from ..database import get_supabase
+from .cache import invalidate_catalog
 from .zoho_inventory import ZohoInventoryClient
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ def set_cart_product_reservation(cart_id: str, product_id: str, quantity: int) -
     ).execute()
     if not result.data:
         raise ReservationError("Could not reserve this product")
+    invalidate_catalog()
 
     reservation = result.data[0]
     delta = int(reservation.get("delta_quantity") or 0)
@@ -103,6 +105,7 @@ def release_expired_cart_reservations() -> int:
                 released += 1
         except Exception:
             logger.exception("Zoho stock was released but Supabase reservation completion failed")
+    invalidate_catalog()
     return released
 
 

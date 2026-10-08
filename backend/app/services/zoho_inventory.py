@@ -1,5 +1,7 @@
 import asyncio
 import json
+import logging
+import re
 import threading
 import time
 from datetime import datetime, timezone
@@ -10,6 +12,9 @@ from uuid import uuid4
 
 from ..config import get_settings
 from ..database import get_supabase
+from .cache import invalidate_catalog
+
+logger = logging.getLogger(__name__)
 
 WEBSITE_CONTACT_NAME = "Online Customer"
 _ADJUSTMENT_DEFAULTS_TTL_SECONDS = 300
@@ -399,7 +404,12 @@ def _extract_item_id(item: dict[str, Any]) -> str | None:
 
 
 def _is_online_store_enabled(item: dict[str, Any]) -> bool:
-    return item.get("show_in_storefront") is True
+    # Zoho's native `show_in_storefront` flag belongs to Zoho's own storefront/
+    # commerce module (not our custom site) and is effectively unset for almost
+    # every item here, even after items were marked "Show in Online Store" in
+    # our workflow. Our storefront instead treats any non-archived Zoho item
+    # (status == "active") as eligible to sync/display.
+    return item.get("status") == "active"
 
 
 def _extract_brand(item: dict[str, Any]) -> str | None:
@@ -460,6 +470,105 @@ def _extract_category_slug(item: dict[str, Any]) -> str | None:
     return None
 
 
+def _extract_custom_field(item: dict[str, Any], api_name: str, label: str) -> str | None:
+    """Reads a Zoho custom field (e.g. cf_product_sub_category, cf_color, cf_size,
+    cf_website_serial) off a raw item, trying the flat keys first (how Zoho's
+    /items list endpoint returns them) and falling back to the custom_fields /
+    custom_field_hash shapes some endpoints use."""
+    keys = (api_name, f"{api_name}_formatted", f"{api_name}_unformatted")
+    values = [item.get(key) for key in keys]
+
+    custom_field_hash = item.get("custom_field_hash")
+    if isinstance(custom_field_hash, dict):
+        values.extend(custom_field_hash.get(key) for key in keys)
+
+    custom_fields = item.get("custom_fields")
+    if isinstance(custom_fields, list):
+        values.extend(
+            field.get("value")
+            for field in custom_fields
+            if isinstance(field, dict) and str(field.get("label") or "").strip().casefold() == label.casefold()
+        )
+
+    for value in values:
+        if isinstance(value, dict):
+            value = value.get("value") or value.get("name") or value.get("label")
+        if value not in (None, ""):
+            return str(value).strip()
+    return None
+
+
+def _extract_subcategory_name(item: dict[str, Any]) -> str | None:
+    return _extract_custom_field(item, "cf_product_sub_category", "Product Sub Category")
+
+
+def _extract_color(item: dict[str, Any]) -> str | None:
+    return _extract_custom_field(item, "cf_color", "Color")
+
+
+def _extract_size(item: dict[str, Any]) -> str | None:
+    return _extract_custom_field(item, "cf_size", "Size")
+
+
+def _extract_website_serial(item: dict[str, Any]) -> str | None:
+    return _extract_custom_field(item, "cf_website_serial", "Website Serial")
+
+
+# Smallest-to-largest rank used to pick the single "primary" listing card out of a
+# group of same-design (same website_serial) variants. Unknown/kids sizes sort last
+# within their own bucket so they never accidentally outrank a recognized adult size.
+_SIZE_RANK = {
+    "xs": 0,
+    "s": 1,
+    "m": 2,
+    "l": 3,
+    "xl": 4,
+    "xxl": 5,
+    "2xl": 5,
+    "xxxl": 6,
+    "3xl": 6,
+    "4xl": 7,
+    "5xl": 8,
+}
+
+
+def _size_sort_key(size: str | None) -> tuple[int, int, str]:
+    normalized = (size or "").strip().lower().replace(" ", "")
+    if normalized in _SIZE_RANK:
+        return (0, _SIZE_RANK[normalized], normalized)
+    # Kids sizes are usually numeric age ranges (e.g. "2-3", "4-5") — sort numerically.
+    leading_digits = re.match(r"^(\d+)", normalized)
+    if leading_digits:
+        return (1, int(leading_digits.group(1)), normalized)
+    return (2, 0, normalized)
+
+
+def _mark_primary_variants(records: list[dict[str, Any]]) -> None:
+    """Mutates `records` in place, setting is_primary_variant so that exactly one
+    row per non-empty website_serial group is the primary (smallest size, then
+    color name, then SKU, as tie-breakers). Rows without a website_serial are
+    always their own primary (singleton)."""
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        record["is_primary_variant"] = True
+        serial = record.get("website_serial")
+        if serial not in (None, ""):
+            groups.setdefault(serial, []).append(record)
+
+    for serial, group in groups.items():
+        if len(group) < 2:
+            continue
+        group.sort(
+            key=lambda r: (
+                _size_sort_key(r.get("size")),
+                (r.get("color") or "").strip().lower(),
+                (r.get("zoho_sku") or "").strip().lower(),
+            )
+        )
+        for record in group[1:]:
+            record["is_primary_variant"] = False
+
+
 async def sync_products_to_supabase() -> int:
     settings = get_settings()
     if not all(
@@ -486,6 +595,26 @@ async def sync_products_to_supabase() -> int:
     # All blocking Supabase I/O runs in a worker thread so the sync never
     # stalls the asyncio event loop (and therefore never blocks other API requests).
     return await asyncio.to_thread(_write_products_to_supabase, items)
+
+
+def _sync_subcategories_to_categories(supabase: Any, subcategories_seen: dict[tuple[str, str], str]) -> None:
+    """Auto-populates the `categories` table (the "Shop by Category" tiles) from the
+    distinct (Product Category, Product Sub Category) pairs actually present on
+    synced items. Never overwrites an existing row's image_url/display_order, and
+    never deletes rows (so a manually curated tile image always survives a resync)."""
+    if not subcategories_seen:
+        return
+
+    existing = supabase.table("categories").select("slug").execute()
+    existing_slugs = {row["slug"] for row in (existing.data or [])}
+
+    new_rows = [
+        {"name": name, "slug": slug, "type": category_type, "is_active": True}
+        for (category_type, slug), name in subcategories_seen.items()
+        if slug not in existing_slugs
+    ]
+    for start in range(0, len(new_rows), 100):
+        supabase.table("categories").insert(new_rows[start : start + 100]).execute()
 
 
 def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
@@ -516,7 +645,8 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
     online_item_ids = {_extract_item_id(item) for item in online_items}
     online_item_ids.discard(None)
 
-    synced_count = 0
+    records: list[dict[str, Any]] = []
+    subcategories_seen: dict[tuple[str, str], str] = {}  # (type, slug) -> name
     for item in online_items:
         item_id = _extract_item_id(item)
         if not item_id:
@@ -535,6 +665,12 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
                 suffix += 1
         used_slugs.add(slug)
 
+        category_slug = _extract_category_slug(item)
+        subcategory_name = _extract_subcategory_name(item)
+        subcategory_slug = _slugify(subcategory_name, "") if subcategory_name else None
+        if category_slug and subcategory_name and subcategory_slug:
+            subcategories_seen[(category_slug, subcategory_slug)] = subcategory_name
+
         record = {
             "zoho_item_id": item_id,
             "name": _extract_name(item),
@@ -542,7 +678,12 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
             "description": _extract_description(item),
             "price": _extract_price(item),
             "compare_at_price": _extract_price(item),
-            "category_slug": _extract_category_slug(item),
+            "category_slug": category_slug,
+            "subcategory_name": subcategory_name,
+            "subcategory_slug": subcategory_slug,
+            "website_serial": _extract_website_serial(item),
+            "color": _extract_color(item),
+            "size": _extract_size(item),
             "stock_quantity": _extract_stock(item),
             "image_url": _extract_image_url(item),
             "zoho_sku": _extract_sku(item),
@@ -556,7 +697,15 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
             "last_synced_at": datetime.now(timezone.utc).isoformat(),
             "is_active": True,
         }
+        record["_item_id"] = item_id
+        records.append(record)
 
+    _mark_primary_variants(records)
+
+    synced_count = 0
+    for record in records:
+        item_id = record.pop("_item_id")
+        slug = record["slug"]
         if item_id in existing_map:
             supabase.table("products").update(record).eq("zoho_item_id", item_id).execute()
         elif slug in existing_slug_map:
@@ -564,6 +713,8 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
         else:
             supabase.table("products").insert(record).execute()
         synced_count += 1
+
+    _sync_subcategories_to_categories(supabase, subcategories_seen)
 
     # Keep Zoho items that are still present but not online; physically remove deleted items.
     disabled_item_ids = [
@@ -573,6 +724,17 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
     ]
     deleted_item_ids = [zoho_item_id for zoho_item_id in existing_map if zoho_item_id not in zoho_item_ids]
 
+    # Safety net: a partial/odd Zoho response must never wipe out the catalogue.
+    removal_count = len(disabled_item_ids) + len(deleted_item_ids)
+    if existing_map and removal_count > 20 and removal_count > len(existing_map) * 0.3:
+        logger.warning(
+            "Zoho sync skipped deactivating/deleting %s of %s products (suspicious response)",
+            removal_count,
+            len(existing_map),
+        )
+        disabled_item_ids = []
+        deleted_item_ids = []
+
     for start in range(0, len(disabled_item_ids), 100):
         item_id_batch = disabled_item_ids[start : start + 100]
         supabase.table("products").update({"is_active": False}).in_("zoho_item_id", item_id_batch).execute()
@@ -580,6 +742,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
         item_id_batch = deleted_item_ids[start : start + 100]
         supabase.table("products").delete().in_("zoho_item_id", item_id_batch).execute()
 
+    invalidate_catalog()
     return synced_count
 
 
@@ -590,7 +753,7 @@ async def sync_loop() -> None:
         try:
             await sync_products_to_supabase()
         except Exception:
-            pass
+            logger.exception("Zoho inventory sync failed")
         await asyncio.sleep(interval_seconds)
 
 

@@ -1,9 +1,9 @@
-import { api } from './client'
-import type { Category, PaginatedProducts } from '../types'
+import { api, cachedGet, peekCached } from './client'
+import type { Category, PaginatedProducts, Product } from '../types'
 
 export function getCategories(type?: 'clothing' | 'accessories') {
   const query = type ? `?type=${type}` : ''
-  return api.get<Category[]>(`/categories${query}`)
+  return cachedGet<Category[]>(`/categories${query}`, 300_000)
 }
 
 export function getCategoryTree(type: 'clothing' | 'accessories') {
@@ -11,7 +11,7 @@ export function getCategoryTree(type: 'clothing' | 'accessories') {
 }
 
 export function getCategoryBySlug(slug: string) {
-  return api.get<Category>(`/categories/${slug}`)
+  return cachedGet<Category>(`/categories/${slug}`, 300_000)
 }
 
 export function getProducts(
@@ -25,7 +25,7 @@ export function getProducts(
   if (category) params.set('category', category)
   if (query) params.set('q', query)
   if (categorySlug) params.set('category_slug', categorySlug)
-  return api.get<PaginatedProducts>(`/products?${params.toString()}`)
+  return cachedGet<PaginatedProducts>(`/products?${params.toString()}`)
 }
 
 export function searchProducts(
@@ -42,6 +42,10 @@ export function searchProducts(
 }
 
 export function getProductBySlug(slug: string) {
-  return api.get<import('../types').Product>(`/products/${slug}`)
+  return cachedGet<Product>(`/products/${slug}`)
+}
+
+export function peekProductBySlug(slug: string) {
+  return peekCached<Product>(`/products/${slug}`)
 }
 

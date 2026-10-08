@@ -19,6 +19,12 @@ export interface Product {
   product_code?: string | null
   zoho_item_id?: string | null
   category_slug?: string | null
+  subcategory_name?: string | null
+  subcategory_slug?: string | null
+  website_serial?: string | null
+  color?: string | null
+  size?: string | null
+  is_primary_variant?: boolean
   name: string
   slug: string
   description?: string | null
@@ -41,6 +47,20 @@ export interface Product {
   weight_unit?: string | null
   last_synced_at?: string | null
   created_at?: string | null
+  variants?: ProductVariant[]
+}
+
+export interface ProductVariant {
+  id: string
+  slug: string
+  name: string
+  color?: string | null
+  size?: string | null
+  image_url?: string | null
+  price: number
+  stock_quantity: number
+  is_primary_variant: boolean
+  product_code?: string | null
 }
 
 export interface ProductReview {
@@ -161,6 +181,9 @@ export interface WishlistItem {
   image_url?: string | null
   price?: number | null
   currency: string
+  size?: string | null
+  color?: string | null
+  stock_quantity?: number | null
   created_at: string
 }
 
@@ -277,6 +300,9 @@ export interface OrderItemDetail {
   product_id?: string | null
   product_name?: string | null
   product_image_url?: string | null
+  size?: string | null
+  color?: string | null
+  product_code?: string | null
   quantity: number
   price: number
 }

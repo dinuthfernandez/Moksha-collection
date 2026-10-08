@@ -28,7 +28,7 @@ from ..schemas import (
 )
 from ..services.email import send_campaign_email, send_sales_email
 from ..services.email_templates import render_order_completed_email
-from ..services.order_inventory import restock_order_items
+from ..services.order_inventory import load_order_items, restock_order_items
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(get_current_admin)])
 
@@ -223,8 +223,7 @@ def delete_coupon(coupon_id: str):
 # Orders management
 # ---------------------------------------------------------------------------
 def _load_order_detail(supabase, order: dict) -> dict:
-    items_result = supabase.table("order_items").select("*").eq("order_id", order["id"]).execute()
-    return {**order, "items": items_result.data or []}
+    return {**order, "items": load_order_items(supabase, order["id"])}
 
 
 @router.get("/orders", response_model=list[OrderDetailOut])
@@ -265,7 +264,7 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateIn):
     allowed_transitions = {
         "pending": {"accepted", "cancelled"},
         "accepted": {"shipped", "cancelled"},
-        "shipped": {"delivered"},
+        "shipped": {"delivered", "cancelled"},
     }
     if payload.status not in allowed_transitions.get(order.get("status"), set()):
         raise HTTPException(status_code=409, detail=f"Order cannot move from {order.get('status')} to {payload.status}")
@@ -334,15 +333,19 @@ def complete_return(order_id: str):
     if existing.data[0].get("return_status") != "requested":
         raise HTTPException(status_code=400, detail="This order has no pending return request")
 
-    # Completing a return means the item is physically back — restock it, locally and in Zoho.
-    restock_order_items(supabase, order_id)
-
+    # Claim the return first so a double click can never restock twice.
     result = (
         supabase.table("orders")
         .update({"return_status": "completed", "return_completed_at": "now()"})
         .eq("id", order_id)
+        .eq("return_status", "requested")
         .execute()
     )
+    if not result.data:
+        raise HTTPException(status_code=409, detail="This return was already processed")
+
+    # Completing a return means the item is physically back — restock it, locally and in Zoho.
+    restock_order_items(supabase, order_id)
     return _load_order_detail(supabase, result.data[0])
 
 

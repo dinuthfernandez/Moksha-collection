@@ -1,8 +1,10 @@
+import BrandLoader from '../components/ui/BrandLoader'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react'
 import { useWishlist } from '../context/WishlistContext'
 import { useCart } from '../context/CartContext'
+import { formatVariant, withVariant } from '../utils/variant'
 import './Wishlist.css'
 
 export default function Wishlist() {
@@ -16,9 +18,11 @@ export default function Wishlist() {
       name: item.product_name,
       image_url: item.image_url ?? undefined,
       price: item.price ?? 0,
+      size: item.size ?? undefined,
+      color: item.color ?? undefined,
       quantity: 1,
     })
-    setCartMessage(reserved ? `${item.product_name} reserved in your cart for 24 hours.` : 'Could not reserve stock. Please try again.')
+    setCartMessage(reserved ? `${withVariant(item.product_name, item)} reserved in your cart for 24 hours.` : 'Could not reserve stock. Please try again.')
   }
 
   return (
@@ -30,7 +34,7 @@ export default function Wishlist() {
       </div>
       {cartMessage && <p role="status">{cartMessage}</p>}
 
-      {isLoading && <div className="wishlist-empty">Loading your wishlist…</div>}
+      {isLoading && <BrandLoader fullScreen={false} label="Loading your wishlist" />}
       {!isLoading && items.length === 0 && (
         <div className="wishlist-empty">
           <Heart size={34} strokeWidth={1.2} />
@@ -45,17 +49,22 @@ export default function Wishlist() {
           {items.map((item) => (
             <article className="wishlist-card" key={item.id}>
               <Link to={item.product_slug ? `/product/${item.product_slug}` : '#'} className="wishlist-card-media">
-                {item.image_url ? <img src={item.image_url} alt={item.product_name} /> : <div className="wishlist-card-placeholder" />}
+                {item.image_url ? <img src={item.image_url} alt={item.product_name} loading="lazy" decoding="async" /> : <div className="wishlist-card-placeholder" />}
               </Link>
               <div className="wishlist-card-body">
                 <Link to={item.product_slug ? `/product/${item.product_slug}` : '#'} className="wishlist-card-title">
                   {item.product_name}
                 </Link>
+                {formatVariant(item) && <p className="wishlist-card-price">{formatVariant(item)}</p>}
+                {item.stock_quantity != null && (
+                  <p className="wishlist-card-price">{item.stock_quantity > 0 ? `In Stock (${item.stock_quantity} available)` : 'Out of stock'}</p>
+                )}
                 <p className="wishlist-card-price">{item.currency} {(item.price ?? 0).toFixed(3)}</p>
                 <div className="wishlist-card-actions">
                   <button
                     type="button"
                     className="btn btn-primary wishlist-add-to-cart"
+                    disabled={item.stock_quantity != null && item.stock_quantity <= 0}
                     onClick={() => void handleAddToCart(item)}
                   >
                     <ShoppingBag size={15} /> Add to Cart

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { updateMyProfile } from '../api/auth'
 import { ApiError } from '../api/client'
-import { COUNTRIES } from '../data/countries'
+import CountryCodeSelect from '../components/ui/CountryCodeSelect'
 import './Account.css'
 
 export default function Account() {
@@ -70,13 +70,10 @@ export default function Account() {
           <label>
             <span>Phone number</span>
             <div className="phone-field">
-              <select value={form.phone_country_code} onChange={update('phone_country_code')} aria-label="Country code">
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.dialCode}>
-                    {c.dialCode} {c.code}
-                  </option>
-                ))}
-              </select>
+              <CountryCodeSelect
+                value={form.phone_country_code}
+                onChange={(dialCode) => setForm((f) => ({ ...f, phone_country_code: dialCode }))}
+              />
               <input required value={form.phone} onChange={update('phone')} />
             </div>
           </label>

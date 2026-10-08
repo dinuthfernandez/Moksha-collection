@@ -114,7 +114,7 @@ export default function RoundCategories({
               >
                 <div className="round-category-circle">
                   {cat.image_url ? (
-                    <img src={cat.image_url} alt={cat.name} className="round-category-img" />
+                    <img src={cat.image_url} alt={cat.name} className="round-category-img" loading="lazy" decoding="async" />
                   ) : (
                     <div className="round-category-fallback">
                       <span>{cat.name.charAt(0)}</span>

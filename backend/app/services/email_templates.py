@@ -110,10 +110,15 @@ def render_password_reset_done_email(first_name: str) -> tuple[str, str, str]:
     return subject, _shell("Your password has been reset", body), text
 
 
+def _variant_suffix(item: dict) -> str:
+    parts = [part for part in (item.get("size"), item.get("color")) if part]
+    return f" ({' · '.join(parts)})" if parts else ""
+
+
 def _order_items_table(items: list[dict]) -> str:
     rows = "".join(
         f"""<tr>
-          <td style="padding:10px 0;border-bottom:1px solid {LINE};font-size:14px;">{item.get('product_name') or 'Item'} &times; {item.get('quantity')}</td>
+          <td style="padding:10px 0;border-bottom:1px solid {LINE};font-size:14px;">{item.get('product_name') or 'Item'}{_variant_suffix(item)} &times; {item.get('quantity')}</td>
           <td style="padding:10px 0;border-bottom:1px solid {LINE};font-size:14px;text-align:right;">{float(item.get('price', 0)) * int(item.get('quantity', 1)):.3f} BHD</td>
         </tr>"""
         for item in items

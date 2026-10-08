@@ -11,7 +11,7 @@ from ..services.email import send_sales_email
 from ..services.email_templates import render_order_placed_email
 from ..services.zoho_inventory import create_invoice_for_order, validate_zoho_inventory_connection
 from ..services.coupons import calculate_coupon_discount, get_current_coupons, select_coupon
-from ..services.order_inventory import restock_order_items
+from ..services.order_inventory import load_order_items, restock_order_items
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -207,7 +207,15 @@ async def create_order(payload: OrderIn, customer: dict | None = Depends(get_opt
 
     if payload.email:
         try:
-            subject, html, text = render_order_placed_email({**order, "items": order_items_records})
+            email_items = [
+                {
+                    **record,
+                    "size": products_by_id[record["product_id"]].get("size"),
+                    "color": products_by_id[record["product_id"]].get("color"),
+                }
+                for record in order_items_records
+            ]
+            subject, html, text = render_order_placed_email({**order, "items": email_items})
             send_sales_email(payload.email, subject, html, text)
         except Exception:
             # sales@ is not provisioned yet in most environments — this is best-effort only.
@@ -230,8 +238,7 @@ async def create_order(payload: OrderIn, customer: dict | None = Depends(get_opt
 
 
 def _load_order_detail(supabase, order: dict) -> dict:
-    items_result = supabase.table("order_items").select("*").eq("order_id", order["id"]).execute()
-    return {**order, "items": items_result.data or []}
+    return {**order, "items": load_order_items(supabase, order["id"])}
 
 
 @router.get("/mine", response_model=list[OrderDetailOut])

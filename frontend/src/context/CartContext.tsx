@@ -85,25 +85,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
-  const addItem = (item: CartItem) => enqueueMutation(async () => {
-    const current = itemsRef.current
+  const applyOptimistically = (productId: string, change: (current: CartItem[]) => CartItem[]) => {
+    const before = itemsRef.current
+    commitItems(change(before))
+    const previousLines = before.filter((item) => item.id === productId)
+    return enqueueMutation(async () => {
+      try {
+        commitItems(await reserveProductQuantity(itemsRef.current, productId))
+      } catch (error) {
+        commitItems([...itemsRef.current.filter((item) => item.id !== productId), ...previousLines])
+        throw error
+      }
+    })
+  }
+
+  const addItem = (item: CartItem) => applyOptimistically(item.id, (current) => {
     const existing = current.find((entry) => entry.id === item.id && entry.size === item.size && entry.color === item.color)
-    const next = existing
+    return existing
       ? current.map((entry) => entry === existing ? { ...entry, quantity: entry.quantity + item.quantity } : entry)
       : [...current, item]
-    commitItems(await reserveProductQuantity(next, item.id))
   })
 
-  const removeItem = (id: string) => enqueueMutation(async () => {
-    const next = itemsRef.current.filter((item) => item.id !== id)
-    await reserveProductQuantity(next, id)
-    commitItems(next)
-  })
+  const removeItem = (id: string) => applyOptimistically(id, (current) => current.filter((item) => item.id !== id))
 
-  const updateQuantity = (id: string, quantity: number) => enqueueMutation(async () => {
-    const next = itemsRef.current.map((item) => item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item)
-    commitItems(await reserveProductQuantity(next, id))
-  })
+  const updateQuantity = (id: string, quantity: number) => applyOptimistically(id, (current) =>
+    current.map((item) => item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item))
 
   const retryReservations = () => enqueueMutation(async () => {
     let next = itemsRef.current

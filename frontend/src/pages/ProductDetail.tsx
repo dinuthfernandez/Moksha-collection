@@ -1,7 +1,8 @@
+import { ProductDetailSkeleton } from '../components/ui/BrandLoader'
 import { useEffect, useRef, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { CalendarDays, ExternalLink, Heart, MapPin, ShoppingBag, Star, Truck } from 'lucide-react'
-import { getProductBySlug } from '../api/categories'
+import { getProductBySlug, peekProductBySlug } from '../api/categories'
 import { getAddresses } from '../api/addresses'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
@@ -11,8 +12,17 @@ import { getAddressTier } from '../data/addressTiers'
 import ProductReviews from '../components/ui/ProductReviews'
 import ProductQuantitySelector from '../components/ui/ProductQuantitySelector'
 import { TERMS_AND_CONDITIONS_SECTIONS } from '../data/policies'
-import type { Address, DeliveryRate, Product } from '../types'
+import type { Address, DeliveryRate, Product, ProductVariant } from '../types'
 import './ProductDetail.css'
+
+// Smallest-to-largest display order for the size picker; anything not listed
+// here (e.g. kids age-range sizes) is sorted after the known adult sizes.
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', 'XXXL', '3XL', '4XL', '5XL']
+
+function sizeRank(size?: string | null) {
+  const index = SIZE_ORDER.indexOf((size ?? '').toUpperCase())
+  return index === -1 ? SIZE_ORDER.length : index
+}
 
 function formatDeliveryDate(daysFromNow: number) {
   const date = new Date()
@@ -43,6 +53,7 @@ function getDeliveryDateRange(rate: DeliveryRate) {
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -63,8 +74,16 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!slug) return
     let mounted = true
-    setLoading(true)
-    setNotFound(false)
+    const cachedProduct = peekProductBySlug(slug)
+    if (cachedProduct) {
+      setProduct(cachedProduct)
+      setLoading(false)
+      setNotFound(false)
+    } else {
+      // Keep showing the previous variant while the next one loads (no blank flash).
+      setLoading((current) => current && !product)
+      setNotFound(false)
+    }
     getProductBySlug(slug)
       .then((data) => mounted && setProduct(data))
       .catch(() => mounted && setNotFound(true))
@@ -73,6 +92,13 @@ export default function ProductDetail() {
       mounted = false
     }
   }, [slug])
+
+  useEffect(() => {
+    const siblings = product?.variants ?? []
+    siblings.forEach((variant) => {
+      if (variant.slug !== product?.slug) void getProductBySlug(variant.slug).catch(() => undefined)
+    })
+  }, [product?.id])
 
   useEffect(() => {
     setQuantity(1)
@@ -133,7 +159,7 @@ export default function ProductDetail() {
     }
   }, [product?.id])
 
-  if (loading) return <div className="container product-detail-page" />
+  if (loading) return <ProductDetailSkeleton />
 
   if (notFound || !product) {
     return (
@@ -175,6 +201,22 @@ export default function ProductDetail() {
       ].filter((line): line is string => Boolean(line?.trim()))
     : []
 
+  // Variants are sibling products sharing the same Zoho "Website Serial" (same
+  // design, different color/size). Each size/color combo is its own SKU, so
+  // they are listed together as one "Sizes & Colors" picker.
+  const variants = product.variants ?? []
+  const hasVariants = variants.length > 1
+  const sortedVariants = hasVariants
+    ? variants
+        .slice()
+        .sort((a, b) => (a.color ?? '').localeCompare(b.color ?? '') || sizeRank(a.size) - sizeRank(b.size))
+    : [{ id: product.id, slug: product.slug, name: product.name, size: product.size, color: product.color, price: product.price, stock_quantity: product.stock_quantity, is_primary_variant: true } as ProductVariant]
+
+  const goToVariant = (variant: ProductVariant) => {
+    if (variant.slug === product.slug) return
+    navigate(`/product/${variant.slug}`)
+  }
+
   const handleAddToCart = async () => {
     const reserved = await addItem({
       id: product.id,
@@ -182,6 +224,8 @@ export default function ProductDetail() {
       image_url: product.image_url ?? undefined,
       price: product.price,
       quantity,
+      size: product.size ?? undefined,
+      color: product.color ?? undefined,
     })
     if (!reserved) return
     setAdded(true)
@@ -223,13 +267,38 @@ export default function ProductDetail() {
             <strong>{reviewSummary.average_rating.toFixed(1)}</strong>
             <span>{reviewSummary.total} {reviewSummary.total === 1 ? 'review' : 'reviews'}</span>
           </div>
-          <p className="product-detail-code">
-            Product code <code>{product.product_code ?? product.zoho_sku ?? product.id.slice(0, 12).toUpperCase()}</code>
-          </p>
           <p className="product-detail-price">BHD {Number(product.price || 0).toFixed(2)}</p>
           <p className={`product-detail-stock ${inStock ? 'in-stock' : 'out-of-stock'}`}>
             {inStock ? `In Stock (${product.stock_quantity} available)` : 'Out of Stock'}
           </p>
+
+          {(hasVariants || product.size || product.color) && (
+            <div className="product-detail-variants">
+              <div className="product-detail-variant-group">
+                <span className="product-detail-variant-label">
+                  Sizes &amp; Colors:{' '}
+                  <strong>{[product.size, product.color].filter(Boolean).join(' · ')}</strong>
+                </span>
+                <div className="product-detail-variant-options">
+                  {sortedVariants.map((variant) => {
+                    const label = [variant.size, variant.color].filter(Boolean).join(' · ')
+                    return (
+                      <button
+                        key={variant.id}
+                        type="button"
+                        disabled={variant.stock_quantity <= 0}
+                        className={`product-detail-variant-chip ${variant.slug === product.slug ? 'is-selected' : ''}`}
+                        onClick={() => goToVariant(variant)}
+                        title={variant.stock_quantity <= 0 ? 'Out of stock' : `${variant.stock_quantity} available`}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
           {product.description && (
             <div className="product-detail-section">

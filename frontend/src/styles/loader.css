@@ -1,0 +1,94 @@
+.brand-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  min-height: 50vh;
+  padding: 3rem 1rem;
+}
+.brand-loader--full {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
+  z-index: 9999;
+  background: var(--bg, #fff);
+}
+.brand-loader__mark {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: grid;
+  place-items: center;
+}
+.brand-loader__mark img {
+  width: 96px;
+  height: auto;
+  animation: brand-pulse 1.8s ease-in-out infinite;
+}
+.brand-loader__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  opacity: 0.55;
+  animation: brand-spin 1.4s linear infinite;
+}
+.brand-loader__ring--2 {
+  inset: 12px;
+  opacity: 0.3;
+  animation-duration: 2.2s;
+  animation-direction: reverse;
+}
+.brand-loader__bar {
+  width: 160px;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(128, 128, 128, 0.2);
+  overflow: hidden;
+}
+.brand-loader__bar span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: currentColor;
+  border-radius: 3px;
+  animation: brand-slide 1.2s ease-in-out infinite;
+}
+.brand-loader__label {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.splash-wrap {
+  transition: opacity 0.45s ease;
+}
+.splash-wrap--out {
+  opacity: 0;
+  pointer-events: none;
+}
+.skeleton-block {
+  background: linear-gradient(90deg, rgba(128,128,128,.12) 25%, rgba(128,128,128,.24) 50%, rgba(128,128,128,.12) 75%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+  animation: skeleton-shimmer 1.3s linear infinite;
+}
+.skeleton-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem;
+  padding-top: 2rem;
+}
+.skeleton-detail__image { aspect-ratio: 4 / 5; }
+.skeleton-detail__info { display: flex; flex-direction: column; gap: 1rem; }
+@media (max-width: 768px) {
+  .skeleton-detail { grid-template-columns: 1fr; }
+}
+@keyframes brand-spin { to { transform: rotate(360deg); } }
+@keyframes brand-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes brand-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+@keyframes skeleton-shimmer { to { background-position: -200% 0; } }

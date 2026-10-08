@@ -158,11 +158,10 @@ export default function SearchResults() {
                 {products.map((product) => (
                   <Link key={product.id} to={`/product/${product.slug}`} className="search-product-card">
                     <div className="search-product-image-wrap">
-                      {product.image_url ? <img src={product.image_url} alt={product.name} /> : <span>No Image</span>}
+                      {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" /> : <span>No Image</span>}
                     </div>
                     <div className="search-product-body">
                       <h2>{product.name}</h2>
-                      <p className="search-product-code">Code: {product.product_code ?? product.zoho_sku ?? product.id.slice(0, 12).toUpperCase()}</p>
                       <p className="search-product-price">BHD {Number(product.price || 0).toFixed(3)}</p>
                     </div>
                   </Link>

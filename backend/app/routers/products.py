@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from ..database import get_supabase
 from ..schemas import ProductListOut, ProductOut, ProductStockAdjustIn
+from ..services.cache import cached, invalidate_catalog
 from ..services.zoho_inventory import ZohoInventoryClient
 from ..config import get_settings
 
@@ -29,10 +30,17 @@ def list_products(
     query = supabase.table("products").select("*", count="exact")
     if active_only:
         query = query.eq("is_active", True).gt("stock_quantity", 0)
-    if category_slug:
-        query = query.eq("category_slug", category_slug)
-    elif category:
+    if category:
         query = query.eq("category_slug", category)
+    if category_slug:
+        # `category_slug` here is actually a Zoho Product Sub Category slug
+        # (e.g. "kurti", "earrings") — subcategory browsing pages pass it in.
+        query = query.eq("subcategory_slug", category_slug)
+    if not q:
+        # Listing/grid views show one card per design: the primary (smallest
+        # size) variant. A search query intentionally ignores this so every
+        # matching variant is still findable by its own SKU/name.
+        query = query.eq("is_primary_variant", True)
     if q:
         safe_term = re.sub(r"[^a-zA-Z0-9 _-]", "", q.strip())
         if safe_term:
@@ -47,21 +55,43 @@ def list_products(
 
     start = (page - 1) * page_size
     end = start + page_size - 1
-    result = query.order("created_at", desc=True).range(start, end).execute()
 
-    total = result.count or 0
-    total_pages = max((total + page_size - 1) // page_size, 1)
-    return ProductListOut(items=result.data, total=total, page=page, page_size=page_size, total_pages=total_pages)
+    def load() -> ProductListOut:
+        result = query.order("created_at", desc=True).range(start, end).execute()
+        total = result.count or 0
+        total_pages = max((total + page_size - 1) // page_size, 1)
+        return ProductListOut(items=result.data, total=total, page=page, page_size=page_size, total_pages=total_pages)
+
+    cache_key = f"products:{category}:{category_slug}:{active_only}:{page}:{page_size}:{q}:{min_price}:{max_price}"
+    return cached(cache_key, 60, load)
 
 
 @router.get("/{slug}", response_model=ProductOut)
 def get_product(slug: str):
-    supabase = get_supabase()
-    result = supabase.table("products").select("*").eq("slug", slug).limit(1).execute()
-    # Out-of-stock products are treated the same as not-found so they never surface on the storefront.
-    if not result.data or (result.data[0].get("stock_quantity") or 0) <= 0:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return result.data[0]
+    def load() -> dict:
+        supabase = get_supabase()
+        result = supabase.table("products").select("*").eq("slug", slug).limit(1).execute()
+        # Out-of-stock products are treated the same as not-found so they never surface on the storefront.
+        if not result.data or (result.data[0].get("stock_quantity") or 0) <= 0:
+            raise HTTPException(status_code=404, detail="Product not found")
+        product = dict(result.data[0])
+
+        website_serial = product.get("website_serial")
+        if website_serial:
+            siblings = (
+                supabase.table("products")
+                .select("id,slug,name,color,size,image_url,price,stock_quantity,is_primary_variant")
+                .eq("website_serial", website_serial)
+                .eq("is_active", True)
+                .gt("stock_quantity", 0)
+                .execute()
+            )
+            product["variants"] = siblings.data or []
+        else:
+            product["variants"] = []
+        return product
+
+    return cached(f"product:{slug}", 60, load)
 
 
 @router.post("/sync")
@@ -80,6 +110,7 @@ async def trigger_sync():
     from ..services.zoho_inventory import sync_products_to_supabase
 
     synced = await sync_products_to_supabase()
+    invalidate_catalog()
     return {"status": "ok", "synced": synced}
 
 
@@ -116,4 +147,5 @@ def adjust_stock(payload: ProductStockAdjustIn):
 
     new_stock = max((row.get("stock_quantity") or 0) - payload.quantity, 0)
     supabase.table("products").update({"stock_quantity": new_stock}).eq("id", payload.product_id).execute()
+    invalidate_catalog()
     return {"status": "ok", "product_id": payload.product_id, "new_stock": new_stock}

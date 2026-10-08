@@ -1,4 +1,4 @@
-import { api } from './client'
+import { cachedGet } from './client'
 import type { PublicSettings } from '../types'
 
-export const getPublicSettings = () => api.get<PublicSettings>('/settings')
+export const getPublicSettings = () => cachedGet<PublicSettings>('/settings', 120_000)

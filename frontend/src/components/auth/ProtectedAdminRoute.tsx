@@ -1,9 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAdminAuth } from '../../context/AdminAuthContext'
+import BrandLoader from '../ui/BrandLoader'
 
 export default function ProtectedAdminRoute() {
   const { isAuthenticated, isLoading } = useAdminAuth()
-  if (isLoading) return null
+  if (isLoading) return <BrandLoader />
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />
   return <Outlet />
 }

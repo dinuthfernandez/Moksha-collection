@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { completeReturn, getReturns } from '../../api/admin'
 import type { ReturnOrder } from '../../types'
+import { withVariant } from '../../utils/variant'
 import '../admin/AdminOrders.css'
 import './AdminReturns.css'
 
@@ -65,7 +66,7 @@ export default function AdminReturns() {
               <ul className="admin-order-items">
                 {order.items.map((item) => (
                   <li key={item.id}>
-                    {item.product_name ?? 'Item'} × {item.quantity} — {(item.price * item.quantity).toFixed(3)} BHD
+                    {withVariant(item.product_name ?? 'Item', item)}{item.product_code ? ` [${item.product_code}]` : ''} × {item.quantity} — {(item.price * item.quantity).toFixed(3)} BHD
                   </li>
                 ))}
               </ul>

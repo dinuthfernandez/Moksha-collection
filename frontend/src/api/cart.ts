@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, clearApiCache } from './client'
 
 export interface CartReservation {
   product_id: string
@@ -7,6 +7,8 @@ export interface CartReservation {
   stock_quantity: number
 }
 
-export function setCartReservation(cartId: string, productId: string, quantity: number) {
-  return api.put<CartReservation>(`/cart/reservations/${productId}`, { cart_id: cartId, quantity })
+export async function setCartReservation(cartId: string, productId: string, quantity: number) {
+  const reservation = await api.put<CartReservation>(`/cart/reservations/${productId}`, { cart_id: cartId, quantity })
+  clearApiCache()
+  return reservation
 }

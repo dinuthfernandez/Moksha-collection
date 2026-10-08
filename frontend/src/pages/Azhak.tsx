@@ -19,18 +19,7 @@ interface CatalogEntry {
   product?: Product
 }
 
-const FALLBACK_CATEGORIES = [
-  { id: 'necklace', name: 'Necklace', slug: 'necklace', image_url: null },
-  { id: 'earrings', name: 'Earrings', slug: 'earrings', image_url: null },
-  { id: 'bangles', name: 'Bangles', slug: 'bangles', image_url: null },
-  { id: 'hip-chains', name: 'Hip Chains', slug: 'hip-chains', image_url: null },
-  { id: 'panja', name: 'Panja', slug: 'panja', image_url: null },
-  { id: 'hair-accessories', name: 'Hair Accessories', slug: 'hair-accessories', image_url: null },
-  { id: 'maang-tikka', name: 'Maang Tikka', slug: 'maang-tikka', image_url: null },
-  { id: 'finger-rings', name: 'Finger Rings', slug: 'finger-rings', image_url: null },
-  { id: 'anklets', name: 'Anklets', slug: 'anklets', image_url: null },
-  { id: 'bag-collection', name: 'Bag Collection', slug: 'bag-collection', image_url: null },
-]
+
 
 const DEMO_PRODUCTS: CatalogEntry[] = [
   { id: 'sample-01', name: 'Sample Necklace', slug: '', price: 8.5, image_url: null },
@@ -119,7 +108,7 @@ export default function Azhak() {
     }
   }, [page])
 
-  const allCategories = categories.length > 0 ? categories : FALLBACK_CATEGORIES
+  const allCategories = categories
   const visibleCategories = allCategories.slice(0, visibleCategoryCount)
 
   const handleAddToBag = async (product: Product) => {
@@ -161,6 +150,7 @@ export default function Azhak() {
           </div>
         </div>
 
+        {!categoriesLoading && allCategories.length === 0 ? null : (
         <section className="azhak-category-section" aria-labelledby="azhak-categories-title">
           <div className="azhak-section-heading">
             <h2 id="azhak-categories-title">Shop by Category</h2>
@@ -200,6 +190,7 @@ export default function Azhak() {
             </button>
           )}
         </section>
+        )}
 
         <section className="azhak-products-section" aria-labelledby="azhak-catalog-title">
           <div className="azhak-section-heading">

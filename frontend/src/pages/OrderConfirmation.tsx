@@ -11,6 +11,7 @@ import { calculateCouponOffer } from '../utils/coupons'
 import { ApiError } from '../api/client'
 import { getAddressTier } from '../data/addressTiers'
 import type { Address, Coupon, DeliveryRate, DeliveryType } from '../types'
+import { withVariant } from '../utils/variant'
 import './OrderConfirmation.css'
 
 const DELIVERY_LABELS: Record<DeliveryType, string> = {
@@ -158,7 +159,7 @@ export default function OrderConfirmation() {
           <ul>
             {items.map((item) => (
               <li key={`${item.id}-${item.size}-${item.color}`}>
-                <span>{item.name} × {item.quantity}</span>
+                <span>{withVariant(item.name, item)} × {item.quantity}</span>
                 <strong>{(item.price * item.quantity).toFixed(3)} BHD</strong>
               </li>
             ))}

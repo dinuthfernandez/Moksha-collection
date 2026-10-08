@@ -1,9 +1,11 @@
+import BrandLoader from '../components/ui/BrandLoader'
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { cancelMyOrder, getMyOrders, requestOrderReturn } from '../api/orders'
 import { getMyReviewedOrderItems, submitProductReview } from '../api/reviews'
 import { ApiError } from '../api/client'
 import type { OrderDetail, OrderItemDetail } from '../types'
+import { withVariant } from '../utils/variant'
 import './Orders.css'
 
 const STATUS_LABELS: Record<OrderDetail['status'], string> = {
@@ -129,7 +131,7 @@ export default function Orders() {
       </div>
 
       {error && <p className="auth-form-error">{error}</p>}
-      {isLoading && <p>Loading your orders…</p>}
+      {isLoading && <BrandLoader fullScreen={false} label="Loading your orders" />}
       {!isLoading && orders.length === 0 && <p className="orders-empty">You haven't placed any orders yet.</p>}
 
       <div className="orders-list">
@@ -143,10 +145,10 @@ export default function Orders() {
             <ul className="order-card-items">
               {order.items.map((item) => (
                 <li key={item.id}>
-                  {item.product_image_url && <img src={item.product_image_url} alt={item.product_name ?? ''} />}
+                  {item.product_image_url && <img src={item.product_image_url} alt={item.product_name ?? ''} loading="lazy" decoding="async" />}
                   <div className="order-item-content">
                     <div className="order-item-summary">
-                      <span>{item.product_name ?? 'Item'} × {item.quantity}</span>
+                      <span>{withVariant(item.product_name ?? 'Item', item)} × {item.quantity}</span>
                       <strong>{(item.price * item.quantity).toFixed(3)} BHD</strong>
                     </div>
                     {order.status === 'delivered' && item.product_id && (

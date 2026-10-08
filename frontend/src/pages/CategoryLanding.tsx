@@ -23,31 +23,6 @@ interface CatalogEntry {
   product?: Product
 }
 
-const FALLBACK_CATEGORIES = [
-  { id: 'bottom-collection', name: 'Bottom Collection', slug: 'bottom-collection', image_url: null },
-  { id: 'co-ord-sets', name: 'Co Ord Sets', slug: 'co-ord-sets', image_url: null },
-  { id: 'dupatta-collection', name: 'Dupatta Collection', slug: 'dupatta-collection', image_url: null },
-  { id: 'feeding-kurti', name: 'Feeding Kurti', slug: 'feeding-kurti', image_url: null },
-  { id: 'girls-wear', name: 'Girls Wear', slug: 'girls-wear', image_url: null },
-  { id: 'home-wear', name: 'Home Wear', slug: 'home-wear', image_url: null },
-  { id: 'kaftan-collection', name: 'Kaftan Collection', slug: 'kaftan-collection', image_url: null },
-  { id: 'kurti', name: 'Kurti', slug: 'kurti', image_url: null },
-  { id: 'plus-size-outfits', name: 'Plus Size Outfits', slug: 'plus-size-outfits', image_url: null },
-  { id: 'premium-collections', name: 'Premium Collections', slug: 'premium-collections', image_url: null },
-  { id: 'salwar-material', name: 'Salwar Material', slug: 'salwar-material', image_url: null },
-  { id: 'skirt', name: 'Skirt', slug: 'skirt', image_url: null },
-  { id: 'top-bottom-set', name: 'Top Bottom Set', slug: 'top-bottom-set', image_url: null },
-  { id: 'western-outfits', name: 'Western Outfits', slug: 'western-outfits', image_url: null },
-  { id: 'saree', name: 'Saree', slug: 'saree', image_url: null },
-  { id: 'top', name: 'Top', slug: 'top', image_url: null },
-  { id: 'top-dupatta', name: 'Top & Dupatta', slug: 'top-dupatta', image_url: null },
-  { id: '2-piece-set', name: '2 Piece Set', slug: '2-piece-set', image_url: null },
-  { id: '3-piece-set', name: '3 Piece Set', slug: '3-piece-set', image_url: null },
-  { id: 'churitar-material', name: 'Churitar Material', slug: 'churitar-material', image_url: null },
-  { id: 'long-frock', name: 'Long Frock', slug: 'long-frock', image_url: null },
-  { id: 'frock', name: 'Frock', slug: 'frock', image_url: null },
-]
-
 const DEMO_PRODUCTS: CatalogEntry[] = [
   { id: 'clothing-sample-01', name: 'Sample Kurti', slug: '', price: 18, image_url: null },
   { id: 'clothing-sample-02', name: 'Sample Co-Ord Set', slug: '', price: 24, image_url: null },
@@ -162,7 +137,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' }) {
     }
   }, [page, type])
 
-  const allCategories = categories.length > 0 ? categories : FALLBACK_CATEGORIES
+  const allCategories = categories
   const visibleCategories = allCategories.slice(0, visibleCategoryCount)
 
   const handleAddToBag = async (product: Product) => {
@@ -199,6 +174,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' }) {
       />
 
       <div className="azhak-page clothing-shop-sections">
+        {!categoriesLoading && allCategories.length === 0 ? null : (
         <section className="azhak-category-section container" aria-labelledby="clothing-categories-title">
           <div className="azhak-section-heading">
             <h2 id="clothing-categories-title">Shop by Category</h2>
@@ -234,6 +210,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' }) {
             </button>
           )}
         </section>
+        )}
 
         <Reveal as="section" className="container category-landing-section">
           <div className="section-heading">
@@ -252,7 +229,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' }) {
                 <Link key={product.id} to={`/product/${product.slug}`} className="product-card">
                   <div className="product-card-image-wrap">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="product-card-image" />
+                      <img src={product.image_url} alt={product.name} className="product-card-image" loading="lazy" decoding="async" />
                     ) : (
                       <div className="product-card-image placeholder">No Image</div>
                     )}

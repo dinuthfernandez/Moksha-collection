@@ -46,6 +46,34 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+const responseCache = new Map<string, { expires: number; data: unknown }>()
+const inflightRequests = new Map<string, Promise<unknown>>()
+
+/** Public GET with a short in-memory cache and request de-duplication. */
+export function cachedGet<T>(path: string, ttlMs = 60_000): Promise<T> {
+  const hit = responseCache.get(path)
+  if (hit && hit.expires > Date.now()) return Promise.resolve(hit.data as T)
+  const pending = inflightRequests.get(path)
+  if (pending) return pending as Promise<T>
+  const promise = request<T>(path)
+    .then((data) => {
+      responseCache.set(path, { expires: Date.now() + ttlMs, data })
+      return data
+    })
+    .finally(() => inflightRequests.delete(path))
+  inflightRequests.set(path, promise)
+  return promise
+}
+
+export function peekCached<T>(path: string): T | undefined {
+  const hit = responseCache.get(path)
+  return hit && hit.expires > Date.now() ? (hit.data as T) : undefined
+}
+
+export function clearApiCache() {
+  responseCache.clear()
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, data: unknown) => request<T>(path, { method: 'POST', body: JSON.stringify(data) }),

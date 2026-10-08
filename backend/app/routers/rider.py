@@ -7,6 +7,7 @@ from ..database import get_supabase
 from ..schemas import RiderOrderOut, RiderOrderUpdateIn
 from ..services.email import send_sales_email
 from ..services.email_templates import render_order_completed_email
+from ..services.order_inventory import restock_order_items
 
 router = APIRouter(prefix="/delivery", tags=["delivery rider"])
 
@@ -79,6 +80,9 @@ def update_rider_order(token: str, payload: RiderOrderUpdateIn):
     if not updated.data:
         raise HTTPException(status_code=404, detail="Order not found")
     result = updated.data[0]
+
+    if payload.action == "cancelled":
+        restock_order_items(supabase, order["id"])
 
     if payload.action == "delivered" and order.get("email"):
         try:

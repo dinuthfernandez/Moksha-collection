@@ -1,5 +1,29 @@
+import logging
+
 from ..config import get_settings
+from .cache import invalidate_catalog
 from .zoho_inventory import ZohoInventoryClient
+
+logger = logging.getLogger(__name__)
+
+
+def load_order_items(supabase, order_id: str) -> list[dict]:
+    """Order items with the product's current size/color attached for display."""
+    items = supabase.table("order_items").select("*").eq("order_id", order_id).execute().data or []
+    product_ids = list({item["product_id"] for item in items if item.get("product_id")})
+    attributes: dict[str, dict] = {}
+    if product_ids:
+        products = supabase.table("products").select("id,size,color,product_code").in_("id", product_ids).execute().data or []
+        attributes = {product["id"]: product for product in products}
+    return [
+        {
+            **item,
+            "size": attributes.get(item.get("product_id"), {}).get("size"),
+            "color": attributes.get(item.get("product_id"), {}).get("color"),
+            "product_code": attributes.get(item.get("product_id"), {}).get("product_code"),
+        }
+        for item in items
+    ]
 
 
 def restock_order_items(supabase, order_id: str) -> None:
@@ -37,9 +61,10 @@ def restock_order_items(supabase, order_id: str) -> None:
         quantity = int(item.get("quantity") or 0)
         new_stock = (product.get("stock_quantity") or 0) + quantity
         supabase.table("products").update({"stock_quantity": new_stock}).eq("id", product_id).execute()
+        invalidate_catalog()
 
         if zoho_client and product.get("zoho_item_id"):
             try:
                 zoho_client.adjust_stock(product["zoho_item_id"], quantity)
             except Exception:
-                pass
+                logger.exception("Zoho restock failed for order %s item %s", order_id, product_id)

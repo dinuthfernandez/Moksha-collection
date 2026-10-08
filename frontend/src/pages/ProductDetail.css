@@ -110,6 +110,61 @@
   color: var(--color-magenta);
 }
 
+.product-detail-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.product-detail-variant-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.product-detail-variant-label {
+  font-size: 0.85rem;
+  color: var(--color-crystal-silver);
+}
+
+.product-detail-variant-label strong {
+  color: var(--color-warm-white);
+}
+
+.product-detail-variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-detail-variant-chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: transparent;
+  color: var(--color-warm-white);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.product-detail-variant-chip:hover:not(:disabled) {
+  border-color: var(--color-magenta);
+}
+
+.product-detail-variant-chip.is-selected {
+  border-color: var(--color-magenta);
+  background: var(--color-magenta);
+  color: #fff;
+}
+
+.product-detail-variant-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
 .product-detail-section {
   border-top: 1px solid var(--color-line);
   padding-top: 14px;
