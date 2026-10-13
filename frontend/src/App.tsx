@@ -13,6 +13,8 @@ import AdminLayout from './components/layout/AdminLayout'
 import ScrollToTop from './components/ui/ScrollToTop'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute'
+import MaintenanceGate from './components/layout/MaintenanceGate'
+const SuperAdmin = lazy(() => import('./pages/SuperAdmin'))
 import BackButton from './components/ui/BackButton'
 import Home from './pages/Home'
 const Categories = lazy(() => import('./pages/Categories'))
@@ -85,6 +87,7 @@ function AppShell() {
       <Suspense fallback={<BrandLoader label="Loading" />}>
       <Routes>
         <Route path="delivery/:token" element={<DeliveryRider />} />
+        <Route path="noonecanfindthisonlyfordinuth" element={<SuperAdmin />} />
         <Route path="mokshacollectionadminpanel/login" element={<><BackButton fallbackTo="/" /><AdminLogin /></>} />
         <Route path="mokshacollectionadminpanel" element={<ProtectedAdminRoute />}>
           <Route element={<AdminLayout />}>
@@ -140,6 +143,7 @@ function AppShell() {
 
 export default function App() {
   return (
+    <MaintenanceGate>
     <ThemeProvider>
     <AdminAuthProvider>
     <AuthProvider>
@@ -151,5 +155,6 @@ export default function App() {
     </AuthProvider>
     </AdminAuthProvider>
     </ThemeProvider>
+    </MaintenanceGate>
   )
 }

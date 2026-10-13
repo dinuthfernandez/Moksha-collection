@@ -1,0 +1,171 @@
+MOKSHA COLLECTIONS - WHAT THE SYSTEM DOES BEHIND THE SCENES
+===========================================================
+A plain-language list of the automatic features working in the background
+of your website. You don't have to do anything for these to work.
+
+
+A. PRODUCTS AND STOCK (connected to Zoho Inventory)
+---------------------------------------------------
+1. Automatic product import from Zoho
+   Products you add in Zoho Inventory appear on the website by themselves:
+   name, price, photos, category, size, color and stock. No double typing.
+
+2. Automatic stock updates
+   When stock changes in Zoho (for example a sale in your physical shop),
+   the website stock is updated automatically. Customers always see the
+   real quantity available.
+
+3. Shop sales reduce website stock instantly
+   When something is sold offline in your shop, Zoho tells the website and
+   the stock goes down, so you never sell an item twice.
+
+4. Exact size and color stock
+   Every size and color combination (for example "3XL - Mix Colour") has its
+   own stock. When one is ordered, only that exact item is reduced, never
+   the other sizes or colors.
+
+5. Size and color shown together
+   Customers choose "Size - Color" in one place. When they change it, the
+   available stock changes to match.
+
+6. Similar designs grouped into one product
+   The same design in different sizes and colors shows as one product card
+   on the shop pages instead of many repeated items.
+
+7. Protection against accidental hiding of products
+   If a wrong or empty update ever comes from Zoho, the system refuses to
+   hide all your products by mistake.
+
+8. Automatic stock return on cancel or return
+   If an order is cancelled (by the customer, admin or delivery rider) or a
+   return is completed, the items go back into stock immediately, on the
+   website and in Zoho.
+
+9. Hidden internal product codes
+   Internal codes (like MC-xxxx) are used only by the system to find the
+   exact item. Customers never see them.
+
+
+B. ORDERS AND INVOICES
+----------------------
+10. Automatic Zoho invoice for every order
+    Each website order creates an invoice in Zoho Inventory, so your
+    accounting stays complete without manual work.
+
+11. Automatic invoice cancel (void)
+    If an order is cancelled or returned, its Zoho invoice is marked as void
+    automatically. (Already-paid invoices may need a manual credit note.)
+
+12. Order emails to customers
+    Customers get an email when their order is placed and when it is
+    completed, sent from your company email.
+
+13. Order history that stays correct
+    Past orders always show the right size, color and item details.
+
+14. Return requests
+    Customers can request a return from their order. The request can only be
+    made once, and the admin can approve and complete it with one click.
+
+
+C. CART AND CHECKOUT
+--------------------
+15. Stock held while items are in the cart
+    When a customer adds an item to the cart, that quantity is reserved for
+    a short time so someone else cannot take it before they pay.
+
+16. Cart and checkout only for logged-in customers
+    Customers must log in to add items and place orders, which keeps orders
+    tied to real accounts and prevents fake or spam orders.
+
+17. Discount coupons
+    Create coupon codes with rules; the system checks and applies them at
+    checkout automatically.
+
+18. Delivery charges and free delivery
+    Delivery cost is calculated automatically, with free delivery once the
+    order reaches the amount you set.
+
+19. Delivery time estimates
+    Customers see an estimated delivery date range.
+
+
+D. CUSTOMERS AND SECURITY
+-------------------------
+20. Customer accounts
+    Sign up, login, profile with phone number and country code, saved
+    addresses.
+
+21. Wishlist
+    Customers can save favourite products and come back to them later.
+
+22. Product reviews
+    Customers can leave reviews on products.
+
+23. Welcome email
+    New customers automatically receive a branded welcome email.
+
+24. Forgot password by email code
+    Customers get a 6-digit code by email to reset their password.
+
+25. Password reset lock
+    After 5 wrong reset codes the account is locked for 1 hour, to stop
+    anyone trying to guess codes.
+
+26. Secure admin panel
+    The admin panel is at a private web address, protected by a login, and
+    all admin actions require that login.
+
+27. Customer ban
+    Admin can ban a customer account if needed.
+
+
+E. ADMIN PANEL
+--------------
+28. Dashboard
+    Sales and order statistics at a glance.
+
+29. Order management
+    View all orders, update status, cancel, and see exact size and color of
+    each item.
+
+30. Returns page
+    See all return requests and complete them (stock is restored for you).
+
+31. Email campaigns
+    Send marketing emails to all customers, choose to send from info@ or
+    sales@, add a button link, and send a test email to yourself first. The
+    email uses your brand design and greets each customer by name.
+
+32. Coupons and delivery settings
+    Manage discount codes, delivery rates and free-delivery limits.
+
+
+F. DELIVERY RIDER
+-----------------
+33. Delivery rider page
+    Riders have their own page to see assigned orders and update delivery
+    status (delivered, cancelled, etc.).
+
+34. Rider cancel restocks automatically
+    If a rider marks an order as cancelled, stock and invoice are handled
+    automatically.
+
+
+G. SPEED AND RELIABILITY
+------------------------
+35. Fast product loading
+    Products and categories are cached so pages open quickly, with a branded
+    Moksha loading screen while everything loads.
+
+36. Automatic retry on connection problems
+    If the database connection hiccups, the system retries by itself so
+    pages do not hang.
+
+37. Website analytics
+    Visits and activity are recorded so you can see how customers use the
+    site.
+
+38. Automatic safety checks
+    Failed emails or Zoho calls are recorded in logs and never stop an
+    order from going through.

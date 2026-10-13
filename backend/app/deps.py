@@ -1,7 +1,19 @@
 from fastapi import Header, HTTPException
 
+from .config import get_settings
 from .database import get_supabase
-from .security import decode_access_token, is_valid_admin_token
+from .security import decode_access_token, is_valid_admin_token, is_valid_superadmin_token
+
+
+async def get_current_superadmin(authorization: str | None = Header(default=None)) -> bool:
+    """Super admin session; only exists when SUPERADMIN_PASSWORD is configured."""
+    if not get_settings().superadmin_password:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not is_valid_superadmin_token(authorization.split(" ", 1)[1].strip()):
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+    return True
 
 
 async def get_current_customer(authorization: str | None = Header(default=None)) -> dict:

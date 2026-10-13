@@ -41,6 +41,23 @@ def decode_access_token(token: str) -> str | None:
 
 
 ADMIN_TOKEN_SUBJECT = "admin"
+SUPERADMIN_TOKEN_SUBJECT = "superadmin"
+
+
+def create_superadmin_token() -> str:
+    settings = get_settings()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.superadmin_jwt_expires_minutes)
+    payload: dict[str, Any] = {"sub": SUPERADMIN_TOKEN_SUBJECT, "role": "superadmin", "exp": expires_at}
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+def is_valid_superadmin_token(token: str) -> bool:
+    settings = get_settings()
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    except jwt.PyJWTError:
+        return False
+    return payload.get("sub") == SUPERADMIN_TOKEN_SUBJECT and payload.get("role") == "superadmin"
 
 
 def create_admin_token() -> str:

@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     admin_password: str = "admin"
     admin_jwt_expires_minutes: int = 60 * 12  # 12 hours
 
+    # Super admin console (hidden URL). Disabled entirely when the password is empty.
+    superadmin_password: str = ""
+    superadmin_jwt_expires_minutes: int = 60
+    # The real server shell is off unless explicitly enabled in the environment.
+    superadmin_shell_enabled: bool = False
+
     # Dedicated Zoho Mail OAuth app for info@ transactional emails.
     info_zoho_client_id: str = ""
     info_zoho_client_secret: str = ""

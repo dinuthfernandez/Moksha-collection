@@ -27,13 +27,16 @@ from .routers import (
     rider,
     settings as settings_router,
     size_charts,
+    superadmin,
     webhooks,
     wishlists,
 )
+from .services import superadmin_state
 from .services.cart_reservations import cart_reservation_expiry_loop
 from .services.zoho_inventory import sync_loop
 
 settings = get_settings()
+superadmin_state.install_log_buffer()
 
 app = FastAPI(
     title="Moksha Collections API",
@@ -42,6 +45,26 @@ app = FastAPI(
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=1024)
+
+MAINTENANCE_ALLOWED_PREFIXES = ("/api/superadmin", "/api/maintenance", "/api/health", "/api/webhooks")
+
+
+@app.middleware("http")
+async def maintenance_gate(request: Request, call_next):
+    path = request.url.path
+    if (
+        superadmin_state.is_maintenance_on()
+        and path.startswith("/api")
+        and request.method != "OPTIONS"
+        and not path.startswith(MAINTENANCE_ALLOWED_PREFIXES)
+    ):
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "maintenance", "maintenance": True},
+            headers={**_cors_headers(request), "Retry-After": "300"},
+        )
+    return await call_next(request)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -103,6 +126,13 @@ app.include_router(rider.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(admin_auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(superadmin.router, prefix="/api")
+
+
+@app.get("/api/maintenance")
+def maintenance_status():
+    state = superadmin_state.get_maintenance()
+    return {"enabled": state["enabled"], "message": state["message"], "eta": state["eta"]}
 
 
 @app.on_event("startup")
