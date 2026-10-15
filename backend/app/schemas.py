@@ -42,6 +42,7 @@ class ProductOut(BaseModel):
     website_serial: Optional[str] = None
     color: Optional[str] = None
     size: Optional[str] = None
+    kids_size: Optional[str] = None
     is_primary_variant: bool = True
     name: str
     slug: str
@@ -76,6 +77,7 @@ class ProductVariantOut(BaseModel):
     name: str
     color: Optional[str] = None
     size: Optional[str] = None
+    kids_size: Optional[str] = None
     image_url: Optional[str] = None
     price: float = 0
     stock_quantity: int = 0

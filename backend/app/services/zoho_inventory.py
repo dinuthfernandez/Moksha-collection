@@ -517,6 +517,10 @@ def _extract_size(item: dict[str, Any]) -> str | None:
     return _extract_custom_field(item, "cf_size", "Size")
 
 
+def _extract_kids_size(item: dict[str, Any]) -> str | None:
+    return _extract_custom_field(item, "cf_kids_size", "Kids size")
+
+
 def _extract_website_serial(item: dict[str, Any]) -> str | None:
     return _extract_custom_field(item, "cf_website_serial", "Website Serial")
 
@@ -733,6 +737,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
             "website_serial": _extract_website_serial(item),
             "color": _extract_color(item),
             "size": _extract_size(item),
+            "kids_size": _extract_kids_size(item),
             "stock_quantity": _extract_stock(item),
             "image_url": _extract_image_url(item),
             "zoho_sku": _extract_sku(item),

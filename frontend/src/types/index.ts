@@ -24,6 +24,7 @@ export interface Product {
   website_serial?: string | null
   color?: string | null
   size?: string | null
+  kids_size?: string | null
   is_primary_variant?: boolean
   name: string
   slug: string
@@ -56,6 +57,7 @@ export interface ProductVariant {
   name: string
   color?: string | null
   size?: string | null
+  kids_size?: string | null
   image_url?: string | null
   price: number
   stock_quantity: number

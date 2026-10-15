@@ -13,6 +13,7 @@ import ProductReviews from '../components/ui/ProductReviews'
 import ProductQuantitySelector from '../components/ui/ProductQuantitySelector'
 import { TERMS_AND_CONDITIONS_SECTIONS } from '../data/policies'
 import type { Address, DeliveryRate, Product, ProductVariant } from '../types'
+import { formatSize, formatVariant } from '../utils/variant'
 import './ProductDetail.css'
 
 // Smallest-to-largest display order for the size picker; anything not listed
@@ -22,6 +23,11 @@ const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', 'XXXL', '3XL', '4XL
 function sizeRank(size?: string | null) {
   const index = SIZE_ORDER.indexOf((size ?? '').toUpperCase())
   return index === -1 ? SIZE_ORDER.length : index
+}
+
+function kidsRank(kidsSize?: string | null) {
+  const age = Number.parseInt(kidsSize ?? '', 10)
+  return Number.isNaN(age) ? 99 : age
 }
 
 function formatDeliveryDate(daysFromNow: number) {
@@ -209,8 +215,8 @@ export default function ProductDetail() {
   const sortedVariants = hasVariants
     ? variants
         .slice()
-        .sort((a, b) => (a.color ?? '').localeCompare(b.color ?? '') || sizeRank(a.size) - sizeRank(b.size))
-    : [{ id: product.id, slug: product.slug, name: product.name, size: product.size, color: product.color, price: product.price, stock_quantity: product.stock_quantity, is_primary_variant: true } as ProductVariant]
+        .sort((a, b) => (a.color ?? '').localeCompare(b.color ?? '') ||         sizeRank(a.size) - sizeRank(b.size) || kidsRank(a.kids_size) - kidsRank(b.kids_size))
+            : [{ id: product.id, slug: product.slug, name: product.name, size: product.size, kids_size: product.kids_size, color: product.color, price: product.price, stock_quantity: product.stock_quantity, is_primary_variant: true } as ProductVariant]
 
   const goToVariant = (variant: ProductVariant) => {
     if (variant.slug === product.slug) return
@@ -224,7 +230,7 @@ export default function ProductDetail() {
       image_url: product.image_url ?? undefined,
       price: product.price,
       quantity,
-      size: product.size ?? undefined,
+      size: formatSize(product) ?? undefined,
       color: product.color ?? undefined,
     })
     if (!reserved) return
@@ -277,11 +283,11 @@ export default function ProductDetail() {
               <div className="product-detail-variant-group">
                 <span className="product-detail-variant-label">
                   Sizes &amp; Colors:{' '}
-                  <strong>{[product.size, product.color].filter(Boolean).join(' · ')}</strong>
+                  <strong>{formatVariant(product)}</strong>
                 </span>
                 <div className="product-detail-variant-options">
                   {sortedVariants.map((variant) => {
-                    const label = [variant.size, variant.color].filter(Boolean).join(' · ')
+                    const label = formatVariant(variant)
                     return (
                       <button
                         key={variant.id}

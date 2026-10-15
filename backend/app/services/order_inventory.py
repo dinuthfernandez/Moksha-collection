@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from ..config import get_settings
 from .cache import invalidate_catalog
+from .variant_labels import display_size
 from .zoho_inventory import ZohoInventoryClient
 
 logger = logging.getLogger(__name__)
@@ -14,12 +15,12 @@ def load_order_items(supabase, order_id: str) -> list[dict]:
     product_ids = list({item["product_id"] for item in items if item.get("product_id")})
     attributes: dict[str, dict] = {}
     if product_ids:
-        products = supabase.table("products").select("id,size,color,product_code").in_("id", product_ids).execute().data or []
+        products = supabase.table("products").        select("id,size,kids_size,color,product_code").in_("id", product_ids).execute().data or []
         attributes = {product["id"]: product for product in products}
     return [
         {
             **item,
-            "size": attributes.get(item.get("product_id"), {}).get("size"),
+                    "size": display_size(attributes.get(item.get("product_id"), {}).get("size"), attributes.get(item.get("product_id"), {}).get("kids_size")),
             "color": attributes.get(item.get("product_id"), {}).get("color"),
             "product_code": attributes.get(item.get("product_id"), {}).get("product_code"),
         }

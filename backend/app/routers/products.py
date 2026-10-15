@@ -81,7 +81,7 @@ def get_product(slug: str):
         if website_serial:
             siblings = (
                 supabase.table("products")
-                .select("id,slug,name,color,size,image_url,price,stock_quantity,is_primary_variant")
+                .select("id,slug,name,color,size,kids_size,image_url,price,stock_quantity,is_primary_variant")
                 .eq("website_serial", website_serial)
                 .eq("is_active", True)
                 .gt("stock_quantity", 0)
