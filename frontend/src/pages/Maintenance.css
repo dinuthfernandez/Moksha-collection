@@ -74,7 +74,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mt-orb, .mt-gear, .mt-bar span, .mt-card { animation: none; }
+  .mt-orb, .mt-gear, .mt-card { animation: none; }
+  .mt-bar span { animation-duration: 2.6s; }
 }
 
 .mt-dev { margin-top: 18px; }
