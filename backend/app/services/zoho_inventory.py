@@ -604,24 +604,66 @@ async def sync_products_to_supabase() -> int:
     return await asyncio.to_thread(_write_products_to_supabase, items)
 
 
+ALLOWED_SUBCATEGORIES: dict[str, dict[str, str]] = {
+    "clothing": {
+        "2-piece-set": "2 Piece Set", "3-piece-set": "3 Piece Set", "kaftan": "Kaftan",
+        "top": "Top", "frock": "Frock", "saree": "Saree", "blouse": "Blouse",
+        "pavada": "Pavada", "set-saree": "Set Saree", "set-mundu": "Set Mundu",
+        "dupatta": "Dupatta", "pant": "Pant",
+    },
+    "accessories": {
+        "bangles": "Bangles", "glass-bangles": "Glass Bangles", "necklace": "Necklace",
+        "earrings": "Earrings", "studs": "Studs", "bracelets": "Bracelets",
+    },
+}
+OTHERS_SUBCATEGORY: dict[str, tuple[str, str]] = {
+    "clothing": ("Others", "others"),
+    "accessories": ("Others", "accessories-others"),
+}
+_SUBCATEGORY_ALIASES = {
+    "2-pcs-set": "2-piece-set", "3-pcs-set": "3-piece-set", "fork": "frock",
+    "pattupavada": "pavada", "set-mund": "set-mundu", "duppatta": "dupatta", "pants": "pant",
+}
+
+
+def _normalize_subcategory(category_slug: str | None, name: str | None) -> tuple[str | None, str | None]:
+    """Maps a Zoho sub category onto the curated website list; anything else goes to that type's Others."""
+    if category_slug not in ALLOWED_SUBCATEGORIES:
+        return name, (_slugify(name, "") if name else None)
+    slug = _slugify(name, "") if name else ""
+    slug = _SUBCATEGORY_ALIASES.get(slug, slug)
+    allowed = ALLOWED_SUBCATEGORIES[category_slug]
+    if slug in allowed:
+        return allowed[slug], slug
+    return OTHERS_SUBCATEGORY[category_slug]
+
+
 def _sync_subcategories_to_categories(supabase: Any, subcategories_seen: dict[tuple[str, str], str]) -> None:
     """Auto-populates the `categories` table (the "Shop by Category" tiles) from the
     distinct (Product Category, Product Sub Category) pairs actually present on
     synced items. Never overwrites an existing row's image_url/display_order, and
     never deletes rows (so a manually curated tile image always survives a resync)."""
-    if not subcategories_seen:
-        return
+    desired: dict[tuple[str, str], str] = {}
+    for ctype, mapping in ALLOWED_SUBCATEGORIES.items():
+        for slug, name in mapping.items():
+            desired[(ctype, slug)] = name
+        oname, oslug = OTHERS_SUBCATEGORY[ctype]
+        desired[(ctype, oslug)] = oname
 
     existing = supabase.table("categories").select("slug").execute()
     existing_slugs = {row["slug"] for row in (existing.data or [])}
 
     new_rows = [
         {"name": name, "slug": slug, "type": category_type, "is_active": True}
-        for (category_type, slug), name in subcategories_seen.items()
+        for (category_type, slug), name in desired.items()
         if slug not in existing_slugs
     ]
     for start in range(0, len(new_rows), 100):
         supabase.table("categories").insert(new_rows[start : start + 100]).execute()
+
+    stale = [slug for slug in existing_slugs if slug not in {s for (_, s) in desired}]
+    for start in range(0, len(stale), 100):
+        supabase.table("categories").delete().in_("slug", stale[start : start + 100]).execute()
 
 
 def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
@@ -674,7 +716,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
 
         category_slug = _extract_category_slug(item)
         subcategory_name = _extract_subcategory_name(item)
-        subcategory_slug = _slugify(subcategory_name, "") if subcategory_name else None
+        subcategory_name, subcategory_slug = _normalize_subcategory(category_slug, subcategory_name)
         if category_slug and subcategory_name and subcategory_slug:
             subcategories_seen[(category_slug, subcategory_slug)] = subcategory_name
 

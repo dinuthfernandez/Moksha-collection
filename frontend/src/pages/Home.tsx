@@ -32,7 +32,7 @@ export default function Home() {
           <p>Distinct edits, thoughtfully selected. Find the pieces that feel like you.</p>
         </div>
         <div className="mh-category-grid">
-          <Link className="mh-category-card" to="/clothing/kurti">
+          <Link className="mh-category-card" to="/clothing/top">
             <img src="/assets/category/DSC_5516.jpg.webp" alt="Kurti collection" />
             <span className="mh-category-copy"><span>01 · Everyday</span><strong>Kurtis</strong><ArrowRight size={17} /></span>
           </Link>
@@ -61,7 +61,7 @@ export default function Home() {
             <p>Fresh silhouettes, familiar ease. A first look at the pieces we’re wearing now.</p>
           </div>
           <div className="mh-arrival-grid">
-            <Link className="mh-arrival-card" to="/clothing/kurti">
+            <Link className="mh-arrival-card" to="/clothing/top">
               <div><img src="/assets/category/DSC_5679.jpg.webp" alt="Kurti in the new edit" /></div>
               <span><strong>Soft structure</strong><small>Explore kurtis</small></span>
             </Link>
