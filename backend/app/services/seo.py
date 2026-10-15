@@ -412,7 +412,8 @@ def inject(html: str, page: dict[str, Any]) -> str:
     html = _HEAD_STRIP.sub("", html)
     html = html.replace("</head>", f"    {render_head(page)}\n  </head>", 1)
     if page["body"]:
-        html = html.replace('<div id="root"></div>', f'<div id="root"><div id="seo-content">{page["body"]}</div></div>', 1)
+        hidden = "position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0"
+        html = html.replace('<div id="root"></div>', f'<div id="root"><div id="seo-content" style="{hidden}">{page["body"]}</div></div>', 1)
     return html
 
 
