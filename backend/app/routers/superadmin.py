@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..config import get_settings
 from ..database import get_supabase
@@ -46,6 +46,17 @@ class MaintenanceIn(BaseModel):
     enabled: bool
     message: str = Field(default="", max_length=500)
     eta: str = Field(default="", max_length=100)
+
+
+class BypassPasswordIn(BaseModel):
+    password: str = Field(default="", max_length=200)
+
+    @field_validator("password")
+    @classmethod
+    def _min_len(cls, value: str) -> str:
+        if value and len(value) < 8:
+            raise ValueError("Use at least 8 characters (or leave empty to remove).")
+        return value
 
 
 class ShellIn(BaseModel):
@@ -94,6 +105,7 @@ def overview():
 
     return {
         "maintenance": state.get_maintenance(),
+        "has_bypass_password": state.has_bypass_password(),
         "uptime_seconds": int(time.time() - state.STARTED_AT),
         "python": sys.version.split()[0],
         "platform": platform.platform(),
@@ -114,6 +126,13 @@ def set_maintenance(payload: MaintenanceIn, request: Request):
     result = state.set_maintenance(payload.enabled, payload.message, payload.eta)
     state.audit("maintenance_on" if payload.enabled else "maintenance_off", _client_ip(request), payload.message)
     return result
+
+
+@protected.post("/bypass-password")
+def set_bypass_password(payload: BypassPasswordIn, request: Request):
+    state.set_bypass_password(payload.password)
+    state.audit("bypass_password_set" if payload.password else "bypass_password_removed", _client_ip(request))
+    return {"has_bypass_password": state.has_bypass_password()}
 
 
 @protected.post("/actions/{action}")

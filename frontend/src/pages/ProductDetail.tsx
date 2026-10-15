@@ -1,6 +1,7 @@
 import { ProductDetailSkeleton } from '../components/ui/BrandLoader'
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useSeo } from '../utils/seo'
 import { CalendarDays, ExternalLink, Heart, MapPin, ShoppingBag, Star, Truck } from 'lucide-react'
 import { getProductBySlug, peekProductBySlug } from '../api/categories'
 import { getAddresses } from '../api/addresses'
@@ -72,6 +73,13 @@ export default function ProductDetail() {
   const [addressLoading, setAddressLoading] = useState(false)
   const [deliveryRates, setDeliveryRates] = useState<DeliveryRate[]>([])
   const [reviewSummary, setReviewSummary] = useState<{ average_rating: number; total: number }>({ average_rating: 0, total: 0 })
+
+  useSeo(
+    product ? `${product.name} - Buy Online in Bahrain | Moksha Collections` : undefined,
+    product
+      ? `Buy ${product.name} online in Bahrain from Moksha Collections, Manama. ${(product.description ?? '').slice(0, 110)}`.trim()
+      : undefined,
+  )
 
   const { addItem, reservationError, reservationBusy } = useCart()
   const { isSaved, toggle } = useWishlist()
@@ -257,12 +265,12 @@ export default function ProductDetail() {
           {product.image_url ? (
             <img src={product.image_url} alt={product.name} className="product-detail-image" />
           ) : (
-            <div className="product-detail-image placeholder">No Image</div>
+            <div className="product-detail-image placeholder" role="img" aria-label="Moksha Collections"><span className="mc-mark">mc</span></div>
           )}
         </div>
 
         <div className="product-detail-info">
-          {product.category_slug && <span className="eyebrow">{product.category_slug === 'accessories' ? 'Accessories' : 'Clothing'}</span>}
+          {product.category_slug && <span className="eyebrow">{product.category_slug === 'accessories' ? 'Accessories' : product.category_slug === 'saree' ? 'Saree' : 'Clothing'}</span>}
           <h1 className="product-detail-title">{product.name}</h1>
           <div className="product-detail-rating" aria-label={`${reviewSummary.average_rating.toFixed(1)} out of 5 stars from ${reviewSummary.total} reviews`}>
             <span aria-hidden="true" className="product-detail-rating-stars">

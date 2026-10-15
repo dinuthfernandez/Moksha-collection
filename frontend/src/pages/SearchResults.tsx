@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Search, SlidersHorizontal } from 'lucide-react'
 import { searchProducts } from '../api/categories'
 import type { Product } from '../types'
+import SearchBox from '../components/ui/SearchBox'
 import './SearchResults.css'
 
 const PAGE_SIZE = 24
@@ -110,8 +111,9 @@ export default function SearchResults() {
         {query ? (
           <p>Showing matches for <strong>“{query}”</strong>{!loading && ` · ${total} ${total === 1 ? 'item' : 'items'}`}</p>
         ) : (
-          <p>Search by product name or product code.</p>
+          <p>Search by product name, colour, category or product code.</p>
         )}
+        <SearchBox initialValue={query} />
       </div>
 
       <div className="search-results-layout">
@@ -140,7 +142,7 @@ export default function SearchResults() {
             <div className="search-empty-state">
               <Search size={26} aria-hidden="true" />
               <h2>What are you looking for?</h2>
-              <p>Enter a product name or code in the header search.</p>
+              <p>Type above to see suggestions, or pick a recent search.</p>
             </div>
           ) : loading ? (
             <p className="search-status">Searching the collection…</p>
@@ -158,7 +160,7 @@ export default function SearchResults() {
                 {products.map((product) => (
                   <Link key={product.id} to={`/product/${product.slug}`} className="search-product-card">
                     <div className="search-product-image-wrap">
-                      {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" /> : <span>No Image</span>}
+                      {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" /> : <span className="mc-mark">mc</span>}
                     </div>
                     <div className="search-product-body">
                       <h2>{product.name}</h2>

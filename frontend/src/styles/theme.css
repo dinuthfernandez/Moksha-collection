@@ -256,3 +256,18 @@ p {
     padding: 0 18px;
   }
 }
+
+.mc-mark {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(2.4rem, 8vw, 4rem);
+  letter-spacing: 1px;
+  color: var(--color-magenta);
+  user-select: none;
+}
+.search-product-image-wrap:has(> .mc-mark) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

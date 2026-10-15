@@ -1,0 +1,65 @@
+MOKSHA COLLECTIONS - HOW TO REACH #1 IN BAHRAIN (SEO + AI SEARCH PLAYBOOK)
+===========================================================================
+
+WHAT IS ALREADY BUILT INTO THE WEBSITE
+- Every page has its own title, description, canonical link, Open Graph/Twitter preview.
+- Google/AI crawlers get real HTML content for every page (not an empty React shell).
+- Structured data (JSON-LD): ClothingStore/LocalBusiness (address, phone, social), WebSite + search,
+  FAQ (shows as Google Q&A), breadcrumbs, collection pages, Product + price in BHD + stock.
+- /sitemap.xml  (all pages, all categories, all products, updates automatically after each Zoho sync)
+- /robots.txt   (allows Google, Bing, ChatGPT, Claude, Perplexity, Gemini etc.; hides cart/login/admin)
+- /llms.txt     (plain summary so AI assistants know exactly what Moksha is)
+- Real 404 for unknown URLs, noindex for private pages (cart, account, admin).
+
+DO THESE STEPS (in this order) - THIS IS WHAT ACTUALLY MAKES YOU #1
+Week 1 (must do)
+1. Google Search Console (search.google.com/search-console): add mokshacollections.com
+   (Domain property), verify via DNS, then Sitemaps -> submit  sitemap.xml
+   Then URL Inspection -> request indexing for: home, /clothing, /saree, /accessories.
+2. Bing Webmaster Tools (bing.com/webmasters): import from Search Console. (Bing feeds ChatGPT search.)
+3. Google Business Profile (business.google.com) - MOST IMPORTANT for "clothing store in Bahrain":
+   - Category: "Indian clothing store" (+ secondary: Clothing store, Saree shop, Boutique)
+   - Exact address, WhatsApp number, opening hours, website link, 15+ real photos of shop and items
+   - Add products, post weekly offers/new arrivals
+   - Ask EVERY happy customer for a Google review (aim 50+, 4.7+). Reply to every review.
+4. Make sure the website domain redirects www -> non-www (or the reverse) so only ONE version exists.
+5. Add the website link to Instagram bio, Facebook page, TikTok bio, WhatsApp Business profile.
+
+Week 2-4
+6. Apple Maps Connect, Bing Places, Waze, Foursquare, Yelp: list the same name/address/phone (identical everywhere).
+7. Bahrain directories: Yellow Pages Bahrain, Bahrain.com / Bahrain Business Directory, Time Out Bahrain,
+   Bahrain Lists, Kerala/Indian community sites and Facebook groups (Malayali/Indians in Bahrain).
+8. Backlinks: ask Bahrain bloggers/influencers (Instagram, TikTok) to feature you AND link to the site.
+   Offer a discount code in exchange. Ask Indian associations, Onam/Vishu/Eid/Diwali event pages to list you.
+9. Share the link in WhatsApp groups, family and friends - real visits and sharing help;
+   asking friends to just open the site does NOT help ranking much. What helps: friends who
+   SEARCH "Moksha Collections", click the Google result, and leave a Google review.
+10. Post consistently: Instagram reels / TikTok every few days, always with the website link.
+
+Ongoing (monthly)
+11. Add a short description in Zoho for every product (shows on website + helps Google). Good photos.
+12. Festival campaigns: Onam, Vishu, Eid, Diwali, Christmas, Wedding season - email campaigns + social.
+13. Keep product stock accurate (already automated) - out-of-stock pages lose ranking.
+14. Check Search Console monthly: which searches bring people, fix any "not indexed" pages.
+
+KEYWORDS TO TARGET (already in titles/descriptions)
+Indian dress Bahrain | Indian clothing store Bahrain | saree shop Bahrain | kurti Bahrain |
+Kerala dress Bahrain | set mundu Bahrain | kaftan Bahrain | Indian accessories / bangles Bahrain |
+ladies boutique Manama | kids Indian dress Bahrain
+
+AI ASSISTANTS (ChatGPT, Gemini, Perplexity, Claude)
+- They use Google/Bing results + sites like Google Maps, reviews, Instagram, directories.
+- Already done: /llms.txt, FAQ structured data, bot access in robots.txt.
+- You do: get Google reviews, directory listings, and mentions on other Bahrain sites. The more places
+  that say "Moksha Collections - Indian clothing store in Manama", the more AI repeats it.
+
+REALISTIC TIMELINE
+- Indexed by Google: 3-14 days after submitting sitemap.
+- Showing for brand name "Moksha Collections": 1-3 weeks.
+- Top 3 for "Indian clothing store Bahrain": 2-6 months with reviews + backlinks + Business Profile.
+- No one can guarantee #1 - competition and reviews decide it. Google Business Profile reviews matter most for local searches.
+
+AFTER DEPLOY - QUICK CHECK
+- Open  https://mokshacollections.com/sitemap.xml  /robots.txt  /llms.txt  (all must load)
+- Test rich results: search.google.com/test/rich-results with your home URL
+- View page source of any page: you should see the title + JSON-LD without running JavaScript.

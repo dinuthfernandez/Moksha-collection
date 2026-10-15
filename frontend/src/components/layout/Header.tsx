@@ -1,7 +1,7 @@
 import { NavLink, Link } from 'react-router-dom'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, ShoppingBag, User, Heart, Search, ArrowRight } from 'lucide-react'
+import { Menu, X, ShoppingBag, User, Heart, Search, ArrowRight, ChevronDown } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { useWishlist } from '../../context/WishlistContext'
@@ -12,7 +12,11 @@ import './Header.css'
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
   { label: 'Clothing', to: '/clothing' },
+  { label: 'Saree', to: '/saree' },
   { label: 'Categories', to: '/categories' },
+]
+
+const MORE_LINKS = [
   { label: 'Size Charts', to: '/size-charts' },
   { label: 'About Us', to: '/about-us' },
   { label: 'Contact Us', to: '/contact-us' },
@@ -20,6 +24,8 @@ const NAV_LINKS = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const moreRef = useRef<HTMLDivElement>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -29,6 +35,28 @@ export default function Header() {
   const { itemCount } = useCart()
   const { isAuthenticated, customer } = useAuth()
   const { itemCount: wishlistCount } = useWishlist()
+
+  useEffect(() => {
+    setMoreOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!moreOpen) return
+    const onDown = (event: MouseEvent) => {
+      if (!moreRef.current?.contains(event.target as Node)) setMoreOpen(false)
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMoreOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [moreOpen])
+
+  const moreActive = MORE_LINKS.some((l) => location.pathname.startsWith(l.to))
 
   useEffect(() => {
     const input = searchInputRef.current
@@ -90,6 +118,13 @@ export default function Header() {
               </NavLink>
             ))}
             <NavLink
+              to="/saree"
+              className={({ isActive }) => 'site-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
+            >
+              <span className="azhak-nav-badge saree-nav-badge"><span className="mc-mark">mc</span></span>
+              Saree
+            </NavLink>
+            <NavLink
               to="/accessories"
               className={({ isActive }) => 'site-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
             >
@@ -98,7 +133,7 @@ export default function Header() {
               </span>
               Accessories
             </NavLink>
-            {NAV_LINKS.slice(2).map((link) => (
+            {NAV_LINKS.slice(3).map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -107,6 +142,31 @@ export default function Header() {
                 {link.label}
               </NavLink>
             ))}
+            <div className="site-nav-more" ref={moreRef}>
+              <button
+                type="button"
+                className={'site-nav-link site-nav-more-btn' + (moreActive || moreOpen ? ' is-active' : '')}
+                aria-haspopup="menu"
+                aria-expanded={moreOpen}
+                onClick={() => setMoreOpen((v) => !v)}
+              >
+                More <ChevronDown size={14} aria-hidden="true" className={moreOpen ? 'is-flipped' : ''} />
+              </button>
+              {moreOpen && (
+                <div className="site-nav-more-menu" role="menu">
+                  {MORE_LINKS.map((link) => (
+                    <NavLink
+                      key={link.to}
+                      to={link.to}
+                      role="menuitem"
+                      className={({ isActive }) => 'site-nav-more-item' + (isActive ? ' is-active' : '')}
+                    >
+                      {link.label}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
           <div className="site-header-actions">
@@ -173,6 +233,14 @@ export default function Header() {
             </NavLink>
           ))}
           <NavLink
+            to="/saree"
+            className={({ isActive }) => 'mobile-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
+            onClick={() => setMenuOpen(false)}
+          >
+            <span className="azhak-nav-badge saree-nav-badge"><span className="mc-mark">mc</span></span>
+            Saree
+          </NavLink>
+          <NavLink
             to="/accessories"
             className={({ isActive }) => 'mobile-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
             onClick={() => setMenuOpen(false)}
@@ -182,11 +250,22 @@ export default function Header() {
             </span>
             Accessories
           </NavLink>
-          {NAV_LINKS.slice(2).map((link) => (
+          {NAV_LINKS.slice(3).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               className={({ isActive }) => 'mobile-nav-link' + (isActive ? ' is-active' : '')}
+              onClick={() => setMenuOpen(false)}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+          <span className="mobile-nav-heading">More</span>
+          {MORE_LINKS.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) => 'mobile-nav-link mobile-nav-sub' + (isActive ? ' is-active' : '')}
               onClick={() => setMenuOpen(false)}
             >
               {link.label}

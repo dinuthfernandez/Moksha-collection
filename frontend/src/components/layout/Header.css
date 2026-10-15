@@ -69,6 +69,21 @@
   width: 100%;
 }
 
+.site-nav-more { position: relative; }
+.site-nav-more-btn { background: none; border: 0; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
+.site-nav-more-btn svg { transition: transform 0.2s ease; }
+.site-nav-more-btn svg.is-flipped { transform: rotate(180deg); }
+.site-nav-more-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; min-width: 170px; z-index: 60;
+  display: flex; flex-direction: column; padding: 6px;
+  background: var(--color-surface, #1c1c1c); border: 1px solid var(--color-border, rgba(255,255,255,.12));
+  border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,.35);
+}
+.site-nav-more-item { padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: var(--color-crystal-silver); white-space: nowrap; }
+.site-nav-more-item:hover, .site-nav-more-item.is-active { background: rgba(255,255,255,.08); color: var(--color-warm-white); }
+.mobile-nav-heading { display: block; padding: 14px 20px 4px; font-size: .7rem; text-transform: uppercase; letter-spacing: .12em; opacity: .55; }
+.mobile-nav-sub { padding-left: 34px; }
+
 /* Azhak (accessories sub-brand) nav item — logo mark + label, set apart
    from plain text links with a subtle pill so it reads as its own edit. */
 .azhak-nav-link {
@@ -104,6 +119,17 @@
   overflow: hidden;
   border-radius: 6px;
   background: var(--fixed-white);
+}
+
+.saree-nav-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.saree-nav-badge .mc-mark {
+  font-size: 1.05rem;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 .azhak-nav-logo {

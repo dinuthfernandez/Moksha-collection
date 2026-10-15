@@ -1,5 +1,4 @@
 import { useState, type CSSProperties } from 'react'
-import { ImageIcon } from 'lucide-react'
 import './PlaceholderImage.css'
 
 interface PlaceholderImageProps {
@@ -19,9 +18,8 @@ export default function PlaceholderImage({ src, alt, label, ratio, className = '
 
   if (failed) {
     return (
-      <div className={`placeholder-image is-empty ${className}`} style={style}>
-        <ImageIcon size={26} strokeWidth={1.2} />
-        {label && <span>{label}</span>}
+      <div className={`placeholder-image is-empty ${className}`} style={style} role="img" aria-label={alt}>
+        <span className="mc-mark">mc</span>
       </div>
     )
   }

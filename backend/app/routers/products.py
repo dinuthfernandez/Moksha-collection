@@ -12,10 +12,62 @@ from ..config import get_settings
 
 router = APIRouter(prefix="/products", tags=["products"])
 
+# Common spellings shoppers use -> how products are actually named.
+_SEARCH_ALIASES = {
+    "sari": "saree", "sarees": "saree", "saris": "saree", "kurthi": "kurti", "kurta": "kurti", "kurtis": "kurti",
+    "kaftans": "kaftan", "frocks": "frock", "dresses": "dress", "tops": "top", "pants": "pant", "bangle": "bangles",
+    "earring": "earrings", "stud": "studs", "bracelet": "bracelets", "necklaces": "necklace", "mundu": "mundu",
+    "pattupavada": "pavada", "pavadai": "pavada", "dupata": "dupatta", "duppatta": "dupatta",
+}
+
+
+def _search_tokens(q: str) -> list[str]:
+    words = re.sub(r"[^a-zA-Z0-9 _-]", " ", q.lower()).split()
+    return [_SEARCH_ALIASES.get(w, w) for w in words[:6]]
+
+
+@router.get("/suggest")
+def suggest_products(q: str = Query(min_length=1, max_length=60)):
+    """Autocomplete: matching categories first, then distinct product names."""
+    tokens = _search_tokens(q)
+    if not tokens:
+        return {"suggestions": []}
+    key = "suggest:" + " ".join(tokens)
+
+    def load():
+        supabase = get_supabase()
+        joined = " ".join(tokens)
+        cats = [
+            c for c in (supabase.table("categories").select("name,slug,type").eq("is_active", True).execute().data or [])
+            if all(t in c["name"].lower() for t in tokens) or joined in c["name"].lower()
+        ]
+        out: list[dict] = [
+            {"type": "category", "label": c["name"], "url": f"/{c['type']}/{c['slug']}"} for c in cats[:4]
+        ]
+        query = (
+            supabase.table("products").select("name,slug,subcategory_name,price,image_url")
+            .eq("is_active", True).gt("stock_quantity", 0).eq("is_primary_variant", True)
+        )
+        for token in tokens:
+            query = query.or_(f"name.ilike.%{token}%,subcategory_name.ilike.%{token}%,color.ilike.%{token}%")
+        seen: set[str] = set()
+        for row in (query.limit(40).execute().data or []):
+            label = row["name"].strip().title()
+            if label.lower() in seen:
+                continue
+            seen.add(label.lower())
+            out.append({"type": "product", "label": label, "url": f"/product/{row['slug']}",
+                        "image_url": row.get("image_url"), "price": row.get("price"), "category": row.get("subcategory_name")})
+            if len(out) >= 8:
+                break
+        return {"suggestions": out}
+
+    return cached(key, 120, load)
+
 
 @router.get("", response_model=ProductListOut)
 def list_products(
-    category: Optional[Literal["clothing", "accessories"]] = None,
+    category: Optional[Literal["clothing", "accessories", "saree"]] = None,
     category_slug: Optional[str] = Query(default=None, max_length=120),
     active_only: bool = Query(default=True),
     page: int = Query(default=1, ge=1),
@@ -43,11 +95,11 @@ def list_products(
         # matching variant is still findable by its own SKU/name.
         query = query.eq("is_primary_variant", True)
     if q:
-        safe_term = re.sub(r"[^a-zA-Z0-9 _-]", "", q.strip())
-        if safe_term:
+        for token in _search_tokens(q):
             query = query.or_(
-                f"name.ilike.%{safe_term}%,description.ilike.%{safe_term}%,"
-                f"product_code.ilike.%{safe_term}%,zoho_sku.ilike.%{safe_term}%"
+                f"name.ilike.%{token}%,description.ilike.%{token}%,color.ilike.%{token}%,"
+                f"subcategory_name.ilike.%{token}%,category_slug.ilike.%{token}%,"
+                f"product_code.ilike.%{token}%,zoho_sku.ilike.%{token}%"
             )
     if min_price is not None:
         query = query.gte("price", min_price)

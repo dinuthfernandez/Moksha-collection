@@ -28,6 +28,7 @@ export default function Footer() {
           <h3>Shop</h3>
           <ul>
             <li><Link to="/clothing">Clothing</Link></li>
+            <li><Link to="/saree">Saree</Link></li>
             <li><Link to="/accessories">Accessories</Link></li>
             <li><Link to="/size-charts">Size Charts</Link></li>
           </ul>

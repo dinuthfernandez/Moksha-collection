@@ -6,8 +6,10 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, Response
+from pydantic import BaseModel, Field
 
+from . import security
 from .config import get_settings
 from .routers import (
     addresses,
@@ -31,7 +33,7 @@ from .routers import (
     webhooks,
     wishlists,
 )
-from .services import superadmin_state
+from .services import seo, superadmin_state
 from .services.cart_reservations import cart_reservation_expiry_loop
 from .services.zoho_inventory import sync_loop
 
@@ -49,6 +51,15 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 MAINTENANCE_ALLOWED_PREFIXES = ("/api/superadmin", "/api/maintenance", "/api/health", "/api/webhooks")
 
 
+BYPASS_COOKIE = "mc_maint_bypass"
+
+
+def _has_bypass(request: Request) -> bool:
+    return superadmin_state.has_bypass_password() and security.is_valid_bypass_token(
+        request.cookies.get(BYPASS_COOKIE), superadmin_state.bypass_fingerprint()
+    )
+
+
 @app.middleware("http")
 async def maintenance_gate(request: Request, call_next):
     path = request.url.path
@@ -57,6 +68,7 @@ async def maintenance_gate(request: Request, call_next):
         and path.startswith("/api")
         and request.method != "OPTIONS"
         and not path.startswith(MAINTENANCE_ALLOWED_PREFIXES)
+        and not _has_bypass(request)
     ):
         return JSONResponse(
             status_code=503,
@@ -130,9 +142,55 @@ app.include_router(superadmin.router, prefix="/api")
 
 
 @app.get("/api/maintenance")
-def maintenance_status():
+def maintenance_status(request: Request):
     state = superadmin_state.get_maintenance()
-    return {"enabled": state["enabled"], "message": state["message"], "eta": state["eta"]}
+    return {
+        "enabled": state["enabled"],
+        "message": state["message"],
+        "eta": state["eta"],
+        "bypass": state["enabled"] and _has_bypass(request),
+        "bypass_available": superadmin_state.has_bypass_password(),
+    }
+
+
+class BypassIn(BaseModel):
+    password: str = Field(min_length=1, max_length=200)
+
+
+@app.post("/api/maintenance/bypass")
+async def maintenance_bypass(payload: BypassIn, request: Request):
+    ip = "bypass:" + (request.client.host if request.client else "unknown")
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        ip = "bypass:" + forwarded.split(",")[0].strip()
+    remaining = superadmin_state.lock_remaining(ip)
+    if remaining:
+        raise HTTPException(status_code=429, detail=f"Too many attempts. Try again in {remaining // 60 + 1} minute(s).")
+    if not superadmin_state.verify_bypass_password(payload.password):
+        superadmin_state.register_failure(ip)
+        superadmin_state.audit("bypass_failed", ip)
+        await asyncio.sleep(1.5)
+        raise HTTPException(status_code=401, detail="Access denied")
+    superadmin_state.register_success(ip)
+    superadmin_state.audit("bypass_ok", ip)
+    response = JSONResponse({"ok": True})
+    response.set_cookie(
+        BYPASS_COOKIE,
+        security.create_bypass_token(superadmin_state.bypass_fingerprint()),
+        max_age=security.BYPASS_COOKIE_HOURS * 3600,
+        httponly=True,
+        samesite="lax",
+        secure=request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https",
+        path="/",
+    )
+    return response
+
+
+@app.post("/api/maintenance/bypass/logout")
+def maintenance_bypass_logout():
+    response = JSONResponse({"ok": True})
+    response.delete_cookie(BYPASS_COOKIE, path="/")
+    return response
 
 
 @app.on_event("startup")
@@ -160,20 +218,41 @@ FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "di
 
 if FRONTEND_DIST.is_dir():
 
+    @app.get("/sitemap.xml")
+    def sitemap():
+        return Response(seo.sitemap_xml(), media_type="application/xml", headers={"Cache-Control": "public, max-age=3600"})
+
+    @app.get("/robots.txt")
+    def robots():
+        return PlainTextResponse(seo.robots_txt(), headers={"Cache-Control": "public, max-age=3600"})
+
+    @app.get("/llms.txt")
+    def llms():
+        return PlainTextResponse(seo.llms_txt(), headers={"Cache-Control": "public, max-age=3600"})
+
     @app.get("/{full_path:path}")
-    async def serve_frontend(full_path: str):
-        if full_path == "" or full_path.startswith("api/") or full_path == "api":
-            if full_path.startswith("api"):
-                raise HTTPException(status_code=404, detail="Not found")
-        else:
-            candidate = FRONTEND_DIST / full_path
-            if candidate.is_file():
-                return FileResponse(candidate)
+    def serve_frontend(full_path: str):
+        if full_path == "api" or full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not found")
+        if full_path:
+            candidate = (FRONTEND_DIST / full_path).resolve()
+            if candidate.is_file() and FRONTEND_DIST.resolve() in candidate.parents:
+                headers = {"Cache-Control": "public, max-age=31536000, immutable"} if full_path.startswith("assets/") else {}
+                return FileResponse(candidate, headers=headers)
 
         index_file = FRONTEND_DIST / "index.html"
-        if index_file.is_file():
+        if not index_file.is_file():
+            raise HTTPException(status_code=404, detail="Frontend build not found")
+        try:
+            page = seo.resolve("/" + full_path)
+            html = seo.inject(index_file.read_text(encoding="utf-8"), page)
+            status = page["status"]
+            headers = {"Cache-Control": "public, max-age=300"}
+            if page["noindex"]:
+                headers["X-Robots-Tag"] = "noindex, nofollow"
+            return HTMLResponse(html, status_code=status, headers=headers)
+        except Exception:
             return FileResponse(index_file)
-        raise HTTPException(status_code=404, detail="Frontend build not found")
 
 else:
 

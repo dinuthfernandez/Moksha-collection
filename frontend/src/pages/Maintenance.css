@@ -76,3 +76,10 @@
 @media (prefers-reduced-motion: reduce) {
   .mt-orb, .mt-gear, .mt-bar span, .mt-card { animation: none; }
 }
+
+.mt-dev { margin-top: 18px; }
+.mt-dev-link { background: none; border: 0; color: rgba(250, 247, 242, 0.35); font-size: 11px; letter-spacing: 1px; cursor: pointer; text-decoration: underline; }
+.mt-dev form { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.mt-dev input { padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(250, 247, 242, 0.25); background: rgba(0, 0, 0, 0.35); color: #faf7f2; font-size: 13px; }
+.mt-dev button[type=submit] { padding: 8px 16px; border-radius: 8px; border: 0; background: #e10a8c; color: #fff; cursor: pointer; }
+.mt-dev-error { width: 100%; margin: 4px 0 0; font-size: 12px; color: #ff7aa8; }

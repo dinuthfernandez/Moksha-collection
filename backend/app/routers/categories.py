@@ -10,7 +10,7 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 
 
 @router.get("", response_model=list[CategoryOut])
-def list_categories(type: Optional[Literal["clothing", "accessories"]] = None):
+def list_categories(type: Optional[Literal["clothing", "accessories", "saree"]] = None):
     """Subcategories under one or all of the top-level sections."""
     supabase = get_supabase()
     def load():

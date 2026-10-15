@@ -22,6 +22,7 @@ async function call<T>(path: string, token: string | null, body?: unknown): Prom
 
 interface Overview {
   maintenance: { enabled: boolean; message: string; eta: string; since: string | null }
+  has_bypass_password: boolean
   uptime_seconds: number
   python: string
   platform: string
@@ -51,6 +52,7 @@ export default function SuperAdmin() {
   const [notice, setNotice] = useState('')
   const [mtMessage, setMtMessage] = useState('')
   const [mtEta, setMtEta] = useState('')
+  const [bypassPw, setBypassPw] = useState('')
 
   const logout = useCallback(() => {
     sessionStorage.removeItem(TOKEN_KEY)
@@ -102,6 +104,15 @@ export default function SuperAdmin() {
     const res = await guard(() => call('/maintenance', token, { enabled, message: mtMessage, eta: mtEta }))
     if (res) {
       setNotice(enabled ? 'Maintenance is ON — the site is now closed to visitors.' : 'Maintenance is OFF — the site is live.')
+      loadOverview()
+    }
+  }
+
+  const saveBypass = async (value: string) => {
+    const res = await guard(() => call('/bypass-password', token, { password: value }))
+    if (res) {
+      setBypassPw('')
+      setNotice(value ? 'Bypass password saved.' : 'Bypass password removed.')
       loadOverview()
     }
   }
@@ -164,6 +175,23 @@ export default function SuperAdmin() {
                 <button className="sa-danger" onClick={() => toggleMaintenance(true)}>Turn on maintenance</button>
               )}
             </div>
+          </div>
+
+          <div className="sa-card">
+            <h2>Developer bypass password</h2>
+            <p className="sa-status">
+              {overview.has_bypass_password ? '● A bypass password is set' : '● No bypass password — nobody can get past maintenance'}
+            </p>
+            <label>New bypass password (min 8 characters)
+              <input type="password" autoComplete="new-password" value={bypassPw} onChange={(e) => setBypassPw(e.target.value)} placeholder="Leave empty & press Remove to disable" />
+            </label>
+            <div className="sa-row">
+              <button className="sa-go" disabled={bypassPw.length < 8} onClick={() => saveBypass(bypassPw)}>Save password</button>
+              {overview.has_bypass_password && <button className="sa-ghost" onClick={() => saveBypass('')}>Remove</button>}
+            </div>
+            <p className="sa-status" style={{ fontSize: 12 }}>
+              While maintenance is ON, developers open the site, tap “Developer access” on the maintenance page and enter this password. Changing or removing it instantly logs out every developer.
+            </p>
           </div>
 
           <div className="sa-card">

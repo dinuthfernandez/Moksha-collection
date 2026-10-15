@@ -1,12 +1,12 @@
 import { api, cachedGet, peekCached } from './client'
 import type { Category, PaginatedProducts, Product } from '../types'
 
-export function getCategories(type?: 'clothing' | 'accessories') {
+export function getCategories(type?: 'clothing' | 'accessories' | 'saree') {
   const query = type ? `?type=${type}` : ''
   return cachedGet<Category[]>(`/categories${query}`, 300_000)
 }
 
-export function getCategoryTree(type: 'clothing' | 'accessories') {
+export function getCategoryTree(type: 'clothing' | 'accessories' | 'saree') {
   return getCategories(type)
 }
 
@@ -15,7 +15,7 @@ export function getCategoryBySlug(slug: string) {
 }
 
 export function getProducts(
-  category?: 'clothing' | 'accessories',
+  category?: 'clothing' | 'accessories' | 'saree',
   page = 1,
   pageSize = 24,
   query?: string,
@@ -39,6 +39,19 @@ export function searchProducts(
   if (minPrice !== undefined) params.set('min_price', String(minPrice))
   if (maxPrice !== undefined) params.set('max_price', String(maxPrice))
   return api.get<PaginatedProducts>(`/products?${params.toString()}`)
+}
+
+export interface SearchSuggestion {
+  type: 'category' | 'product'
+  label: string
+  url: string
+  image_url?: string | null
+  price?: number | null
+  category?: string | null
+}
+
+export function getSearchSuggestions(query: string) {
+  return api.get<{ suggestions: SearchSuggestion[] }>(`/products/suggest?q=${encodeURIComponent(query)}`)
 }
 
 export function getProductBySlug(slug: string) {

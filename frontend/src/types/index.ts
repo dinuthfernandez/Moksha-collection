@@ -1,7 +1,7 @@
 // Shared domain types for the Moksha Collections storefront.
 // Mirrors the Supabase `moksha_collection` schema tables.
 
-export type CategoryType = 'clothing' | 'accessories'
+export type CategoryType = 'clothing' | 'accessories' | 'saree'
 
 export interface Category {
   id: string

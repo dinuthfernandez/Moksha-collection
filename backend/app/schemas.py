@@ -9,7 +9,7 @@ class CategoryOut(BaseModel):
     id: str
     name: str
     slug: str
-    type: Literal["clothing", "accessories"]
+    type: Literal["clothing", "accessories", "saree"]
     parent_id: Optional[str] = None
     image_url: Optional[str] = None
     display_order: int = 0

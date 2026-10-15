@@ -62,7 +62,15 @@ const CONTENT = {
   ],
 }
 
-export default function CategoryLanding({ type }: { type: 'clothing' }) {
+const SAREE_CONTENT = {
+  ...CONTENT,
+  heroEyebrow: 'Timeless Drapes',
+  heroTitle: 'Drape Yourself in',
+  heroHighlight: 'Elegance.',
+  heroSubtitle: 'Sarees and saree sets for weddings, festivals and every celebration in between.',
+}
+
+export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }) {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [visibleCategoryCount, setVisibleCategoryCount] = useState(CATEGORY_BATCH_SIZE)
@@ -137,6 +145,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' }) {
     }
   }, [page, type])
 
+  const content = type === 'saree' ? SAREE_CONTENT : CONTENT
   const allCategories = categories
   const visibleCategories = allCategories.slice(0, visibleCategoryCount)
 
@@ -166,11 +175,11 @@ export default function CategoryLanding({ type }: { type: 'clothing' }) {
   return (
     <div className="category-landing">
       <CategoryHeroCarousel
-        eyebrow={CONTENT.heroEyebrow}
-        title={CONTENT.heroTitle}
-        highlight={CONTENT.heroHighlight}
-        subtitle={CONTENT.heroSubtitle}
-        sets={CONTENT.heroSets}
+        eyebrow={content.heroEyebrow}
+        title={content.heroTitle}
+        highlight={content.heroHighlight}
+        subtitle={content.heroSubtitle}
+        sets={content.heroSets}
       />
 
       <div className="azhak-page clothing-shop-sections">
@@ -182,7 +191,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' }) {
           </div>
           <div className="azhak-category-grid" aria-busy={categoriesLoading}>
             {visibleCategories.map((category) => (
-              <Link key={category.id} to={`/clothing/${category.slug}`} className="azhak-category-card">
+              <Link key={category.id} to={`/${type}/${category.slug}`} className="azhak-category-card">
                 <PlaceholderImage
                   src={category.image_url}
                   alt={category.name}
@@ -231,7 +240,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' }) {
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.name} className="product-card-image" loading="lazy" decoding="async" />
                     ) : (
-                      <div className="product-card-image placeholder">No Image</div>
+                      <div className="product-card-image placeholder" role="img" aria-label="Moksha Collections"><span className="mc-mark">mc</span></div>
                     )}
                   </div>
                   <div className="product-card-body">

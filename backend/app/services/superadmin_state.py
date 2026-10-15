@@ -1,7 +1,10 @@
 """In-process state for the super admin console: maintenance mode, log buffer, audit trail, login throttle."""
 
+import hashlib
+import hmac
 import json
 import logging
+import secrets
 import threading
 import time
 from collections import deque
@@ -13,14 +16,43 @@ STARTED_AT = time.time()
 
 _lock = threading.Lock()
 _maintenance: dict = {"enabled": False, "message": "", "eta": "", "since": None}
+_bypass: dict = {"hash": ""}
+
+
+def _apply(data: dict) -> None:
+    _maintenance.update({k: data.get(k, _maintenance[k]) for k in _maintenance})
+    _bypass["hash"] = str(data.get("bypass_hash", "") or "")
 
 
 def _load_maintenance() -> None:
+    """Loads from Supabase (survives Render restarts); falls back to the local file."""
     try:
-        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-        _maintenance.update({k: data.get(k, _maintenance[k]) for k in _maintenance})
+        from ..database import get_supabase
+
+        rows = get_supabase().table("app_state").select("value").eq("key", "maintenance").limit(1).execute().data
+        if rows:
+            _apply(rows[0]["value"] or {})
+            return
+    except Exception:
+        logging.getLogger(__name__).warning("Could not load maintenance state from database", exc_info=True)
+    try:
+        _apply(json.loads(STATE_FILE.read_text(encoding="utf-8")))
     except (OSError, ValueError):
         pass
+
+
+def _persist() -> None:
+    payload = {**_maintenance, "bypass_hash": _bypass["hash"]}
+    try:
+        STATE_FILE.write_text(json.dumps(payload), encoding="utf-8")
+    except OSError:
+        pass
+    try:
+        from ..database import get_supabase
+
+        get_supabase().table("app_state").upsert({"key": "maintenance", "value": payload}).execute()
+    except Exception:
+        logging.getLogger(__name__).warning("Could not persist maintenance state to database", exc_info=True)
 
 
 _load_maintenance()
@@ -40,11 +72,45 @@ def set_maintenance(enabled: bool, message: str = "", eta: str = "") -> dict:
         _maintenance["message"] = message.strip()[:500]
         _maintenance["eta"] = eta.strip()[:100]
         _maintenance["since"] = datetime.now(timezone.utc).isoformat() if enabled else None
-        try:
-            STATE_FILE.write_text(json.dumps(_maintenance), encoding="utf-8")
-        except OSError:
-            logging.getLogger(__name__).warning("Could not persist maintenance state")
+        _persist()
     return get_maintenance()
+
+
+# --- developer bypass password (stored only as a salted PBKDF2 hash) -------
+_PBKDF2_ROUNDS = 240_000
+
+
+def has_bypass_password() -> bool:
+    return bool(_bypass["hash"])
+
+
+def set_bypass_password(password: str) -> None:
+    """Sets (or, with an empty string, removes) the developer bypass password."""
+    with _lock:
+        if not password:
+            _bypass["hash"] = ""
+        else:
+            salt = secrets.token_bytes(16)
+            digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, _PBKDF2_ROUNDS)
+            _bypass["hash"] = f"{salt.hex()}${digest.hex()}"
+        _persist()
+
+
+def verify_bypass_password(password: str) -> bool:
+    stored = _bypass["hash"]
+    if not stored or not password:
+        return False
+    try:
+        salt_hex, digest_hex = stored.split("$", 1)
+        digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), _PBKDF2_ROUNDS)
+        return hmac.compare_digest(digest.hex(), digest_hex)
+    except ValueError:
+        return False
+
+
+def bypass_fingerprint() -> str:
+    """Changes whenever the bypass password changes, which invalidates every issued bypass cookie."""
+    return hashlib.sha256(_bypass["hash"].encode("utf-8")).hexdigest()[:24]
 
 
 # --- live log buffer -------------------------------------------------------

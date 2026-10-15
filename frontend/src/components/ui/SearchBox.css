@@ -1,0 +1,17 @@
+.searchbox { position: relative; width: 100%; max-width: 640px; margin: 1rem auto 0; text-align: left; }
+.searchbox-form { display: flex; align-items: center; gap: .5rem; background: var(--color-onyx-elevated); border: 1px solid var(--color-line-strong); border-radius: 999px; padding: .3rem .3rem .3rem 1rem; }
+.searchbox-form:focus-within { border-color: var(--color-magenta); box-shadow: 0 0 0 3px var(--color-magenta-soft); }
+.searchbox-icon { flex: none; opacity: .6; }
+.searchbox-form input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: var(--color-warm-white); padding: .5rem 0; }
+.searchbox-form input::-webkit-search-cancel-button { display: none; }
+.searchbox-clear { border: 0; background: transparent; color: var(--color-warm-white); opacity: .6; cursor: pointer; display: flex; padding: .25rem; }
+.searchbox-submit { border-radius: 999px; padding: .55rem 1.3rem; }
+.searchbox-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + .4rem); list-style: none; margin: 0; padding: .4rem; background: var(--color-onyx-elevated); border: 1px solid var(--color-line-strong); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .14); max-height: 380px; overflow-y: auto; }
+.searchbox-heading { display: flex; justify-content: space-between; align-items: center; padding: .4rem .7rem; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
+.searchbox-heading button { border: 0; background: transparent; color: var(--color-warm-white); cursor: pointer; text-decoration: underline; font: inherit; }
+.searchbox-item { display: flex; align-items: center; gap: .65rem; width: 100%; border: 0; background: transparent; color: var(--color-warm-white); font: inherit; text-align: left; padding: .6rem .7rem; border-radius: 10px; cursor: pointer; }
+.searchbox-item.is-active { background: var(--color-magenta-soft); }
+.searchbox-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.searchbox-meta { font-size: .8rem; opacity: .65; flex: none; }
+@media (max-width: 520px) { .searchbox-submit { padding: .5rem 1rem; } }
+

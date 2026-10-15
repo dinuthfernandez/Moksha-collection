@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import RouteSeo from './utils/seo'
 import BrandLoader from './components/ui/BrandLoader'
 import { useAuth } from './context/AuthContext'
 import { getCategories, getProducts } from './api/categories'
@@ -84,6 +85,7 @@ function AppShell() {
         </div>
       )}
       <ScrollToTop />
+      <RouteSeo />
       <Suspense fallback={<BrandLoader label="Loading" />}>
       <Routes>
         <Route path="delivery/:token" element={<DeliveryRider />} />
@@ -113,6 +115,8 @@ function AppShell() {
             }
           />
           <Route path="clothing/:slug" element={<CategoryDetail />} />
+          <Route path="saree" element={<CategoryLanding type="saree" />} />
+          <Route path="saree/:slug" element={<CategoryDetail />} />
           <Route path="product/:slug" element={<ProductDetail />} />
           <Route path="accessories" element={<Azhak />} />
           <Route path="accessories/:slug" element={<CategoryDetail />} />

@@ -1,11 +1,34 @@
+import { useState, type FormEvent } from 'react'
+import { submitBypass } from '../api/maintenance'
 import './Maintenance.css'
 
 interface Props {
   message?: string
   eta?: string
+  bypassAvailable?: boolean
+  onUnlocked?: () => void
 }
 
-export default function MaintenancePage({ message, eta }: Props) {
+export default function MaintenancePage({ message, eta, bypassAvailable, onUnlocked }: Props) {
+  const [open, setOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const unlock = async (event: FormEvent) => {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    const failure = await submitBypass(password)
+    setBusy(false)
+    if (failure) {
+      setError(failure)
+      return
+    }
+    setPassword('')
+    onUnlocked?.()
+  }
+
   return (
     <div className="mt-page">
       <div className="mt-orb mt-orb--one" />
@@ -39,6 +62,27 @@ export default function MaintenancePage({ message, eta }: Props) {
         )}
 
         <p className="mt-foot">This page refreshes by itself — no need to reload.</p>
+
+        {bypassAvailable && onUnlocked && (
+          <div className="mt-dev">
+            {open ? (
+              <form onSubmit={unlock} autoComplete="off">
+                <input
+                  type="password"
+                  autoFocus
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Developer password"
+                  aria-label="Developer password"
+                />
+                <button type="submit" disabled={busy || !password}>{busy ? '…' : 'Enter'}</button>
+                {error && <p className="mt-dev-error">{error}</p>}
+              </form>
+            ) : (
+              <button type="button" className="mt-dev-link" onClick={() => setOpen(true)}>Developer access</button>
+            )}
+          </div>
+        )}
       </main>
     </div>
   )

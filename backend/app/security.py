@@ -74,3 +74,25 @@ def is_valid_admin_token(token: str) -> bool:
     except jwt.PyJWTError:
         return False
     return payload.get("sub") == ADMIN_TOKEN_SUBJECT and payload.get("role") == "admin"
+
+
+BYPASS_TOKEN_SUBJECT = "maintenance-bypass"
+BYPASS_COOKIE_HOURS = 12
+
+
+def create_bypass_token(fingerprint: str) -> str:
+    settings = get_settings()
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=BYPASS_COOKIE_HOURS)
+    payload: dict[str, Any] = {"sub": BYPASS_TOKEN_SUBJECT, "fp": fingerprint, "exp": expires_at}
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+def is_valid_bypass_token(token: str | None, fingerprint: str) -> bool:
+    if not token:
+        return False
+    settings = get_settings()
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    except jwt.PyJWTError:
+        return False
+    return payload.get("sub") == BYPASS_TOKEN_SUBJECT and payload.get("fp") == fingerprint

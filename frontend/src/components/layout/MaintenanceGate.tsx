@@ -33,6 +33,15 @@ export default function MaintenanceGate({ children }: { children: ReactNode }) {
   const isSuperAdmin = pathname.startsWith(SUPERADMIN_PATH)
   if (isSuperAdmin) return <>{children}</>
   if (!checked) return <div style={{ position: 'fixed', inset: 0, background: '#0e0a14' }} />
-  if (status?.enabled) return <MaintenancePage message={status.message} eta={status.eta} />
+  if (status?.enabled && !status.bypass) {
+    return (
+      <MaintenancePage
+        message={status.message}
+        eta={status.eta}
+        bypassAvailable={status.bypass_available}
+        onUnlocked={() => fetchMaintenance().then((next) => next && setStatus(next))}
+      />
+    )
+  }
   return <>{children}</>
 }

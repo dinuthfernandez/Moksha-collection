@@ -611,10 +611,11 @@ async def sync_products_to_supabase() -> int:
 ALLOWED_SUBCATEGORIES: dict[str, dict[str, str]] = {
     "clothing": {
         "2-piece-set": "2 Piece Set", "3-piece-set": "3 Piece Set", "kaftan": "Kaftan",
-        "top": "Top", "frock": "Frock", "saree": "Saree", "blouse": "Blouse",
-        "pavada": "Pavada", "set-saree": "Set Saree", "set-mundu": "Set Mundu",
+        "top": "Top", "frock": "Frock", "blouse": "Blouse",
+        "pavada": "Pavada", "set-mundu": "Set Mundu",
         "dupatta": "Dupatta", "pant": "Pant",
     },
+    "saree": {"saree": "Saree", "set-saree": "Set Saree"},
     "accessories": {
         "bangles": "Bangles", "glass-bangles": "Glass Bangles", "necklace": "Necklace",
         "earrings": "Earrings", "studs": "Studs", "bracelets": "Bracelets",
@@ -624,6 +625,7 @@ OTHERS_SUBCATEGORY: dict[str, tuple[str, str]] = {
     "clothing": ("Others", "others"),
     "accessories": ("Others", "accessories-others"),
 }
+SAREE_SUBCATEGORY_SLUGS = set(ALLOWED_SUBCATEGORIES["saree"])
 _SUBCATEGORY_ALIASES = {
     "2-pcs-set": "2-piece-set", "3-pcs-set": "3-piece-set", "fork": "frock",
     "pattupavada": "pavada", "set-mund": "set-mundu", "duppatta": "dupatta", "pants": "pant",
@@ -651,8 +653,9 @@ def _sync_subcategories_to_categories(supabase: Any, subcategories_seen: dict[tu
     for ctype, mapping in ALLOWED_SUBCATEGORIES.items():
         for slug, name in mapping.items():
             desired[(ctype, slug)] = name
-        oname, oslug = OTHERS_SUBCATEGORY[ctype]
-        desired[(ctype, oslug)] = oname
+        if ctype in OTHERS_SUBCATEGORY:
+            oname, oslug = OTHERS_SUBCATEGORY[ctype]
+            desired[(ctype, oslug)] = oname
 
     existing = supabase.table("categories").select("slug").execute()
     existing_slugs = {row["slug"] for row in (existing.data or [])}
@@ -720,6 +723,9 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
 
         category_slug = _extract_category_slug(item)
         subcategory_name = _extract_subcategory_name(item)
+        raw_sub_slug = _slugify(subcategory_name, "") if subcategory_name else ""
+        if _SUBCATEGORY_ALIASES.get(raw_sub_slug, raw_sub_slug) in SAREE_SUBCATEGORY_SLUGS:
+            category_slug = "saree"
         subcategory_name, subcategory_slug = _normalize_subcategory(category_slug, subcategory_name)
         if category_slug and subcategory_name and subcategory_slug:
             subcategories_seen[(category_slug, subcategory_slug)] = subcategory_name
