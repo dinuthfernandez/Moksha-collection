@@ -108,7 +108,7 @@ export const PRIVACY_POLICY_SECTIONS: PolicySection[] = [
 export const TERMS_AND_CONDITIONS_SECTIONS: PolicySection[] = [
   {
     title: 'About these terms',
-    body: "Last updated: [date]\n\nWelcome to Moksha Collections. These Terms govern your use of our website at mokshacollections.com and any purchase you make from us. Moksha Collections is operated by [Volant Holdings WLL], registered in the Kingdom of Bahrain. By using our site or placing an order, you confirm you have read and agree to these Terms together with our Privacy Policy and our Return, Exchange & Refund Policy, which form part of your agreement with us. If you don't agree, please don't use the site — but do reach out at [email] and we'll try to help.",
+    body: "Last updated: [date]\n\nWelcome to Moksha Collections. These Terms govern your use of our website at www.mokshacollection.com and any purchase you make from us. Moksha Collections is operated by [Volant Holdings WLL], registered in the Kingdom of Bahrain. By using our site or placing an order, you confirm you have read and agree to these Terms together with our Privacy Policy and our Return, Exchange & Refund Policy, which form part of your agreement with us. If you don't agree, please don't use the site — but do reach out at [email] and we'll try to help.",
   },
   {
     title: 'Who can use the site',

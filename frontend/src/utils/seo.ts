@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
 const BRAND = 'Moksha Collections'
-const SITE = 'https://mokshacollections.com'
+const SITE = 'https://www.mokshacollection.com'
 
 const PAGES: Record<string, { title: string; description: string }> = {
   '/': {
