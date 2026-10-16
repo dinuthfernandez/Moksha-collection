@@ -194,6 +194,8 @@ export default function SuperAdmin() {
             </p>
           </div>
 
+          <MetricsCard token={token} />
+
           <div className="sa-card">
             <h2>Live numbers</h2>
             <ul className="sa-stats">
@@ -229,6 +231,87 @@ export default function SuperAdmin() {
       {tab === 'Logs' && <LogsTab token={token} guard={guard} />}
       {tab === 'Data' && <DataTab token={token} guard={guard} />}
       {tab === 'Audit' && <AuditTab token={token} guard={guard} />}
+    </div>
+  )
+}
+
+interface Metrics {
+  source: 'container' | 'host'
+  cpu_percent: number
+  cpu_cores: number
+  memory_percent: number
+  memory_used_mb: number
+  memory_total_mb: number
+  process_cpu_percent: number
+  process_memory_mb: number
+}
+
+const METRIC_POINTS = 60
+const METRIC_INTERVAL_MS = 2000
+
+function LineChart({ data, color }: { data: number[]; color: string }) {
+  const w = 300, h = 90
+  const step = w / (METRIC_POINTS - 1)
+  const pts = data.map((v, i) => `${(w - (data.length - 1 - i) * step).toFixed(1)},${(h - (Math.min(v, 100) / 100) * h).toFixed(1)}`)
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="sa-chart">
+      {[25, 50, 75].map((g) => <line key={g} x1="0" x2={w} y1={h - (g / 100) * h} y2={h - (g / 100) * h} stroke="#2a2038" strokeWidth="1" />)}
+      {pts.length > 1 && (
+        <>
+          <polygon points={`${pts[0].split(',')[0]},${h} ${pts.join(' ')} ${w},${h}`} fill={color} opacity="0.15" />
+          <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+function MetricsCard({ token }: { token: string | null }) {
+  const [cpu, setCpu] = useState<number[]>([])
+  const [ram, setRam] = useState<number[]>([])
+  const [latest, setLatest] = useState<Metrics | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let stopped = false
+    const tick = async () => {
+      if (document.hidden) return
+      try {
+        const m = await call<Metrics>('/metrics', token)
+        if (stopped) return
+        setLatest(m)
+        setCpu((a) => [...a, m.cpu_percent].slice(-METRIC_POINTS))
+        setRam((a) => [...a, m.memory_percent].slice(-METRIC_POINTS))
+        setError('')
+      } catch (e) {
+        if (!stopped) setError((e as Error).message)
+      }
+    }
+    tick()
+    const id = setInterval(tick, METRIC_INTERVAL_MS)
+    return () => { stopped = true; clearInterval(id) }
+  }, [token])
+
+  return (
+    <div className="sa-card sa-metrics">
+      <h2>Live CPU &amp; RAM {latest && <small>({latest.source === 'container' ? 'container limits' : 'this machine'})</small>}</h2>
+      {error && <p className="sa-error">{error}</p>}
+      <div className="sa-metric">
+        <div className="sa-metric-head">
+          <span>CPU</span>
+          <b>{latest ? `${latest.cpu_percent}%` : '…'}</b>
+          {latest && <small>{latest.cpu_cores} core(s) · app {latest.process_cpu_percent}%</small>}
+        </div>
+        <LineChart data={cpu} color="#E10A8C" />
+      </div>
+      <div className="sa-metric">
+        <div className="sa-metric-head">
+          <span>RAM</span>
+          <b>{latest ? `${latest.memory_percent}%` : '…'}</b>
+          {latest && <small>{latest.memory_used_mb} / {latest.memory_total_mb} MB · app {latest.process_memory_mb} MB</small>}
+        </div>
+        <LineChart data={ram} color="#4ac2ff" />
+      </div>
     </div>
   )
 }

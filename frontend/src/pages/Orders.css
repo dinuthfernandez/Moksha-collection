@@ -224,3 +224,6 @@
     grid-column: 1;
   }
 }
+
+.order-item-return-button { margin-top: 8px; padding: 6px 14px; font-size: 13px; }
+.order-item-content .order-card-return-note { margin: 6px 0 0; }

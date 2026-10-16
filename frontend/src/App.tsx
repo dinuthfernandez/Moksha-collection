@@ -41,6 +41,7 @@ const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'))
 const Payment = lazy(() => import('./pages/Payment'))
 const Orders = lazy(() => import('./pages/Orders'))
 const DeliveryRider = lazy(() => import('./pages/DeliveryRider'))
+const ReturnRider = lazy(() => import('./pages/ReturnRider'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
@@ -89,6 +90,7 @@ function AppShell() {
       <Suspense fallback={<BrandLoader label="Loading" />}>
       <Routes>
         <Route path="delivery/:token" element={<DeliveryRider />} />
+        <Route path="delivery/return/:token" element={<ReturnRider />} />
         <Route path="noonecanfindthisonlyfordinuth" element={<SuperAdmin />} />
         <Route path="mokshacollectionadminpanel/login" element={<><BackButton fallbackTo="/" /><AdminLogin /></>} />
         <Route path="mokshacollectionadminpanel" element={<ProtectedAdminRoute />}>

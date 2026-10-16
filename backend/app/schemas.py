@@ -170,6 +170,9 @@ class OrderItemOut(BaseModel):
     product_code: Optional[str] = None
     quantity: int
     price: float
+    return_status: str = "none"
+    return_requested_at: Optional[str] = None
+    return_completed_at: Optional[str] = None
 
 
 class OrderDetailOut(BaseModel):
@@ -233,6 +236,31 @@ class RiderOrderUpdateIn(BaseModel):
     action: Literal["delivered", "attempt_failed", "cancelled"]
     expected_delivery_date: Optional[date] = None
     note: Optional[str] = Field(default=None, max_length=500)
+
+
+class ReturnRiderItemOut(BaseModel):
+    id: str
+    product_name: Optional[str] = None
+    product_image_url: Optional[str] = None
+    size: Optional[str] = None
+    color: Optional[str] = None
+    product_code: Optional[str] = None
+    quantity: int
+    return_status: str
+
+
+class ReturnRiderOut(BaseModel):
+    id: str
+    customer_name: str
+    phone: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    pending_count: int
+    items: list[ReturnRiderItemOut] = []
+
+
+class ReturnRiderCompleteIn(BaseModel):
+    item_ids: Optional[list[str]] = Field(default=None, max_length=100)
 
 
 class ReturnOrderOut(OrderDetailOut):

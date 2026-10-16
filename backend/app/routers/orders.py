@@ -11,7 +11,7 @@ from ..services.email import send_sales_email
 from ..services.email_templates import render_order_placed_email
 from ..services.zoho_inventory import create_invoice_for_order, validate_zoho_inventory_connection
 from ..services.coupons import calculate_coupon_discount, get_current_coupons, select_coupon
-from ..services.order_inventory import load_order_items, restock_order_items
+from ..services.order_inventory import load_order_items, refresh_order_return_status, restock_order_items
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -296,9 +296,7 @@ def cancel_my_order(
     return _load_order_detail(supabase, updated.data[0])
 
 
-@router.post("/{order_id}/return", response_model=OrderDetailOut)
-def request_return(order_id: str, customer: dict = Depends(get_current_customer)):
-    supabase = get_supabase()
+def _request_item_returns(supabase, customer: dict, order_id: str, item_id: str | None) -> dict:
     result = supabase.table("orders").select("*").eq("id", order_id).eq("customer_id", customer["id"]).limit(1).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -306,8 +304,6 @@ def request_return(order_id: str, customer: dict = Depends(get_current_customer)
     order = result.data[0]
     if order["status"] != "delivered":
         raise HTTPException(status_code=400, detail="Only delivered orders can be returned")
-    if order.get("return_status") != "none":
-        raise HTTPException(status_code=400, detail="A return has already been requested for this order")
 
     window_days = _get_return_window_days(supabase)
     delivered_at_raw = order.get("updated_at") or order.get("created_at")
@@ -318,14 +314,28 @@ def request_return(order_id: str, customer: dict = Depends(get_current_customer)
     if (datetime.now(timezone.utc) - delivered_at).days > window_days:
         raise HTTPException(status_code=400, detail=f"Return window of {window_days} days has expired")
 
-    update_result = (
-        supabase.table("orders")
+    query = (
+        supabase.table("order_items")
         .update({"return_status": "requested", "return_requested_at": datetime.now(timezone.utc).isoformat()})
-        .eq("id", order_id)
+        .eq("order_id", order_id)
         .eq("return_status", "none")
-        .execute()
     )
-    if not update_result.data:
-        raise HTTPException(status_code=400, detail="A return has already been requested for this order")
-    return _load_order_detail(supabase, update_result.data[0])
+    if item_id:
+        query = query.eq("id", item_id)
+    if not query.execute().data:
+        raise HTTPException(status_code=400, detail="A return has already been requested for this item")
+
+    updated_order = refresh_order_return_status(supabase, order_id)
+    return _load_order_detail(supabase, updated_order or order)
+
+
+@router.post("/{order_id}/return", response_model=OrderDetailOut)
+def request_return(order_id: str, customer: dict = Depends(get_current_customer)):
+    """Requests a return for every item in the order that has not been returned yet."""
+    return _request_item_returns(get_supabase(), customer, order_id, None)
+
+
+@router.post("/{order_id}/items/{item_id}/return", response_model=OrderDetailOut)
+def request_item_return(order_id: str, item_id: str, customer: dict = Depends(get_current_customer)):
+    return _request_item_returns(get_supabase(), customer, order_id, item_id)
 

@@ -5,5 +5,7 @@ export const createOrder = (payload: OrderCreatePayload) => api.post<OrderCreate
 export const getZohoCheckoutStatus = () => api.get<{ available: boolean }>('/orders/zoho-status')
 export const getMyOrders = () => api.get<OrderDetail[]>('/orders/mine')
 export const requestOrderReturn = (orderId: string) => api.post<OrderDetail>(`/orders/${orderId}/return`, {})
+export const requestItemReturn = (orderId: string, itemId: string) =>
+	api.post<OrderDetail>(`/orders/${orderId}/items/${itemId}/return`, {})
 export const cancelMyOrder = (orderId: string, reason?: string) =>
 	api.post<OrderDetail>(`/orders/${orderId}/cancel`, { reason })

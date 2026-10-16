@@ -26,3 +26,11 @@
   color: var(--color-warm-white);
   font-weight: 600;
 }
+
+.admin-return-items { display: grid; gap: 8px; list-style: none; padding: 0; }
+.admin-return-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.admin-return-item.is-none { opacity: 0.6; }
+.admin-return-tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--color-line-soft); }
+.tag-requested { color: var(--color-magenta); border-color: var(--color-magenta); }
+.tag-completed { color: #3ecf8e; border-color: #3ecf8e; }
+.admin-return-item-btn { padding: 4px 12px; font-size: 0.75rem; }

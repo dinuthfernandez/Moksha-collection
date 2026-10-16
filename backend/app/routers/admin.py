@@ -28,7 +28,7 @@ from ..schemas import (
 )
 from ..services.email import send_campaign_email, send_sales_email
 from ..services.email_templates import render_order_completed_email
-from ..services.order_inventory import load_order_items, restock_order_items
+from ..services.order_inventory import complete_item_returns, load_order_items, restock_order_items
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(get_current_admin)])
 logger = logging.getLogger(__name__)
@@ -297,9 +297,11 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateIn):
 # Returns
 # ---------------------------------------------------------------------------
 @router.get("/returns", response_model=list[ReturnOrderOut])
-def list_returns():
+def list_returns(status: str = "requested"):
     supabase = get_supabase()
-    result = supabase.table("orders").select("*").eq("return_status", "requested").order("return_requested_at", desc=True).execute()
+    status = "completed" if status == "completed" else "requested"
+    order_column = "return_completed_at" if status == "completed" else "return_requested_at"
+    result = supabase.table("orders").select("*").eq("return_status", status).order(order_column, desc=True).execute()
 
     orders = []
     for order in result.data or []:
@@ -327,31 +329,43 @@ def list_returns():
 
 @router.put("/returns/{order_id}/complete", response_model=OrderDetailOut)
 def complete_return(order_id: str):
+    """Completes every pending item return on the order (restocks locally and in Zoho)."""
+    return _complete_returns(order_id, None)
+
+
+@router.put("/returns/{order_id}/items/{item_id}/complete", response_model=OrderDetailOut)
+def complete_item_return(order_id: str, item_id: str):
+    return _complete_returns(order_id, [item_id])
+
+
+def _complete_returns(order_id: str, item_ids: list[str] | None) -> dict:
     supabase = get_supabase()
     existing = supabase.table("orders").select("*").eq("id", order_id).limit(1).execute()
     if not existing.data:
         raise HTTPException(status_code=404, detail="Order not found")
-    if existing.data[0].get("return_status") != "requested":
-        raise HTTPException(status_code=400, detail="This order has no pending return request")
-
-    # Claim the return first so a double click can never restock twice.
-    result = (
-        supabase.table("orders")
-        .update({"return_status": "completed", "return_completed_at": "now()"})
-        .eq("id", order_id)
-        .eq("return_status", "requested")
-        .execute()
-    )
-    if not result.data:
-        raise HTTPException(status_code=409, detail="This return was already processed")
-
-    # Completing a return means the item is physically back — restock it, locally and in Zoho.
     try:
-        restock_order_items(supabase, order_id)
+        completed = complete_item_returns(supabase, order_id, item_ids)
     except Exception:
-        supabase.table("orders").update({"return_status": "requested", "return_completed_at": None}).eq("id", order_id).execute()
         raise HTTPException(status_code=500, detail="Could not restock the items; return not completed")
-    return _load_order_detail(supabase, result.data[0])
+    if not completed:
+        raise HTTPException(status_code=409, detail="No pending return for this item (already processed?)")
+    order = supabase.table("orders").select("*").eq("id", order_id).limit(1).execute().data[0]
+    return _load_order_detail(supabase, order)
+
+
+@router.post("/returns/{order_id}/rider-link", response_model=RiderLinkOut)
+def create_return_rider_link(order_id: str):
+    supabase = get_supabase()
+    pending = (
+        supabase.table("order_items").select("id").eq("order_id", order_id).eq("return_status", "requested").limit(1).execute()
+    )
+    if not pending.data:
+        raise HTTPException(status_code=409, detail="This order has no pending return")
+
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    supabase.table("order_delivery_tokens").insert({"order_id": order_id, "token_hash": token_hash, "kind": "return"}).execute()
+    return {"token": token}
 
 
 # ---------------------------------------------------------------------------

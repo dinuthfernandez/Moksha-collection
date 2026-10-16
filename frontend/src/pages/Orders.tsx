@@ -1,7 +1,7 @@
 import BrandLoader from '../components/ui/BrandLoader'
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
-import { cancelMyOrder, getMyOrders, requestOrderReturn } from '../api/orders'
+import { cancelMyOrder, getMyOrders, requestItemReturn } from '../api/orders'
 import { getMyReviewedOrderItems, submitProductReview } from '../api/reviews'
 import { ApiError } from '../api/client'
 import type { OrderDetail, OrderItemDetail } from '../types'
@@ -96,11 +96,12 @@ export default function Orders() {
     load()
   }, [])
 
-  const onReturn = async (orderId: string) => {
-    setBusyId(orderId)
+  const onReturn = async (orderId: string, itemId: string) => {
+    if (!window.confirm('Request a return for this item?')) return
+    setBusyId(itemId)
     setError(null)
     try {
-      await requestOrderReturn(orderId)
+      await requestItemReturn(orderId, itemId)
       await load()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not request a return.')
@@ -151,6 +152,17 @@ export default function Orders() {
                       <span>{withVariant(item.product_name ?? 'Item', item)} × {item.quantity}</span>
                       <strong>{(item.price * item.quantity).toFixed(3)} BHD</strong>
                     </div>
+                    {order.status === 'delivered' && item.return_status === 'requested' && (
+                      <p className="order-card-return-note">Return requested — awaiting pickup.</p>
+                    )}
+                    {order.status === 'delivered' && item.return_status === 'completed' && (
+                      <p className="order-card-return-note">Returned.</p>
+                    )}
+                    {order.status === 'delivered' && (!item.return_status || item.return_status === 'none') && (
+                      <button type="button" className="btn btn-outline order-item-return-button" disabled={busyId === item.id} onClick={() => onReturn(order.id, item.id)}>
+                        {busyId === item.id ? 'Requesting…' : 'Return this item'}
+                      </button>
+                    )}
                     {order.status === 'delivered' && item.product_id && (
                       reviewedItemIds.has(item.id) ? (
                         <p className="order-review-complete">Thank you, your review has been received.</p>
@@ -185,14 +197,6 @@ export default function Orders() {
               </div>
             )}
 
-            {order.return_status === 'requested' && <p className="order-card-return-note">Return requested — awaiting pickup.</p>}
-            {order.return_status === 'completed' && <p className="order-card-return-note">Return completed.</p>}
-
-            {order.status === 'delivered' && order.return_status === 'none' && (
-              <button type="button" className="btn btn-outline" disabled={busyId === order.id} onClick={() => onReturn(order.id)}>
-                {busyId === order.id ? 'Requesting…' : 'Return Order'}
-              </button>
-            )}
             {(order.status === 'pending' || order.status === 'accepted') && (
               <button type="button" className="btn btn-outline order-cancel-button" disabled={busyId === order.id} onClick={() => onCancel(order.id)}>
                 {busyId === order.id ? 'Cancelling…' : 'Cancel Order'}

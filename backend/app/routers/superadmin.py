@@ -15,6 +15,7 @@ from ..database import get_supabase
 from ..deps import get_current_superadmin
 from ..security import create_superadmin_token
 from ..services import superadmin_state as state
+from ..services import system_metrics
 from ..services.cache import invalidate_catalog
 
 import hmac
@@ -119,6 +120,11 @@ def overview():
             "campaigns": count("campaigns"),
         },
     }
+
+
+@protected.get("/metrics")
+def metrics():
+    return system_metrics.snapshot()
 
 
 @protected.post("/maintenance")

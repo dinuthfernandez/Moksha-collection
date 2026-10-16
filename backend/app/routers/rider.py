@@ -4,12 +4,57 @@ from datetime import date, datetime, timezone
 from fastapi import APIRouter, HTTPException
 
 from ..database import get_supabase
-from ..schemas import RiderOrderOut, RiderOrderUpdateIn
+from ..schemas import ReturnRiderCompleteIn, ReturnRiderOut, RiderOrderOut, RiderOrderUpdateIn
 from ..services.email import send_sales_email
 from ..services.email_templates import render_order_completed_email
-from ..services.order_inventory import restock_order_items
+from ..services.order_inventory import complete_item_returns, load_order_items, restock_order_items
 
 router = APIRouter(prefix="/delivery", tags=["delivery rider"])
+
+
+def _return_payload(token: str) -> dict:
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    supabase = get_supabase()
+    token_result = (
+        supabase.table("order_delivery_tokens")
+        .select("order_id")
+        .eq("token_hash", token_hash)
+        .eq("kind", "return")
+        .limit(1)
+        .execute()
+    )
+    if not token_result.data:
+        raise HTTPException(status_code=404, detail="Return link not found")
+    order_result = (
+        supabase.table("orders")
+        .select("id,customer_name,phone,address,city")
+        .eq("id", token_result.data[0]["order_id"])
+        .limit(1)
+        .execute()
+    )
+    if not order_result.data:
+        raise HTTPException(status_code=404, detail="Return link not found")
+    order = order_result.data[0]
+    items = [item for item in load_order_items(supabase, order["id"]) if item.get("return_status") in ("requested", "completed")]
+    return {**order, "items": items, "pending_count": sum(1 for item in items if item["return_status"] == "requested")}
+
+
+@router.get("/return/{token}", response_model=ReturnRiderOut)
+def get_return_pickup(token: str):
+    return _return_payload(token)
+
+
+@router.put("/return/{token}", response_model=ReturnRiderOut)
+def complete_return_pickup(token: str, payload: ReturnRiderCompleteIn):
+    """Rider confirms the item(s) were collected: marks them returned and restocks Supabase + Zoho."""
+    data = _return_payload(token)
+    try:
+        completed = complete_item_returns(get_supabase(), data["id"], payload.item_ids)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Could not restock the items; return not completed")
+    if not completed:
+        raise HTTPException(status_code=409, detail="Nothing pending to complete (already processed?)")
+    return _return_payload(token)
 
 
 def _get_order_for_token(token: str) -> dict:
@@ -19,6 +64,7 @@ def _get_order_for_token(token: str) -> dict:
         supabase.table("order_delivery_tokens")
         .select("order_id")
         .eq("token_hash", token_hash)
+        .eq("kind", "delivery")
         .limit(1)
         .execute()
     )

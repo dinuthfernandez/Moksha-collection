@@ -307,6 +307,30 @@ export interface OrderItemDetail {
   product_code?: string | null
   quantity: number
   price: number
+  return_status?: ReturnStatus
+  return_requested_at?: string | null
+  return_completed_at?: string | null
+}
+
+export interface ReturnRiderItem {
+  id: string
+  product_name?: string | null
+  product_image_url?: string | null
+  size?: string | null
+  color?: string | null
+  product_code?: string | null
+  quantity: number
+  return_status: ReturnStatus
+}
+
+export interface ReturnRiderOrder {
+  id: string
+  customer_name: string
+  phone: string
+  address?: string | null
+  city?: string | null
+  pending_count: number
+  items: ReturnRiderItem[]
 }
 
 export interface OrderDetail {
