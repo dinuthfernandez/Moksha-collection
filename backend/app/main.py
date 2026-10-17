@@ -33,7 +33,7 @@ from .routers import (
     webhooks,
     wishlists,
 )
-from .services import seo, superadmin_state
+from .services import launch_state, seo, superadmin_state
 from .services.cart_reservations import cart_reservation_expiry_loop
 from .services.zoho_inventory import sync_loop
 
@@ -139,6 +139,17 @@ app.include_router(settings_router.router, prefix="/api")
 app.include_router(admin_auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(superadmin.router, prefix="/api")
+
+
+@app.get("/api/launch/status")
+def launch_status():
+    return JSONResponse(launch_state.status(), headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/launch/trigger")
+def launch_trigger():
+    launch_state.trigger()
+    return JSONResponse(launch_state.status(), headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/maintenance")

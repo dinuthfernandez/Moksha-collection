@@ -18,6 +18,8 @@ import MaintenanceGate from './components/layout/MaintenanceGate'
 const SuperAdmin = lazy(() => import('./pages/SuperAdmin'))
 import BackButton from './components/ui/BackButton'
 import Home from './pages/Home'
+const Launch = lazy(() => import('./pages/Launch'))
+const LaunchButton = lazy(() => import('./pages/LaunchButton'))
 const Categories = lazy(() => import('./pages/Categories'))
 const CategoryLanding = lazy(() => import('./pages/CategoryLanding'))
 const Azhak = lazy(() => import('./pages/Azhak'))
@@ -89,6 +91,8 @@ function AppShell() {
       <RouteSeo />
       <Suspense fallback={<BrandLoader label="Loading" />}>
       <Routes>
+        <Route path="launch" element={<Launch />} />
+        <Route path="launchbutton" element={<LaunchButton />} />
         <Route path="delivery/:token" element={<DeliveryRider />} />
         <Route path="delivery/return/:token" element={<ReturnRider />} />
         <Route path="noonecanfindthisonlyfordinuth" element={<SuperAdmin />} />

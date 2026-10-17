@@ -96,7 +96,7 @@ STATIC_PAGES: dict[str, dict[str, str]] = {
 NOINDEX_PREFIXES = (
     "/cart", "/login", "/register", "/forgot-password", "/reset-password", "/account", "/addresses",
     "/wishlist", "/orders", "/checkout", "/delivery", "/search", "/mokshacollectionadminpanel",
-    "/noonecanfindthisonlyfordinuth",
+    "/noonecanfindthisonlyfordinuth", "/launch", "/launchbutton",
 )
 ROOT_TYPES = ("clothing", "accessories", "saree")
 TYPE_LABEL = {"clothing": "Clothing", "accessories": "Accessories", "saree": "Saree"}

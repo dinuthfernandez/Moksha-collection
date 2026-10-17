@@ -1,10 +1,26 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
+import Confetti from '../components/ui/Confetti'
 import './Home.css'
 
 export default function Home() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [celebrating, setCelebrating] = useState(
+    () => (location.state as { celebrate?: boolean } | null)?.celebrate === true,
+  )
+
+  // Clear the flag so a refresh or later visit doesn't replay the confetti.
+  useEffect(() => {
+    if ((location.state as { celebrate?: boolean } | null)?.celebrate) {
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.state, location.pathname, navigate])
+
   return (
     <div className="moksha-home">
+      {celebrating && <Confetti mode="rain" durationMs={5000} onDone={() => setCelebrating(false)} />}
       <section className="mh-hero" aria-labelledby="mh-hero-title">
         <img className="mh-hero-photo" src="/assets/hero/DSC_5738.jpg.webp" alt="Moksha Collections clothing look" />
         <div className="mh-hero-scrim" aria-hidden="true" />

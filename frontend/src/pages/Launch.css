@@ -1,0 +1,174 @@
+.launch {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0e0a14;
+  color: #faf7f2;
+  text-align: center;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.launch-glow {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  animation: launch-drift 14s ease-in-out infinite alternate;
+}
+.launch-glow--a { background: #e10a8c; top: -35vmax; left: -25vmax; }
+.launch-glow--b { background: #4b2a9c; bottom: -40vmax; right: -25vmax; animation-delay: -7s; }
+.launch--live .launch-glow { opacity: 0.55; animation-duration: 5s; }
+
+@keyframes launch-drift {
+  to { transform: translate(8vmax, 6vmax) scale(1.15); }
+}
+
+.launch-idle, .launch-live {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+}
+
+.launch-eyebrow {
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #c8cad0;
+}
+
+.launch h1 {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(38px, 8vw, 84px);
+  line-height: 1.05;
+}
+
+.launch-press {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: 0;
+  color: #c8cad0;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.launch-press kbd {
+  min-width: min(360px, 70vw);
+  padding: 18px 0;
+  border: 1px solid rgba(225, 10, 140, 0.7);
+  border-radius: 14px;
+  background: rgba(225, 10, 140, 0.08);
+  color: #fff;
+  font: 600 18px 'Inter', sans-serif;
+  letter-spacing: 0.5em;
+  box-shadow: 0 0 0 0 rgba(225, 10, 140, 0.5);
+  animation: launch-pulse 1.8s ease-out infinite;
+}
+@keyframes launch-pulse {
+  to { box-shadow: 0 0 0 28px rgba(225, 10, 140, 0); }
+}
+
+.launch-title {
+  background: linear-gradient(100deg, #fff 0%, #e10a8c 45%, #ffd166 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: clamp(64px, 16vw, 170px) !important;
+  letter-spacing: 0.12em;
+  animation: launch-shine 2.5s linear infinite, launch-in 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes launch-shine { to { background-position: -200% 0; } }
+@keyframes launch-in {
+  from { transform: scale(0.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.launch-ring {
+  position: relative;
+  width: clamp(150px, 26vmin, 220px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.launch-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.launch-ring-track { fill: none; stroke: rgba(255, 255, 255, 0.12); stroke-width: 6; }
+.launch-ring-bar {
+  fill: none;
+  stroke: #e10a8c;
+  stroke-width: 6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 8px #e10a8c);
+  transition: stroke-dashoffset 1s linear;
+}
+.launch-count {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(64px, 12vmin, 100px);
+  font-weight: 600;
+  animation: launch-pop 1s ease-out both;
+}
+@keyframes launch-pop {
+  0% { transform: scale(1.6); opacity: 0; }
+  25% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0.85; }
+}
+
+.launch-fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.launch-wave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30vmin;
+  aspect-ratio: 1;
+  margin: -15vmin 0 0 -15vmin;
+  border-radius: 50%;
+  border: 2px solid rgba(225, 10, 140, 0.8);
+  box-shadow: 0 0 40px rgba(225, 10, 140, 0.45), inset 0 0 40px rgba(225, 10, 140, 0.25);
+  opacity: 0;
+  animation: launch-wave 4s ease-out infinite;
+}
+@keyframes launch-wave {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(5); opacity: 0; }
+}
+.launch-ember {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  background: #ffd166;
+  box-shadow: 0 0 10px 2px rgba(255, 209, 102, 0.7);
+  opacity: 0;
+  animation: launch-ember linear infinite;
+}
+@keyframes launch-ember {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-105vh) translateX(30px); opacity: 0; }
+}
+
+.launch-live p {
+  margin: 0;
+  color: #c8cad0;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-glow, .launch-title, .launch-press kbd, .launch-wave, .launch-ember { animation: none; }
+}
