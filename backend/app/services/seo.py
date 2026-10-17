@@ -110,7 +110,7 @@ FAQ = [
      "pavada, set mundu, dupattas, pants), sarees and set sarees, and accessories such as bangles, "
      "glass bangles, earrings, studs, necklaces and bracelets."),
     ("Do you deliver across Bahrain?",
-     "Yes. You can order online at www.mokshacollection.com and we deliver across the Kingdom of Bahrain."),
+     "Yes. You can order online at www.mokshacollections.com and we deliver across the Kingdom of Bahrain."),
     ("How can I contact Moksha Collections?",
      "Message our concierge on WhatsApp at +973 3552 1619, email info@mokshacollections.com, or visit the "
      "Manama shop."),

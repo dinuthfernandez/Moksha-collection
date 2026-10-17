@@ -101,7 +101,7 @@ export default function AdminCampaigns() {
           </label>
           <label>
             <span>Button link (optional, https://…)</span>
-            <input type="url" value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="https://www.mokshacollection.com/products" />
+            <input type="url" value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="https://www.mokshacollections.com/products" />
           </label>
           <label>
             <span>Send a test to</span>

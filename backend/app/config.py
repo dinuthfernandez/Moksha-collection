@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     password_reset_code_expires_minutes: int = 15
 
-    frontend_base_url: str = "https://www.mokshacollection.com"
+    frontend_base_url: str = "https://www.mokshacollections.com"
 
     port: int = 8000
     allowed_origins: str = "http://localhost:5173"

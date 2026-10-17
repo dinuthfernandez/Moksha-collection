@@ -13,7 +13,7 @@ WHAT IS ALREADY BUILT INTO THE WEBSITE
 
 DO THESE STEPS (in this order) - THIS IS WHAT ACTUALLY MAKES YOU #1
 Week 1 (must do)
-1. Google Search Console (search.google.com/search-console): add www.mokshacollection.com
+1. Google Search Console (search.google.com/search-console): add www.mokshacollections.com
    (Domain property), verify via DNS, then Sitemaps -> submit  sitemap.xml
    Then URL Inspection -> request indexing for: home, /clothing, /saree, /accessories.
 2. Bing Webmaster Tools (bing.com/webmasters): import from Search Console. (Bing feeds ChatGPT search.)
@@ -60,6 +60,6 @@ REALISTIC TIMELINE
 - No one can guarantee #1 - competition and reviews decide it. Google Business Profile reviews matter most for local searches.
 
 AFTER DEPLOY - QUICK CHECK
-- Open  https://www.mokshacollection.com/sitemap.xml  /robots.txt  /llms.txt  (all must load)
+- Open  https://www.mokshacollections.com/sitemap.xml  /robots.txt  /llms.txt  (all must load)
 - Test rich results: search.google.com/test/rich-results with your home URL
 - View page source of any page: you should see the title + JSON-LD without running JavaScript.
