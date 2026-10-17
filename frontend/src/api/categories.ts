@@ -3,7 +3,13 @@ import type { Category, PaginatedProducts, Product } from '../types'
 
 export function getCategories(type?: 'clothing' | 'accessories' | 'saree') {
   const query = type ? `?type=${type}` : ''
-  return cachedGet<Category[]>(`/categories${query}`, 300_000)
+  return cachedGet<Category[]>(`/categories${query}`, 300_000).then(othersLast)
+}
+
+// "Others" is a catch-all, so it always sits at the end of the category cards.
+function othersLast(categories: Category[]) {
+  const isOthers = (c: Category) => c.name.trim().toLowerCase() === 'others'
+  return [...categories.filter((c) => !isOthers(c)), ...categories.filter(isOthers)]
 }
 
 export function getCategoryTree(type: 'clothing' | 'accessories' | 'saree') {

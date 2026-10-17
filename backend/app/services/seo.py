@@ -36,7 +36,7 @@ LOGO_PATH = "/assets/logo/logo.png"
 HOME_TITLE = "Indian Dresses, Sarees & Accessories Store in Bahrain | Moksha Collections"
 HOME_DESC = (
     "Moksha Collections is an Indian clothing store in Manama, Bahrain. Shop kurtis, sarees, kaftans, "
-    "frocks, set mundu, pavada, dupattas, bangles, earrings and more. Online ordering and delivery across Bahrain."
+    "frocks, set mundu, pattupavada, dupattas, bangles, earrings and more. Online ordering and delivery across Bahrain."
 )
 KEYWORDS = (
     "Indian dress Bahrain, Indian clothing store Bahrain, Indian ethnic wear Bahrain, saree shop Bahrain, "
@@ -49,7 +49,7 @@ STATIC_PAGES: dict[str, dict[str, str]] = {
     "/clothing": {
         "title": "Indian Clothing in Bahrain - Kurti, Kaftan, Frock, Set Mundu | Moksha Collections",
         "desc": "Shop Indian women's and kids' clothing in Bahrain: tops, kurtis, kaftans, frocks, 2 & 3 piece sets, "
-        "pavada, set mundu, dupattas and more from Moksha Collections, Manama.",
+        "pattupavada, set mundu, dupattas and more from Moksha Collections, Manama.",
         "h1": "Indian Clothing Store in Bahrain",
     },
     "/saree": {
@@ -107,7 +107,7 @@ FAQ = [
      "Sugaya Avenue, Saqiyyaah 0328, Manama, Kingdom of Bahrain."),
     ("What does Moksha Collections sell?",
      "Indian and Kerala-style dresses for women and kids (kurtis, tops, kaftans, frocks, 2 and 3 piece sets, "
-     "pavada, set mundu, dupattas, pants), sarees and set sarees, and accessories such as bangles, "
+     "pattupavada, set mundu, dupattas, pants), sarees and set sarees, and accessories such as bangles, "
      "glass bangles, earrings, studs, necklaces and bracelets."),
     ("Do you deliver across Bahrain?",
      "Yes. You can order online at www.mokshacollections.com and we deliver across the Kingdom of Bahrain."),

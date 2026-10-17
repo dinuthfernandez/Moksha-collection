@@ -7,6 +7,7 @@ from ..schemas import CategoryOut
 from ..services.cache import cached
 
 router = APIRouter(prefix="/categories", tags=["categories"])
+_LEGACY_CATEGORY_SLUGS = {"pavada": "pattupavada"}
 
 
 @router.get("", response_model=list[CategoryOut])
@@ -24,6 +25,8 @@ def list_categories(type: Optional[Literal["clothing", "accessories", "saree"]] 
 
 @router.get("/{slug}", response_model=CategoryOut)
 def get_category(slug: str):
+    slug = _LEGACY_CATEGORY_SLUGS.get(slug, slug)
+
     def load():
         result = get_supabase().table("categories").select("*").eq("slug", slug).limit(1).execute()
         if not result.data:

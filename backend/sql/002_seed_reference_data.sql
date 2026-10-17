@@ -24,6 +24,6 @@ on conflict (slug) do update set
 
 insert into moksha_collection.announcements (message, display_order, is_active)
 values
-  ('FREE SHIPPING OVER 20 BHD • SHOP NEW ARRIVALS • CODE: MOKSHA10', 1, true),
-  ('FREE SHIPPING OVER 20 BHD • EASY RETURNS • SECURE CHECKOUT • SHOP NOW', 2, true),
+  ('SHOP NEW ARRIVALS', 1, true),
+  ('FREE SHIPPING OVER 5 BHD • EASY RETURNS • SECURE CHECKOUT • SHOP NOW', 2, true),
   ('DISCOVER NEW ARRIVALS • PREMIUM QUALITY • LIMITED-TIME OFFERS • SHOP MOKSHA COLLECTIONS', 3, true);

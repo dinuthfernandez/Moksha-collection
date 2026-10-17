@@ -4,7 +4,7 @@ import MobileAnnouncementBar from './MobileAnnouncementBar'
 import './AnnouncementBar.css'
 
 const FALLBACK_MESSAGES = [
-  'FREE SHIPPING OVER 20 BHD • SHOP NEW ARRIVALS',
+  'SHOP NEW ARRIVALS',
   'EASY EXCHANGES • SECURE CHECKOUT • SHOP NOW',
   'DISCOVER MOKSHA COLLECTIONS • MANAMA, BAHRAIN',
 ]

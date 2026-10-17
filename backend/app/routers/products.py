@@ -17,7 +17,7 @@ _SEARCH_ALIASES = {
     "sari": "saree", "sarees": "saree", "saris": "saree", "kurthi": "kurti", "kurta": "kurti", "kurtis": "kurti",
     "kaftans": "kaftan", "frocks": "frock", "dresses": "dress", "tops": "top", "pants": "pant", "bangle": "bangles",
     "earring": "earrings", "stud": "studs", "bracelet": "bracelets", "necklaces": "necklace", "mundu": "mundu",
-    "pattupavada": "pavada", "pavadai": "pavada", "dupata": "dupatta", "duppatta": "dupatta",
+    "pavada": "pattupavada", "pavadai": "pattupavada", "dupata": "dupatta", "duppatta": "dupatta",
 }
 
 
@@ -47,6 +47,7 @@ def suggest_products(q: str = Query(min_length=1, max_length=60)):
         query = (
             supabase.table("products").select("name,slug,subcategory_name,price,image_url")
             .eq("is_active", True).gt("stock_quantity", 0).eq("is_primary_variant", True)
+            .order("has_image", desc=True)
         )
         for token in tokens:
             query = query.or_(f"name.ilike.%{token}%,subcategory_name.ilike.%{token}%,color.ilike.%{token}%")
@@ -88,6 +89,7 @@ def list_products(
     if category_slug:
         # `category_slug` here is actually a Zoho Product Sub Category slug
         # (e.g. "kurti", "earrings") — subcategory browsing pages pass it in.
+        category_slug = {"pavada": "pattupavada"}.get(category_slug, category_slug)
         query = query.eq("subcategory_slug", category_slug)
     if not q:
         # Listing/grid views show one card per design: the primary (smallest
@@ -110,7 +112,7 @@ def list_products(
     end = start + page_size - 1
 
     def load() -> ProductListOut:
-        result = query.order("created_at", desc=True).range(start, end).execute()
+        result = query.order("has_image", desc=True).order("created_at", desc=True).range(start, end).execute()
         total = result.count or 0
         total_pages = max((total + page_size - 1) // page_size, 1)
         return ProductListOut(items=result.data, total=total, page=page, page_size=page_size, total_pages=total_pages)

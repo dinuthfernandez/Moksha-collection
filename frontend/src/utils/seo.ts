@@ -8,7 +8,7 @@ const PAGES: Record<string, { title: string; description: string }> = {
   '/': {
     title: 'Indian Dresses, Sarees & Accessories Store in Bahrain | Moksha Collections',
     description:
-      'Moksha Collections is an Indian clothing store in Manama, Bahrain. Shop kurtis, sarees, kaftans, frocks, set mundu, pavada, dupattas, bangles, earrings and more.',
+      'Moksha Collections is an Indian clothing store in Manama, Bahrain. Shop kurtis, sarees, kaftans, frocks, set mundu, pattupavada, dupattas, bangles, earrings and more.',
   },
   '/clothing': {
     title: 'Indian Clothing in Bahrain - Kurti, Kaftan, Frock, Set Mundu | Moksha Collections',

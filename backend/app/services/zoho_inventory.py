@@ -13,6 +13,7 @@ from uuid import uuid4
 from ..config import get_settings
 from ..database import get_supabase
 from .cache import invalidate_catalog
+from .product_images import store_product_image
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +144,24 @@ class ZohoInventoryClient:
             page += 1
 
         return items
+
+    def download_item_image(self, zoho_item_id: str) -> bytes | None:
+        """Downloads the raw image attached to a Zoho item, or None if it has none."""
+        url = (
+            f"https://www.zohoapis.com/inventory/v1/items/{zoho_item_id}/image"
+            f"?{parse.urlencode({'organization_id': self.organization_id})}"
+        )
+        req = request.Request(
+            url, headers={"Authorization": f"Zoho-oauthtoken {self.get_access_token()}"}, method="GET"
+        )
+        try:
+            with request.urlopen(req, timeout=60) as response:
+                data = response.read()
+        except HTTPError as exc:
+            if exc.code == 404:
+                return None
+            raise RuntimeError(f"Zoho image download failed for {zoho_item_id}: {exc}") from exc
+        return data or None
 
     def validate_connection(self) -> None:
         result = self._request_json(
@@ -612,8 +631,8 @@ ALLOWED_SUBCATEGORIES: dict[str, dict[str, str]] = {
     "clothing": {
         "2-piece-set": "2 Piece Set", "3-piece-set": "3 Piece Set", "kaftan": "Kaftan",
         "top": "Top", "frock": "Frock", "blouse": "Blouse",
-        "pavada": "Pavada", "set-mundu": "Set Mundu",
-        "dupatta": "Dupatta", "pant": "Pant",
+        "pattupavada": "Pattupavada", "set-mundu": "Set Mundu",
+        "dupatta": "Dupatta", "pant": "Pant", "dhavani-set": "Dhavani Set",
     },
     "saree": {"saree": "Saree", "set-saree": "Set Saree"},
     "accessories": {
@@ -628,7 +647,7 @@ OTHERS_SUBCATEGORY: dict[str, tuple[str, str]] = {
 SAREE_SUBCATEGORY_SLUGS = set(ALLOWED_SUBCATEGORIES["saree"])
 _SUBCATEGORY_ALIASES = {
     "2-pcs-set": "2-piece-set", "3-pcs-set": "3-piece-set", "fork": "frock",
-    "pattupavada": "pavada", "set-mund": "set-mundu", "duppatta": "dupatta", "pants": "pant",
+    "pavada": "pattupavada", "set-mund": "set-mundu", "duppatta": "dupatta", "pants": "pant",
 }
 
 
@@ -657,8 +676,25 @@ def _sync_subcategories_to_categories(supabase: Any, subcategories_seen: dict[tu
             oname, oslug = OTHERS_SUBCATEGORY[ctype]
             desired[(ctype, oslug)] = oname
 
-    existing = supabase.table("categories").select("slug").execute()
-    existing_slugs = {row["slug"] for row in (existing.data or [])}
+    existing = supabase.table("categories").select("id,slug,type,image_url").execute()
+    existing_rows = existing.data or []
+
+    legacy_pavada_rows = [
+        row for row in existing_rows
+        if row.get("type") == "clothing" and row.get("slug") == "pavada"
+    ]
+    pattupavada_exists = any(row.get("slug") == "pattupavada" for row in existing_rows)
+    for row in legacy_pavada_rows:
+        if pattupavada_exists:
+            continue
+        supabase.table("categories").update(
+            {"name": "Pattupavada", "slug": "pattupavada",
+             **({} if row.get("image_url") else {"image_url": "/assets/category-tiles/pattupavada.jpg"})}
+        ).eq("id", row["id"]).execute()
+        row["slug"] = "pattupavada"
+        pattupavada_exists = True
+
+    existing_slugs = {row["slug"] for row in existing_rows}
 
     new_rows = [
         {"name": name, "slug": slug, "type": category_type, "is_active": True}
@@ -673,8 +709,43 @@ def _sync_subcategories_to_categories(supabase: Any, subcategories_seen: dict[tu
         supabase.table("categories").delete().in_("slug", stale[start : start + 100]).execute()
 
 
+def _resolve_product_image(
+    client: ZohoInventoryClient | None, item: dict[str, Any], item_id: str, existing_row: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Returns image_url/image_source_id for a record. Zoho images are downloaded, compressed to
+    <= 300 KB and stored in Supabase Storage; an unchanged image is never re-downloaded."""
+    document_id = str(item.get("image_document_id") or "").strip()
+    if not document_id:
+        return {"image_url": _extract_image_url(item), "image_source_id": None}
+
+    if existing_row and existing_row.get("image_url") and existing_row.get("image_source_id") == document_id:
+        return {"image_url": existing_row["image_url"], "image_source_id": document_id}
+
+    fallback = {
+        "image_url": (existing_row or {}).get("image_url"),
+        "image_source_id": (existing_row or {}).get("image_source_id"),
+    }
+    if client is None:
+        return fallback
+    try:
+        data = client.download_item_image(item_id)
+        if not data:
+            return fallback
+        return {"image_url": store_product_image(item_id, data), "image_source_id": document_id}
+    except Exception:
+        logger.exception("Could not sync image for Zoho item %s", item_id)
+        return fallback
+
+
 def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
     supabase = get_supabase()
+    settings = get_settings()
+    image_client = ZohoInventoryClient(
+        client_id=settings.zoho_client_id,
+        client_secret=settings.zoho_client_secret,
+        refresh_token=settings.zoho_refresh_token,
+        organization_id=settings.zoho_organization_id,
+    )
 
     existing_rows: list[dict[str, Any]] = []
     page_size = 1000
@@ -682,7 +753,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
     while True:
         batch = (
             supabase.table("products")
-            .select("id,zoho_item_id,slug,is_active")
+            .select("id,zoho_item_id,slug,is_active,image_url,image_source_id")
             .range(offset, offset + page_size - 1)
             .execute()
         )
@@ -730,6 +801,8 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
         if category_slug and subcategory_name and subcategory_slug:
             subcategories_seen[(category_slug, subcategory_slug)] = subcategory_name
 
+        image = _resolve_product_image(image_client, item, item_id, existing_row)
+
         record = {
             "zoho_item_id": item_id,
             "name": _extract_name(item),
@@ -745,7 +818,8 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
             "size": _extract_size(item),
             "kids_size": _extract_kids_size(item),
             "stock_quantity": _extract_stock(item),
-            "image_url": _extract_image_url(item),
+            "image_url": image["image_url"],
+            "image_source_id": image["image_source_id"],
             "zoho_sku": _extract_sku(item),
             "brand": _extract_brand(item),
             "length": _extract_dimension(item, "length"),
