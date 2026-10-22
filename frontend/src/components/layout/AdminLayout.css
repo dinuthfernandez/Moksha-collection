@@ -18,6 +18,12 @@
   color: var(--color-warm-white);
 }
 
+.admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .admin-logout {
   display: inline-flex;
   align-items: center;

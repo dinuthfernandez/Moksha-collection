@@ -2,6 +2,7 @@ import { Outlet, Link } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 import AdminBottomNav from './AdminBottomNav'
+import ThemeToggle from '../ui/ThemeToggle'
 import BackButton from '../ui/BackButton'
 import './AdminLayout.css'
 
@@ -14,9 +15,12 @@ export default function AdminLayout() {
         <Link to="/mokshacollectionadminpanel/dashboard" className="admin-topbar-brand">
           Moksha Admin
         </Link>
-        <button type="button" className="admin-logout" onClick={logout}>
-          <LogOut size={16} /> Log out
-        </button>
+        <div className="admin-topbar-actions">
+          <ThemeToggle />
+          <button type="button" className="admin-logout" onClick={logout}>
+            <LogOut size={16} /> Log out
+          </button>
+        </div>
       </header>
       <main className="admin-content">
         <BackButton fallbackTo="/mokshacollectionadminpanel/dashboard" />
