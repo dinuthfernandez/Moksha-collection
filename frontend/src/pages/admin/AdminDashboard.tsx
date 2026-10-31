@@ -212,7 +212,7 @@ export default function AdminDashboard() {
         </div>
         <div className="admin-stat-card">
           <TrendingUp size={20} />
-          <span className="admin-stat-value">{stats?.profit_estimate?.toFixed(2) ?? '—'} BHD</span>
+          <span className="admin-stat-value">{stats?.profit_estimate?.toFixed(3) ?? '—'} BHD</span>
           <span className="admin-stat-label">Profit Estimate</span>
         </div>
       </div>

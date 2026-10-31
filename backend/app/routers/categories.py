@@ -7,7 +7,7 @@ from ..schemas import CategoryOut
 from ..services.cache import cached
 
 router = APIRouter(prefix="/categories", tags=["categories"])
-_LEGACY_CATEGORY_SLUGS = {"pavada": "pattupavada"}
+_LEGACY_CATEGORY_SLUGS = {"pattupavada": "pavada"}
 
 
 @router.get("", response_model=list[CategoryOut])

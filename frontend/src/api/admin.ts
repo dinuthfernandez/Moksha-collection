@@ -45,6 +45,29 @@ export const updateOrderStatus = (orderId: string, status: OrderStatus, cancelRe
 export const createRiderDeliveryLink = (orderId: string) =>
   adminApi.post<{ token: string }>(`/admin/orders/${orderId}/delivery-link`)
 
+export interface ZohoSyncProduct {
+  id: string
+  zoho_sku: string
+  name: string
+  stock_quantity: number | null
+  price: number | null
+  image_url: string | null
+  is_active: boolean
+  subcategory_name: string | null
+  last_synced_at: string | null
+}
+export interface ZohoRefreshResult {
+  sku: string
+  changed_fields: string[]
+  image_refreshed: boolean
+  product: ZohoSyncProduct
+  [key: string]: unknown
+}
+export const searchZohoSyncProducts = (q: string) =>
+  adminApi.get<ZohoSyncProduct[]>(`/admin/zoho-sync/search?q=${encodeURIComponent(q)}`)
+export const refreshProductFromZoho = (sku: string) =>
+  adminApi.post<ZohoRefreshResult>('/admin/zoho-sync/refresh', { sku })
+
 export const getReturns = (status: 'requested' | 'completed' = 'requested') =>
   adminApi.get<ReturnOrder[]>(`/admin/returns?status=${status}`)
 export const completeReturn = (orderId: string) => adminApi.put<OrderDetail>(`/admin/returns/${orderId}/complete`, {})

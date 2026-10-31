@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 from app.routers.products import _search_tokens
 from app.services.zoho_inventory import (
+    ALLOWED_SUBCATEGORIES,
     _normalize_subcategory,
     _sync_subcategories_to_categories,
 )
@@ -67,44 +68,89 @@ class FakeSupabase:
 
 
 class PattupavadaCategoryTests(unittest.TestCase):
-    def test_zoho_pavada_values_normalize_to_pattupavada(self):
+    def test_zoho_pavada_values_keep_the_requested_category_name(self):
         self.assertEqual(
             _normalize_subcategory("clothing", "Pavada"),
-            ("Pattupavada", "pattupavada"),
+            ("Pavada", "pavada"),
         )
         self.assertEqual(
             _normalize_subcategory("clothing", "Pattupavada"),
-            ("Pattupavada", "pattupavada"),
+            ("Pavada", "pavada"),
         )
 
     def test_legacy_supabase_category_is_renamed_without_losing_tile_fields(self):
         categories = [
             {
                 "id": "pavada-id",
-                "name": "Pavada",
-                "slug": "pavada",
+                "name": "Pattupavada",
+                "slug": "pattupavada",
                 "type": "clothing",
                 "image_url": "https://example.com/pavada.jpg",
                 "display_order": 7,
+                "is_active": True,
             }
         ]
 
         _sync_subcategories_to_categories(FakeSupabase(categories), {})
 
         renamed = next(row for row in categories if row["id"] == "pavada-id")
-        self.assertEqual(renamed["name"], "Pattupavada")
-        self.assertEqual(renamed["slug"], "pattupavada")
+        self.assertEqual(renamed["name"], "Pavada")
+        self.assertEqual(renamed["slug"], "pavada")
         self.assertEqual(renamed["image_url"], "https://example.com/pavada.jpg")
-        self.assertEqual(renamed["display_order"], 7)
-        self.assertFalse(any(row["slug"] == "pavada" for row in categories))
+        self.assertTrue(renamed["is_active"])
 
     def test_searching_legacy_name_targets_renamed_category(self):
-        self.assertEqual(_search_tokens("pavada"), ["pattupavada"])
+        self.assertEqual(_search_tokens("pavada"), ["pavada"])
+        self.assertEqual(_search_tokens("pattupavada"), ["pavada"])
 
-    def test_dhavani_set_is_an_allowed_clothing_subcategory(self):
+    def test_all_image_subcategories_are_supported(self):
+        image_categories = {
+            "clothing": {
+                "Kurti", "Top", "Saree", "Co-ord Set", "3 Piece Set", "Frock", "Set Mundu",
+                "Pavada", "Pavada Blouse", "Set Saree", "Dupatta", "2 Piece Set", "Dress Material",
+                "Dhavani Set", "Blouse", "Kaftan", "Short Top", "Pant", "Skirt & Top",
+            },
+            "accessories": {
+                "Bindi", "Earrings", "Necklace", "Bangles", "Hair Clip", "Glass Bangles", "Tic Tac",
+                "Bracelets", "Mala", "Eye Liner", "Ear Chain", "Safety Pin", "Nose Pin",
+                "Ear Supporters", "Anklets", "Hip Chain", "Nettichutti", "Sticker", "Saree Pin",
+            },
+        }
+        clothing = set(ALLOWED_SUBCATEGORIES["clothing"].values()) | set(ALLOWED_SUBCATEGORIES["saree"].values())
+        self.assertEqual(clothing, image_categories["clothing"])
+        self.assertEqual(set(ALLOWED_SUBCATEGORIES["accessories"].values()), image_categories["accessories"])
+
+    def test_mismatched_zoho_subcategories_only_go_to_others(self):
         self.assertEqual(
-            _normalize_subcategory("clothing", "Dhavani Set"),
-            ("Dhavani Set", "dhavani-set"),
+            _normalize_subcategory("clothing", "Unexpected Clothing Group"),
+            ("Others", "others"),
+        )
+        self.assertEqual(
+            _normalize_subcategory("accessories", "Unexpected Accessory Group"),
+            ("Others", "accessories-others"),
+        )
+
+    def test_sync_inserts_every_image_category_and_keeps_stale_rows_inactive(self):
+        stale = {
+            "id": "studs-id",
+            "name": "Studs",
+            "slug": "studs",
+            "type": "accessories",
+            "image_url": "/assets/category-tiles/studs.jpg",
+            "display_order": 5,
+            "is_active": True,
+        }
+        categories = [stale]
+        _sync_subcategories_to_categories(FakeSupabase(categories), {})
+
+        self.assertFalse(stale["is_active"])
+        for slug in ("kurti", "pavada", "co-ord-set", "bindi", "hair-clip", "accessories-others"):
+            self.assertTrue(any(row["slug"] == slug and row["is_active"] for row in categories))
+        self.assertTrue(any(row["slug"] == "kurti" and row["image_url"] for row in categories))
+        self.assertEqual(sum(row["type"] == "accessories" and row["is_active"] for row in categories), 20)
+        self.assertEqual(
+            sum(row["type"] in {"clothing", "saree"} and row["is_active"] for row in categories),
+            21,
         )
 
     def test_large_images_are_compressed_to_300kb_or_less(self):

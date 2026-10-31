@@ -11,7 +11,6 @@ import Reveal from '../components/ui/Reveal'
 import './CategoryLanding.css'
 import './Azhak.css'
 
-const CATEGORY_BATCH_SIZE = 6
 const PAGE_SIZE = 8
 
 interface CatalogEntry {
@@ -73,7 +72,6 @@ const SAREE_CONTENT = {
 export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }) {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesLoading, setCategoriesLoading] = useState(true)
-  const [visibleCategoryCount, setVisibleCategoryCount] = useState(CATEGORY_BATCH_SIZE)
   const [newArrivals, setNewArrivals] = useState<Product[]>([])
   const [newArrivalsLoading, setNewArrivalsLoading] = useState(true)
   const [products, setProducts] = useState<CatalogEntry[]>([])
@@ -87,7 +85,16 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
 
   useEffect(() => {
     let mounted = true
-    getCategoryTree(type)
+    const categoryRequest = type === 'clothing'
+      ? Promise.all([getCategoryTree('clothing'), getCategoryTree('saree')])
+        .then(([clothingCategories, sareeCategories]) => (
+          [
+            ...clothingCategories,
+            ...sareeCategories.filter((category) => category.slug !== 'saree-others'),
+          ].sort((a, b) => a.display_order - b.display_order)
+        ))
+      : getCategoryTree(type)
+    categoryRequest
       .then((data) => mounted && setCategories(data))
       .catch(() => mounted && setCategories([]))
       .finally(() => mounted && setCategoriesLoading(false))
@@ -147,7 +154,6 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
 
   const content = type === 'saree' ? SAREE_CONTENT : CONTENT
   const allCategories = categories
-  const visibleCategories = allCategories.slice(0, visibleCategoryCount)
 
   const handleAddToBag = async (product: Product) => {
     const reserved = await addItem({
@@ -190,7 +196,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
             <span>{allCategories.length} categories</span>
           </div>
           <div className="azhak-category-grid" aria-busy={categoriesLoading}>
-            {visibleCategories.map((category) => (
+            {allCategories.map((category) => (
               <Link key={category.id} to={`/${type}/${category.slug}`} className="azhak-category-card">
                 <PlaceholderImage
                   src={category.image_url}
@@ -206,18 +212,6 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
               </Link>
             ))}
           </div>
-          {allCategories.length > CATEGORY_BATCH_SIZE && (
-            <button
-              type="button"
-              className="azhak-see-more"
-              onClick={() => setVisibleCategoryCount((count) => (
-                count >= allCategories.length ? CATEGORY_BATCH_SIZE : count + CATEGORY_BATCH_SIZE
-              ))}
-            >
-              {visibleCategoryCount >= allCategories.length ? 'Show fewer' : 'See more categories'}
-              <ArrowRight size={15} />
-            </button>
-          )}
         </section>
         )}
 
@@ -242,11 +236,12 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
                     ) : (
                       <div className="product-card-image placeholder" role="img" aria-label="Moksha Collections"><span className="mc-mark">mc</span></div>
                     )}
+                    {product.stock_quantity <= 0 && <span className="product-card-badge-oos">Out of Stock</span>}
                   </div>
                   <div className="product-card-body">
                     <h2>{product.name}</h2>
-                    <p className="product-card-price">BHD {Number(product.price || 0).toFixed(2)}</p>
-                    <p className="product-card-stock">Stock on Hand: {product.stock_quantity}</p>
+                    <p className="product-card-price">BHD {Number(product.price || 0).toFixed(3)}</p>
+                    <p className={`product-card-stock${product.stock_quantity <= 0 ? ' out-of-stock' : ''}`}>{product.stock_quantity > 0 ? `Stock on Hand: ${product.stock_quantity}` : 'Out of Stock'}</p>
                   </div>
                 </Link>
               ))}
@@ -275,7 +270,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
                         <PlaceholderImage src={entry.image_url} alt={entry.name} label="Product image — 1000 × 1250 px" ratio="4 / 5" className="azhak-product-image" />
                         <div className="azhak-product-info">
                           <h3>{entry.name}</h3>
-                          <span>BHD {Number(entry.price || 0).toFixed(2)}</span>
+                          <span>BHD {Number(entry.price || 0).toFixed(3)}</span>
                         </div>
                       </Link>
                     ) : (
@@ -284,7 +279,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
                         <PlaceholderImage src={entry.image_url} alt={entry.name} label="Product image — 1000 × 1250 px" ratio="4 / 5" className="azhak-product-image" />
                         <div className="azhak-product-info">
                           <h3>{entry.name}</h3>
-                          <span>BHD {entry.price.toFixed(2)}</span>
+                          <span>BHD {entry.price.toFixed(3)}</span>
                         </div>
                       </div>
                     )}

@@ -17,7 +17,8 @@ _SEARCH_ALIASES = {
     "sari": "saree", "sarees": "saree", "saris": "saree", "kurthi": "kurti", "kurta": "kurti", "kurtis": "kurti",
     "kaftans": "kaftan", "frocks": "frock", "dresses": "dress", "tops": "top", "pants": "pant", "bangle": "bangles",
     "earring": "earrings", "stud": "studs", "bracelet": "bracelets", "necklaces": "necklace", "mundu": "mundu",
-    "pavada": "pattupavada", "pavadai": "pattupavada", "dupata": "dupatta", "duppatta": "dupatta",
+    "pavada": "pavada", "pavadai": "pavada", "pattupavada": "pavada",
+    "dupata": "dupatta", "duppatta": "dupatta",
 }
 
 
@@ -46,7 +47,7 @@ def suggest_products(q: str = Query(min_length=1, max_length=60)):
         ]
         query = (
             supabase.table("products").select("name,slug,subcategory_name,price,image_url")
-            .eq("is_active", True).gt("stock_quantity", 0).eq("is_primary_variant", True)
+            .eq("is_active", True).eq("is_primary_variant", True)
             .order("has_image", desc=True)
         )
         for token in tokens:
@@ -83,13 +84,13 @@ def list_products(
     supabase = get_supabase()
     query = supabase.table("products").select("*", count="exact")
     if active_only:
-        query = query.eq("is_active", True).gt("stock_quantity", 0)
+        query = query.eq("is_active", True)
     if category:
         query = query.eq("category_slug", category)
     if category_slug:
         # `category_slug` here is actually a Zoho Product Sub Category slug
         # (e.g. "kurti", "earrings") — subcategory browsing pages pass it in.
-        category_slug = {"pavada": "pattupavada"}.get(category_slug, category_slug)
+        category_slug = {"pattupavada": "pavada"}.get(category_slug, category_slug)
         query = query.eq("subcategory_slug", category_slug)
     if not q:
         # Listing/grid views show one card per design: the primary (smallest
@@ -126,8 +127,7 @@ def get_product(slug: str):
     def load() -> dict:
         supabase = get_supabase()
         result = supabase.table("products").select("*").eq("slug", slug).limit(1).execute()
-        # Out-of-stock products are treated the same as not-found so they never surface on the storefront.
-        if not result.data or (result.data[0].get("stock_quantity") or 0) <= 0:
+        if not result.data or not result.data[0].get("is_active"):
             raise HTTPException(status_code=404, detail="Product not found")
         product = dict(result.data[0])
 
@@ -138,7 +138,6 @@ def get_product(slug: str):
                 .select("id,slug,name,color,size,kids_size,image_url,price,stock_quantity,is_primary_variant")
                 .eq("website_serial", website_serial)
                 .eq("is_active", True)
-                .gt("stock_quantity", 0)
                 .execute()
             )
             product["variants"] = siblings.data or []
@@ -164,7 +163,7 @@ async def trigger_sync():
 
     from ..services.zoho_inventory import sync_products_to_supabase
 
-    synced = await sync_products_to_supabase()
+    synced = await sync_products_to_supabase(full=True)
     invalidate_catalog()
     return {"status": "ok", "synced": synced}
 

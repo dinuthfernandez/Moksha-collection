@@ -5,6 +5,7 @@ import re
 import threading
 import time
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from urllib import parse, request
 from urllib.error import HTTPError
@@ -16,6 +17,11 @@ from .cache import invalidate_catalog
 from .product_images import store_product_image
 
 logger = logging.getLogger(__name__)
+
+_ZOHO_RETRIES = 8
+_ZOHO_RETRY_STATUSES = {429, 500, 502, 503, 504}
+_LIGHT_SYNC_FIELDS = ("name", "description", "zoho_sku", "stock_quantity")
+_WRITE_WORKERS = 6
 
 WEBSITE_CONTACT_NAME = "Online Customer"
 _ADJUSTMENT_DEFAULTS_TTL_SECONDS = 300
@@ -56,11 +62,16 @@ class ZohoInventoryClient:
             method="POST",
         )
 
-        try:
-            with request.urlopen(req, timeout=30) as response:
-                response_body = response.read().decode("utf-8")
-        except Exception as exc:  # pragma: no cover - surfaced to caller
-            raise RuntimeError(f"Zoho token refresh failed: {exc}") from exc
+        response_body = ""
+        for attempt in range(_ZOHO_RETRIES):
+            try:
+                with request.urlopen(req, timeout=30) as response:
+                    response_body = response.read().decode("utf-8")
+                break
+            except Exception as exc:  # pragma: no cover - surfaced to caller
+                if attempt == _ZOHO_RETRIES - 1:
+                    raise RuntimeError(f"Zoho token refresh failed: {exc}") from exc
+                time.sleep(2 ** (attempt + 1))
 
         data = json.loads(response_body)
         access_token = data.get("access_token")
@@ -98,14 +109,26 @@ class ZohoInventoryClient:
 
         data = json.dumps(json_body).encode("utf-8") if json_body is not None else None
         req = request.Request(url, data=data, headers=headers, method=method)
-        try:
-            with request.urlopen(req, timeout=30) as response:
-                body = response.read().decode("utf-8")
-        except HTTPError as exc:  # pragma: no cover - surfaced to caller
-            error_body = exc.read().decode("utf-8") if exc.fp else ""
-            raise RuntimeError(f"Zoho API request failed for {path}: {exc} — {error_body[:500]}") from exc
-        except Exception as exc:  # pragma: no cover - surfaced to caller
-            raise RuntimeError(f"Zoho API request failed for {path}: {exc}") from exc
+        # Only reads are retried; retrying a write could create duplicate invoices/adjustments.
+        attempts = _ZOHO_RETRIES if method == "GET" else 1
+        body = ""
+        for attempt in range(attempts):
+            delay = min(30, 2 ** (attempt + 1))
+            try:
+                with request.urlopen(req, timeout=60) as response:
+                    body = response.read().decode("utf-8")
+                break
+            except HTTPError as exc:  # pragma: no cover - surfaced to caller
+                if exc.code in _ZOHO_RETRY_STATUSES and attempt < attempts - 1:
+                    time.sleep(delay)
+                    continue
+                error_body = exc.read().decode("utf-8") if exc.fp else ""
+                raise RuntimeError(f"Zoho API request failed for {path}: {exc} — {error_body[:500]}") from exc
+            except Exception as exc:  # pragma: no cover - surfaced to caller
+                if attempt < attempts - 1:
+                    time.sleep(delay)
+                    continue
+                raise RuntimeError(f"Zoho API request failed for {path}: {exc}") from exc
 
         if not body:
             return {}
@@ -120,6 +143,7 @@ class ZohoInventoryClient:
         page = 1
         page_size = 200
         items: list[dict[str, Any]] = []
+        seen_ids: set[str] = set()
 
         while True:
             result = self._request_json(
@@ -136,14 +160,30 @@ class ZohoInventoryClient:
             if not batch:
                 break
 
-            items.extend(batch)
+            for entry in batch:
+                entry_id = str(entry.get("item_id") or "")
+                if entry_id and entry_id in seen_ids:
+                    continue
+                seen_ids.add(entry_id)
+                items.append(entry)
 
-            if len(batch) < page_size:
+            has_more = (result.get("page_context") or {}).get("has_more_page")
+            if has_more is False or (has_more is None and len(batch) < page_size):
                 break
 
             page += 1
 
         return items
+
+    def fetch_item(self, zoho_item_id: str) -> dict[str, Any] | None:
+        """Fetches one item's full detail. Returns None only when Zoho confirms it no longer exists."""
+        try:
+            result = self._request_json(f"/items/{zoho_item_id}", {"organization_id": self.organization_id})
+        except RuntimeError as exc:
+            if "HTTP Error 404" in str(exc):
+                return None
+            raise
+        return result.get("item") or None
 
     def download_item_image(self, zoho_item_id: str) -> bytes | None:
         """Downloads the raw image attached to a Zoho item, or None if it has none."""
@@ -158,7 +198,7 @@ class ZohoInventoryClient:
             with request.urlopen(req, timeout=60) as response:
                 data = response.read()
         except HTTPError as exc:
-            if exc.code == 404:
+            if exc.code in (400, 404):
                 return None
             raise RuntimeError(f"Zoho image download failed for {zoho_item_id}: {exc}") from exc
         return data or None
@@ -599,7 +639,9 @@ def _mark_primary_variants(records: list[dict[str, Any]]) -> None:
             record["is_primary_variant"] = False
 
 
-async def sync_products_to_supabase() -> int:
+async def sync_products_to_supabase(full: bool = False) -> int:
+    """Light sync by default: only name, SKU, description and stock are refreshed for existing
+    products (and only rows that actually changed are written). New products are inserted in full."""
     settings = get_settings()
     if not all(
         [
@@ -624,35 +666,147 @@ async def sync_products_to_supabase() -> int:
 
     # All blocking Supabase I/O runs in a worker thread so the sync never
     # stalls the asyncio event loop (and therefore never blocks other API requests).
-    return await asyncio.to_thread(_write_products_to_supabase, items)
+    return await asyncio.to_thread(_write_products_to_supabase, items, False, not full)
 
 
 ALLOWED_SUBCATEGORIES: dict[str, dict[str, str]] = {
     "clothing": {
-        "2-piece-set": "2 Piece Set", "3-piece-set": "3 Piece Set", "kaftan": "Kaftan",
-        "top": "Top", "frock": "Frock", "blouse": "Blouse",
-        "pattupavada": "Pattupavada", "set-mundu": "Set Mundu",
-        "dupatta": "Dupatta", "pant": "Pant", "dhavani-set": "Dhavani Set",
+        "kurti": "Kurti",
+        "top": "Top",
+        "co-ord-set": "Co-ord Set",
+        "3-piece-set": "3 Piece Set",
+        "frock": "Frock",
+        "set-mundu": "Set Mundu",
+        "pavada": "Pavada",
+        "pavada-blouse": "Pavada Blouse",
+        "dupatta": "Dupatta",
+        "2-piece-set": "2 Piece Set",
+        "dress-material": "Dress Material",
+        "dhavani-set": "Dhavani Set",
+        "blouse": "Blouse",
+        "kaftan": "Kaftan",
+        "short-top": "Short Top",
+        "pant": "Pant",
+        "skirt-top": "Skirt & Top",
     },
     "saree": {"saree": "Saree", "set-saree": "Set Saree"},
     "accessories": {
-        "bangles": "Bangles", "glass-bangles": "Glass Bangles", "necklace": "Necklace",
-        "earrings": "Earrings", "studs": "Studs", "bracelets": "Bracelets",
+        "bindi": "Bindi",
+        "earrings": "Earrings",
+        "necklace": "Necklace",
+        "bangles": "Bangles",
+        "hair-clip": "Hair Clip",
+        "glass-bangles": "Glass Bangles",
+        "tic-tac": "Tic Tac",
+        "bracelets": "Bracelets",
+        "mala": "Mala",
+        "eye-liner": "Eye Liner",
+        "ear-chain": "Ear Chain",
+        "safety-pin": "Safety Pin",
+        "nose-pin": "Nose Pin",
+        "ear-supporters": "Ear Supporters",
+        "anklets": "Anklets",
+        "hip-chain": "Hip Chain",
+        "nettichutti": "Nettichutti",
+        "sticker": "Sticker",
+        "saree-pin": "Saree Pin",
     },
 }
 OTHERS_SUBCATEGORY: dict[str, tuple[str, str]] = {
     "clothing": ("Others", "others"),
     "accessories": ("Others", "accessories-others"),
+    "saree": ("Others", "saree-others"),
 }
 SAREE_SUBCATEGORY_SLUGS = set(ALLOWED_SUBCATEGORIES["saree"])
 _SUBCATEGORY_ALIASES = {
-    "2-pcs-set": "2-piece-set", "3-pcs-set": "3-piece-set", "fork": "frock",
-    "pavada": "pattupavada", "set-mund": "set-mundu", "duppatta": "dupatta", "pants": "pant",
+    "2-pcs-set": "2-piece-set",
+    "3-pcs-set": "3-piece-set",
+    "coord-set": "co-ord-set",
+    "co-ord-sets": "co-ord-set",
+    "fork": "frock",
+    "pattupavada": "pavada",
+    "pavadai": "pavada",
+    "pavada-blouses": "pavada-blouse",
+    "set-mund": "set-mundu",
+    "duppatta": "dupatta",
+    "pants": "pant",
+    "skirts-top": "skirt-top",
+    "hair-clips": "hair-clip",
+    "earring": "earrings",
+    "bangle": "bangles",
+    "anklet": "anklets",
 }
+
+_CATEGORY_IMAGES: dict[str, str] = {
+    "kurti": "/assets/category-tiles/kurti.jpg",
+    "saree": "/assets/category-tiles/saree.jpg",
+    "3-piece-set": "/assets/category-tiles/3-piece-set.jpg",
+    "frock": "/assets/category-tiles/frock.jpg",
+    "set-mundu": "/assets/category-tiles/set-mundu.jpg",
+    "pavada": "/assets/category-tiles/pavada.jpg",
+    "pavada-blouse": "/assets/category-tiles/blouse.jpg",
+    "dupatta": "/assets/category-tiles/dupatta.jpeg",
+    "2-piece-set": "/assets/category-tiles/2-piece-set.jpg",
+    "dhavani-set": "/assets/category-tiles/dhavani-set.jpeg",
+    "blouse": "/assets/category-tiles/blouse.jpg",
+    "kaftan": "/assets/category-tiles/kaftan.jpg",
+    "pant": "/assets/category-tiles/pant.jpg",
+    "set-saree": "/assets/category-tiles/set-saree.jpg",
+    "earrings": "/assets/category-tiles/earrings.jpg",
+    "necklace": "/assets/category-tiles/necklace.jpg",
+    "bangles": "/assets/category-tiles/bangles.jpg",
+    "glass-bangles": "/assets/category-tiles/glass-bangles.jpg",
+    "bracelets": "/assets/category-tiles/bracelets.jpg",
+    "others": "/assets/category-tiles/others.jpeg",
+    "accessories-others": "/assets/category-tiles/accessories-others.jpg",
+}
+_CATEGORY_DISPLAY_ORDER = (
+    ("clothing", "kurti"),
+    ("clothing", "top"),
+    ("saree", "saree"),
+    ("clothing", "co-ord-set"),
+    ("clothing", "3-piece-set"),
+    ("clothing", "frock"),
+    ("clothing", "set-mundu"),
+    ("clothing", "pavada"),
+    ("clothing", "pavada-blouse"),
+    ("saree", "set-saree"),
+    ("clothing", "dupatta"),
+    ("clothing", "2-piece-set"),
+    ("clothing", "dress-material"),
+    ("clothing", "dhavani-set"),
+    ("clothing", "blouse"),
+    ("clothing", "kaftan"),
+    ("clothing", "short-top"),
+    ("clothing", "pant"),
+    ("clothing", "skirt-top"),
+    ("accessories", "bindi"),
+    ("accessories", "earrings"),
+    ("accessories", "necklace"),
+    ("accessories", "bangles"),
+    ("accessories", "hair-clip"),
+    ("accessories", "glass-bangles"),
+    ("accessories", "tic-tac"),
+    ("accessories", "bracelets"),
+    ("accessories", "mala"),
+    ("accessories", "eye-liner"),
+    ("accessories", "ear-chain"),
+    ("accessories", "safety-pin"),
+    ("accessories", "nose-pin"),
+    ("accessories", "ear-supporters"),
+    ("accessories", "anklets"),
+    ("accessories", "hip-chain"),
+    ("accessories", "nettichutti"),
+    ("accessories", "sticker"),
+    ("accessories", "saree-pin"),
+    ("clothing", "others"),
+    ("saree", "saree-others"),
+    ("accessories", "accessories-others"),
+)
 
 
 def _normalize_subcategory(category_slug: str | None, name: str | None) -> tuple[str | None, str | None]:
-    """Maps a Zoho sub category onto the curated website list; anything else goes to that type's Others."""
+    """Keep every listed subcategory; route unknown Zoho values to that section's Others."""
     if category_slug not in ALLOWED_SUBCATEGORIES:
         return name, (_slugify(name, "") if name else None)
     slug = _slugify(name, "") if name else ""
@@ -664,49 +818,71 @@ def _normalize_subcategory(category_slug: str | None, name: str | None) -> tuple
 
 
 def _sync_subcategories_to_categories(supabase: Any, subcategories_seen: dict[tuple[str, str], str]) -> None:
-    """Auto-populates the `categories` table (the "Shop by Category" tiles) from the
-    distinct (Product Category, Product Sub Category) pairs actually present on
-    synced items. Never overwrites an existing row's image_url/display_order, and
-    never deletes rows (so a manually curated tile image always survives a resync)."""
+    """Ensure every supported subcategory and its fallback exists in the categories table."""
     desired: dict[tuple[str, str], str] = {}
-    for ctype, mapping in ALLOWED_SUBCATEGORIES.items():
-        for slug, name in mapping.items():
-            desired[(ctype, slug)] = name
-        if ctype in OTHERS_SUBCATEGORY:
-            oname, oslug = OTHERS_SUBCATEGORY[ctype]
-            desired[(ctype, oslug)] = oname
+    for category_type, slug in _CATEGORY_DISPLAY_ORDER:
+        if slug == OTHERS_SUBCATEGORY.get(category_type, (None, None))[1]:
+            desired[(category_type, slug)] = OTHERS_SUBCATEGORY[category_type][0]
+        else:
+            desired[(category_type, slug)] = ALLOWED_SUBCATEGORIES[category_type][slug]
 
-    existing = supabase.table("categories").select("id,slug,type,image_url").execute()
+    existing = supabase.table("categories").select("id,name,slug,type,image_url,display_order,is_active").execute()
     existing_rows = existing.data or []
 
-    legacy_pavada_rows = [
-        row for row in existing_rows
-        if row.get("type") == "clothing" and row.get("slug") == "pavada"
+    pavada_rows = [
+        row
+        for row in existing_rows
+        if row.get("type") == "clothing" and row.get("slug") == "pattupavada"
     ]
-    pattupavada_exists = any(row.get("slug") == "pattupavada" for row in existing_rows)
-    for row in legacy_pavada_rows:
-        if pattupavada_exists:
+    pavada_exists = any(row.get("type") == "clothing" and row.get("slug") == "pavada" for row in existing_rows)
+    for row in pavada_rows:
+        if pavada_exists:
+            supabase.table("categories").update({"is_active": False}).eq("id", row["id"]).execute()
             continue
         supabase.table("categories").update(
-            {"name": "Pattupavada", "slug": "pattupavada",
-             **({} if row.get("image_url") else {"image_url": "/assets/category-tiles/pattupavada.jpg"})}
+            {
+                "name": "Pavada",
+                "slug": "pavada",
+                "image_url": _CATEGORY_IMAGES["pavada"],
+            }
         ).eq("id", row["id"]).execute()
-        row["slug"] = "pattupavada"
-        pattupavada_exists = True
+        row.update({"name": "Pavada", "slug": "pavada"})
+        pavada_exists = True
 
-    existing_slugs = {row["slug"] for row in existing_rows}
+    existing_by_slug = {row["slug"]: row for row in existing_rows if row.get("slug")}
+    new_rows: list[dict[str, Any]] = []
+    for order, ((category_type, slug), name) in enumerate(desired.items(), start=1):
+        image_url = _CATEGORY_IMAGES.get(slug)
+        row = existing_by_slug.get(slug)
+        if row is None:
+            new_rows.append(
+                {
+                    "name": name,
+                    "slug": slug,
+                    "type": category_type,
+                    "image_url": image_url,
+                    "display_order": order,
+                    "is_active": True,
+                }
+            )
+            continue
 
-    new_rows = [
-        {"name": name, "slug": slug, "type": category_type, "is_active": True}
-        for (category_type, slug), name in desired.items()
-        if slug not in existing_slugs
-    ]
+        updates: dict[str, Any] = {
+            "name": name,
+            "type": category_type,
+            "display_order": order,
+            "is_active": True,
+            "image_url": image_url,
+        }
+        supabase.table("categories").update(updates).eq("id", row["id"]).execute()
+
+    desired_slugs = {slug for _, slug in desired}
+    for row in existing_rows:
+        if row.get("slug") not in desired_slugs and row.get("is_active", True):
+            supabase.table("categories").update({"is_active": False}).eq("id", row["id"]).execute()
+
     for start in range(0, len(new_rows), 100):
         supabase.table("categories").insert(new_rows[start : start + 100]).execute()
-
-    stale = [slug for slug in existing_slugs if slug not in {s for (_, s) in desired}]
-    for start in range(0, len(stale), 100):
-        supabase.table("categories").delete().in_("slug", stale[start : start + 100]).execute()
 
 
 def _resolve_product_image(
@@ -737,52 +913,204 @@ def _resolve_product_image(
         return fallback
 
 
-def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
+def _same_value(old: Any, new: Any) -> bool:
+    if old in (None, "") and new in (None, ""):
+        return True
+    if isinstance(old, (int, float)) or isinstance(new, (int, float)):
+        try:
+            return abs(float(old) - float(new)) < 1e-9
+        except (TypeError, ValueError):
+            return False
+    return old == new
+
+
+def _changed_fields(row: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in record.items()
+        if key != "last_synced_at" and not _same_value(row.get(key), value)
+    }
+
+
+def _with_retry(action: Any, attempts: int = 3) -> Any:
+    for attempt in range(attempts):
+        try:
+            return action()
+        except Exception:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(1 + attempt)
+
+
+def _apply_updates(supabase: Any, updates: list[tuple[str, dict[str, Any]]]) -> None:
+    """Writes per-row updates concurrently; each row only carries the fields that changed."""
+    if not updates:
+        return
+
+    def write(update: tuple[str, dict[str, Any]]) -> None:
+        row_id, fields = update
+        _with_retry(lambda: supabase.table("products").update(fields).eq("id", row_id).execute())
+
+    with ThreadPoolExecutor(max_workers=_WRITE_WORKERS) as pool:
+        list(pool.map(write, updates))
+
+
+def _load_products(supabase: Any, columns: str = "*") -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    page_size = 1000
+    offset = 0
+    while True:
+        batch = supabase.table("products").select(columns).range(offset, offset + page_size - 1).execute().data or []
+        rows.extend(batch)
+        if len(batch) < page_size:
+            return rows
+        offset += page_size
+
+
+def _light_record(item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "name": _extract_name(item),
+        "description": _extract_description(item),
+        "zoho_sku": _extract_sku(item),
+        "stock_quantity": _extract_stock(item),
+    }
+
+
+def _full_record(
+    item: dict[str, Any],
+    item_id: str,
+    slug: str,
+    image: dict[str, Any],
+    subcategories_seen: dict[tuple[str, str], str],
+) -> dict[str, Any]:
+    category_slug = _extract_category_slug(item)
+    subcategory_name = _extract_subcategory_name(item)
+    raw_sub_slug = _slugify(subcategory_name, "") if subcategory_name else ""
+    if _SUBCATEGORY_ALIASES.get(raw_sub_slug, raw_sub_slug) in SAREE_SUBCATEGORY_SLUGS:
+        category_slug = "saree"
+    subcategory_name, subcategory_slug = _normalize_subcategory(category_slug, subcategory_name)
+    if category_slug and subcategory_name and subcategory_slug:
+        subcategories_seen[(category_slug, subcategory_slug)] = subcategory_name
+
+    return {
+        "zoho_item_id": item_id,
+        "slug": slug,
+        "price": _extract_price(item),
+        "compare_at_price": _extract_price(item),
+        "category_slug": category_slug,
+        "subcategory_name": subcategory_name,
+        "subcategory_slug": subcategory_slug,
+        "website_serial": _extract_website_serial(item),
+        "color": _extract_color(item),
+        "size": _extract_size(item),
+        "kids_size": _extract_kids_size(item),
+        "image_url": image["image_url"],
+        "image_source_id": image["image_source_id"],
+        "brand": _extract_brand(item),
+        "length": _extract_dimension(item, "length"),
+        "width": _extract_dimension(item, "width"),
+        "height": _extract_dimension(item, "height"),
+        "weight": _extract_weight(item),
+        "dimension_unit": item.get("dimension_unit") or None,
+        "weight_unit": item.get("weight_unit") or None,
+        "last_synced_at": datetime.now(timezone.utc).isoformat(),
+        "is_active": True,
+        **_light_record(item),
+    }
+
+
+def _primary_variant_updates(
+    rows: list[dict[str, Any]], new_records: list[dict[str, Any]]
+) -> list[tuple[str, dict[str, Any]]]:
+    """Re-ranks design variants after new products arrive; returns only rows whose primary flag flips."""
+    stubs = [
+        {
+            "id": row["id"],
+            "website_serial": row.get("website_serial"),
+            "size": row.get("size"),
+            "color": row.get("color"),
+            "zoho_sku": row.get("zoho_sku"),
+            "_was": row.get("is_primary_variant"),
+        }
+        for row in rows
+        if row.get("is_active") and row.get("website_serial")
+    ]
+    _mark_primary_variants(stubs + new_records)
+    return [
+        (stub["id"], {"is_primary_variant": stub["is_primary_variant"]})
+        for stub in stubs
+        if stub["_was"] != stub["is_primary_variant"]
+    ]
+
+
+def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = False, light: bool = False) -> int:
+    """Writes Zoho items to Supabase.
+
+    light=True refreshes only name/SKU/description/stock on existing products (new products are inserted
+    in full). Either way only rows whose values actually changed are written, concurrently, and inserts
+    are batched. partial=True means `items` is a subset, so nothing is deactivated or deleted."""
     supabase = get_supabase()
     settings = get_settings()
-    image_client = ZohoInventoryClient(
+    client = ZohoInventoryClient(
         client_id=settings.zoho_client_id,
         client_secret=settings.zoho_client_secret,
         refresh_token=settings.zoho_refresh_token,
         organization_id=settings.zoho_organization_id,
     )
 
-    existing_rows: list[dict[str, Any]] = []
-    page_size = 1000
-    offset = 0
-    while True:
-        batch = (
-            supabase.table("products")
-            .select("id,zoho_item_id,slug,is_active,image_url,image_source_id")
-            .range(offset, offset + page_size - 1)
-            .execute()
-        )
-        rows = batch.data or []
-        existing_rows.extend(rows)
-        if len(rows) < page_size:
-            break
-        offset += page_size
-
+    existing_rows = _load_products(supabase)
     existing_map = {row.get("zoho_item_id"): row for row in existing_rows if row.get("zoho_item_id")}
-    existing_slug_map = {row.get("slug"): row for row in existing_rows if row.get("slug")}
-    used_slugs = set(existing_slug_map.keys())
+    used_slugs = {row.get("slug") for row in existing_rows if row.get("slug")}
+
+    items = list(items)
     zoho_item_ids = {_extract_item_id(item) for item in items}
     zoho_item_ids.discard(None)
+
+    # Zoho's paginated list can silently omit items, so anything we hold that is missing from it is
+    # checked directly: still there -> processed normally, confirmed gone (404) -> removable.
+    deleted_item_ids: list[str] = []
+    if not partial:
+        for missing_id in [i for i in existing_map if i not in zoho_item_ids]:
+            try:
+                found = client.fetch_item(missing_id)
+            except Exception:
+                logger.warning("Could not verify Zoho item %s; leaving it untouched", missing_id)
+                zoho_item_ids.add(missing_id)
+                continue
+            if found:
+                items.append(found)
+                zoho_item_ids.add(missing_id)
+            else:
+                deleted_item_ids.append(missing_id)
+
     online_items = [item for item in items if _is_online_store_enabled(item)]
     online_item_ids = {_extract_item_id(item) for item in online_items}
     online_item_ids.discard(None)
 
-    records: list[dict[str, Any]] = []
+    now = datetime.now(timezone.utc).isoformat()
     subcategories_seen: dict[tuple[str, str], str] = {}  # (type, slug) -> name
+    updates: list[tuple[str, dict[str, Any]]] = []
+    new_records: list[dict[str, Any]] = []
+    existing_records: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    processed = 0
     for item in online_items:
         item_id = _extract_item_id(item)
         if not item_id:
             continue
+        processed += 1
+        row = existing_map.get(item_id)
 
-        existing_row = existing_map.get(item_id)
-        # Keep the slug this row already owns; only mint a new one for genuinely new products.
-        if existing_row and existing_row.get("slug"):
-            slug = existing_row["slug"]
+        if row is not None and light:
+            record = _light_record(item)
+            if not row.get("is_active"):
+                record["is_active"] = True
+            changed = _changed_fields(row, record)
+            if changed:
+                updates.append((row["id"], {**changed, "last_synced_at": now}))
+            continue
+
+        if row is not None:
+            slug = row["slug"]
         else:
             base_slug = _slugify(_extract_name(item), item_id)
             slug = base_slug
@@ -790,73 +1118,41 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
             while slug in used_slugs:
                 slug = f"{base_slug}-{suffix}"
                 suffix += 1
-        used_slugs.add(slug)
+            used_slugs.add(slug)
 
-        category_slug = _extract_category_slug(item)
-        subcategory_name = _extract_subcategory_name(item)
-        raw_sub_slug = _slugify(subcategory_name, "") if subcategory_name else ""
-        if _SUBCATEGORY_ALIASES.get(raw_sub_slug, raw_sub_slug) in SAREE_SUBCATEGORY_SLUGS:
-            category_slug = "saree"
-        subcategory_name, subcategory_slug = _normalize_subcategory(category_slug, subcategory_name)
-        if category_slug and subcategory_name and subcategory_slug:
-            subcategories_seen[(category_slug, subcategory_slug)] = subcategory_name
-
-        image = _resolve_product_image(image_client, item, item_id, existing_row)
-
-        record = {
-            "zoho_item_id": item_id,
-            "name": _extract_name(item),
-            "slug": slug,
-            "description": _extract_description(item),
-            "price": _extract_price(item),
-            "compare_at_price": _extract_price(item),
-            "category_slug": category_slug,
-            "subcategory_name": subcategory_name,
-            "subcategory_slug": subcategory_slug,
-            "website_serial": _extract_website_serial(item),
-            "color": _extract_color(item),
-            "size": _extract_size(item),
-            "kids_size": _extract_kids_size(item),
-            "stock_quantity": _extract_stock(item),
-            "image_url": image["image_url"],
-            "image_source_id": image["image_source_id"],
-            "zoho_sku": _extract_sku(item),
-            "brand": _extract_brand(item),
-            "length": _extract_dimension(item, "length"),
-            "width": _extract_dimension(item, "width"),
-            "height": _extract_dimension(item, "height"),
-            "weight": _extract_weight(item),
-            "dimension_unit": item.get("dimension_unit") or None,
-            "weight_unit": item.get("weight_unit") or None,
-            "last_synced_at": datetime.now(timezone.utc).isoformat(),
-            "is_active": True,
-        }
-        record["_item_id"] = item_id
-        records.append(record)
-
-    _mark_primary_variants(records)
-
-    synced_count = 0
-    for record in records:
-        item_id = record.pop("_item_id")
-        slug = record["slug"]
-        if item_id in existing_map:
-            supabase.table("products").update(record).eq("zoho_item_id", item_id).execute()
-        elif slug in existing_slug_map:
-            supabase.table("products").update(record).eq("slug", slug).execute()
+        image = _resolve_product_image(client, item, item_id, row)
+        record = _full_record(item, item_id, slug, image, subcategories_seen)
+        if row is None:
+            new_records.append(record)
         else:
-            supabase.table("products").insert(record).execute()
-        synced_count += 1
+            existing_records.append((row, record))
 
-    _sync_subcategories_to_categories(supabase, subcategories_seen)
+    if not light:
+        _mark_primary_variants([record for _, record in existing_records] + new_records)
+        for row, record in existing_records:
+            changed = _changed_fields(row, record)
+            if changed:
+                updates.append((row["id"], {**changed, "last_synced_at": now}))
+    elif new_records:
+        updates.extend(_primary_variant_updates(existing_rows, new_records))
 
-    # Keep Zoho items that are still present but not online; physically remove deleted items.
+    _apply_updates(supabase, updates)
+    for start in range(0, len(new_records), 100):
+        batch = new_records[start : start + 100]
+        _with_retry(lambda: supabase.table("products").insert(batch).execute())
+
+    if not light or new_records:
+        _sync_subcategories_to_categories(supabase, subcategories_seen)
+
+    # Keep Zoho items that are still present but not online; physically remove confirmed-deleted items.
     disabled_item_ids = [
         zoho_item_id
         for zoho_item_id, row in existing_map.items()
         if zoho_item_id in zoho_item_ids and zoho_item_id not in online_item_ids and row.get("is_active")
     ]
-    deleted_item_ids = [zoho_item_id for zoho_item_id in existing_map if zoho_item_id not in zoho_item_ids]
+    if partial:
+        disabled_item_ids = []
+        deleted_item_ids = []
 
     # Safety net: a partial/odd Zoho response must never wipe out the catalogue.
     removal_count = len(disabled_item_ids) + len(deleted_item_ids)
@@ -876,8 +1172,93 @@ def _write_products_to_supabase(items: list[dict[str, Any]]) -> int:
         item_id_batch = deleted_item_ids[start : start + 100]
         supabase.table("products").delete().in_("zoho_item_id", item_id_batch).execute()
 
+    logger.info(
+        "Zoho %s sync: %s online items, %s inserted, %s updated, %s deactivated, %s deleted",
+        "light" if light else "full",
+        processed,
+        len(new_records),
+        len(updates),
+        len(disabled_item_ids),
+        len(deleted_item_ids),
+    )
+    if updates or new_records or disabled_item_ids or deleted_item_ids:
+        invalidate_catalog()
+    return processed
+
+
+_REFRESH_PREVIEW_FIELDS = (
+    "name", "description", "zoho_sku", "stock_quantity", "price", "category_slug", "subcategory_name",
+    "color", "size", "kids_size", "website_serial", "image_url", "is_active",
+)
+
+
+def refresh_product_from_zoho(sku: str) -> dict[str, Any]:
+    """Re-fetches one product from Zoho (all fields, image forced) and overwrites its Supabase row.
+    Raises LookupError when the SKU is unknown here or in Zoho, RuntimeError when Zoho cannot be reached."""
+    supabase = get_supabase()
+    settings = get_settings()
+    if not all([settings.zoho_client_id, settings.zoho_client_secret, settings.zoho_refresh_token, settings.zoho_organization_id]):
+        raise RuntimeError("Zoho Inventory credentials are not configured")
+
+    rows = supabase.table("products").select("*").eq("zoho_sku", sku).limit(2).execute().data or []
+    if not rows:
+        raise LookupError(f"No product with SKU {sku} in the database")
+    row = rows[0]
+
+    client = ZohoInventoryClient(
+        client_id=settings.zoho_client_id,
+        client_secret=settings.zoho_client_secret,
+        refresh_token=settings.zoho_refresh_token,
+        organization_id=settings.zoho_organization_id,
+    )
+    item_id = row.get("zoho_item_id")
+    item = client.fetch_item(item_id) if item_id else None
+    if item is None:
+        listing = client._request_json("/items", {"organization_id": client.organization_id, "sku": sku}).get("items") or []
+        match = next((entry for entry in listing if entry.get("sku") == sku), None)
+        item = client.fetch_item(match["item_id"]) if match else None
+    if item is None:
+        raise LookupError(f"SKU {sku} was not found in Zoho Inventory")
+    item_id = _extract_item_id(item) or item_id
+
+    image = {"image_url": row.get("image_url"), "image_source_id": row.get("image_source_id")}
+    image_refreshed = False
+    data = client.download_item_image(item_id)
+    if data:
+        document_id = str(item.get("image_document_id") or "").strip()
+        image = {"image_url": store_product_image(item_id, data), "image_source_id": document_id or None}
+        image_refreshed = True
+
+    record = _full_record(item, item_id, row["slug"], image, {})
+    record["is_active"] = _is_online_store_enabled(item)
+
+    old_serial = row.get("website_serial")
+    serials = {s for s in (old_serial, record.get("website_serial")) if s}
+    sibling_rows = (
+        supabase.table("products").select("*").in_("website_serial", list(serials)).neq("id", row["id"]).execute().data or []
+        if serials
+        else []
+    )
+    group = [dict(r) for r in sibling_rows if r.get("is_active")] + [record]
+    _mark_primary_variants(group)
+
+    changed = _changed_fields(row, record)
+    _with_retry(lambda: supabase.table("products").update(record).eq("id", row["id"]).execute())
+    flips = [
+        (sibling["id"], {"is_primary_variant": flagged["is_primary_variant"]})
+        for sibling, flagged in zip([r for r in sibling_rows if r.get("is_active")], group)
+        if sibling.get("is_primary_variant") != flagged["is_primary_variant"]
+    ]
+    _apply_updates(supabase, flips)
     invalidate_catalog()
-    return synced_count
+
+    updated = {"id": row["id"], **{key: record.get(key) for key in _REFRESH_PREVIEW_FIELDS}}
+    return {
+        "sku": sku,
+        "changed_fields": sorted(changed),
+        "image_refreshed": image_refreshed,
+        "product": updated,
+    }
 
 
 async def sync_loop() -> None:

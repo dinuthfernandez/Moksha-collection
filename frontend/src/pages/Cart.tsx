@@ -81,7 +81,7 @@ export default function Cart() {
                     <button disabled={reservationBusy} onClick={() => void updateQuantity(item.id, item.quantity + 1)}>+</button>
                   </div>
                 </div>
-                <div className="cart-item-price">{(item.price * item.quantity).toFixed(2)} BHD</div>
+                <div className="cart-item-price">{(item.price * item.quantity).toFixed(3)} BHD</div>
                 <button className="cart-item-remove" disabled={reservationBusy} onClick={() => void removeItem(item.id)} aria-label="Remove">
                   &times;
                 </button>
@@ -136,7 +136,7 @@ export default function Cart() {
             ) : null}
             <div className="cart-summary-row">
               <span>Subtotal</span>
-              <strong>{subtotal.toFixed(2)} BHD</strong>
+              <strong>{subtotal.toFixed(3)} BHD</strong>
             </div>
             {couponOffer.applied && (
               <>

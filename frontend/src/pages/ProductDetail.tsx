@@ -281,7 +281,7 @@ export default function ProductDetail() {
             <strong>{reviewSummary.average_rating.toFixed(1)}</strong>
             <span>{reviewSummary.total} {reviewSummary.total === 1 ? 'review' : 'reviews'}</span>
           </div>
-          <p className="product-detail-price">BHD {Number(product.price || 0).toFixed(2)}</p>
+          <p className="product-detail-price">BHD {Number(product.price || 0).toFixed(3)}</p>
           <p className={`product-detail-stock ${inStock ? 'in-stock' : 'out-of-stock'}`}>
             {inStock ? `In Stock (${product.stock_quantity} available)` : 'Out of Stock'}
           </p>

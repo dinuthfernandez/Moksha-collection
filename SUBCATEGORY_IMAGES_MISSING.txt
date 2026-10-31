@@ -1,0 +1,55 @@
+Moksha Collections - Subcategory Images Missing
+
+Category images come ONLY from "Moksha collection/mc category images".
+These categories have no matching image in that folder, so their cards show the
+default placeholder. Add a file to the folder (and tell me) to fill them.
+
+CLOTHING (6)
+- Top
+- Co-ord Set
+- Dress Material
+- Short Top
+- Skirt & Top
+- (Saree section) Others
+
+ACCESSORIES (14)
+- Bindi
+- Hair Clip
+- Tic Tac
+- Mala
+- Eye Liner
+- Ear Chain
+- Safety Pin
+- Nose Pin
+- Ear Supporters
+- Anklets
+- Hip Chain
+- Nettichutti
+- Sticker
+- Saree Pin
+
+IMAGES USED (folder file -> category)
+- 2 pice set.jpg -> 2 Piece Set
+- 3 pice set.jpg -> 3 Piece Set
+- bangles.jpg -> Bangles
+- blouse.jpg -> Blouse, Pavada Blouse
+- bracelet.jpg -> Bracelets
+- Dhavani set.jpeg -> Dhavani Set
+- Dupatta.jpeg -> Dupatta
+- earrings.jpg -> Earrings
+- frock.jpg -> Frock
+- glass bangles.jpg -> Glass Bangles
+- kaftan.jpg -> Kaftan
+- kurti.jpg -> Kurti
+- other accssesories.jpg -> Others (Accessories)
+- other cloths.jpeg -> Others (Clothing)
+- pant.jpg -> Pant
+- pattupavada.jpg -> Pavada
+- pendant set.jpg -> Necklace
+- saree.jpg -> Saree
+- set mund.jpg -> Set Mundu
+- set saree.jpg -> Set Saree
+
+IN FOLDER BUT NOT USED (no matching category)
+- kids.jpg
+- studs.jpg

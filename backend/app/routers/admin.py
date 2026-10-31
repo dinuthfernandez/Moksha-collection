@@ -4,6 +4,7 @@ import secrets
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 
 from ..database import get_supabase
 from ..deps import get_current_admin
@@ -406,6 +407,47 @@ def set_customer_ban(customer_id: str, is_banned: bool = Query(...)):
     if not result.data:
         raise HTTPException(status_code=404, detail="Customer not found")
     return result.data[0]
+
+
+# ---------------------------------------------------------------------------
+# Manual Zoho sync (single product)
+# ---------------------------------------------------------------------------
+class ZohoRefreshIn(BaseModel):
+    sku: str = Field(min_length=1, max_length=120)
+
+
+@router.get("/zoho-sync/search")
+def search_products_by_sku(q: str = Query(min_length=1, max_length=120)):
+    term = q.strip()
+    if not term:
+        return []
+    supabase = get_supabase()
+    rows = (
+        supabase.table("products")
+        .select("id,zoho_sku,name,stock_quantity,price,image_url,is_active,subcategory_name,last_synced_at")
+        .ilike("zoho_sku", f"%{term}%")
+        .order("zoho_sku")
+        .limit(25)
+        .execute()
+        .data
+        or []
+    )
+    # An exact SKU match is always listed first.
+    rows.sort(key=lambda r: (str(r.get("zoho_sku") or "").lower() != term.lower(),))
+    return rows
+
+
+@router.post("/zoho-sync/refresh")
+def refresh_product(payload: ZohoRefreshIn):
+    from ..services.zoho_inventory import refresh_product_from_zoho
+
+    try:
+        return refresh_product_from_zoho(payload.sku.strip())
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Manual Zoho refresh failed for %s", payload.sku)
+        raise HTTPException(status_code=502, detail=f"Zoho refresh failed: {exc}") from exc
 
 
 # ---------------------------------------------------------------------------

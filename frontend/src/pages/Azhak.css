@@ -292,7 +292,20 @@
   transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
 }
 
-.azhak-add-button:hover {
+.azhak-add-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: transparent;
+  border-color: var(--color-line-strong);
+  color: inherit;
+}
+
+.azhak-oos-label {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+.azhak-add-button:hover:not(:disabled) {
   border-color: var(--color-magenta);
   background: var(--color-magenta);
   color: var(--on-brand-text);

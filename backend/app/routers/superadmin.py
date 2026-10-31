@@ -151,7 +151,7 @@ async def run_action(action: Literal["clear-cache", "zoho-sync"], request: Reque
     from ..services.zoho_inventory import sync_products_to_supabase
 
     try:
-        total = await sync_products_to_supabase()
+        total = await sync_products_to_supabase(full=True)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Zoho sync failed: {exc}") from exc
     return {"message": f"Zoho sync finished: {total} item(s) processed."}

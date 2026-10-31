@@ -7,7 +7,6 @@ import type { Category, Product } from '../types'
 import PlaceholderImage from '../components/ui/PlaceholderImage'
 import './Azhak.css'
 
-const CATEGORY_BATCH_SIZE = 6
 const PRODUCT_PAGE_SIZE = 8
 
 interface CatalogEntry {
@@ -43,7 +42,6 @@ const DEMO_PRODUCTS: CatalogEntry[] = [
 export default function Azhak() {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesLoading, setCategoriesLoading] = useState(true)
-  const [visibleCategoryCount, setVisibleCategoryCount] = useState(CATEGORY_BATCH_SIZE)
   const [products, setProducts] = useState<CatalogEntry[]>([])
   const [productsLoading, setProductsLoading] = useState(true)
   const [demoCatalog, setDemoCatalog] = useState(false)
@@ -109,7 +107,6 @@ export default function Azhak() {
   }, [page])
 
   const allCategories = categories
-  const visibleCategories = allCategories.slice(0, visibleCategoryCount)
 
   const handleAddToBag = async (product: Product) => {
     const reserved = await addItem({
@@ -157,7 +154,7 @@ export default function Azhak() {
             <span>{allCategories.length} categories</span>
           </div>
           <div className="azhak-category-grid" aria-busy={categoriesLoading}>
-            {visibleCategories.map((category) => (
+            {allCategories.map((category) => (
               <Link
                 key={category.id}
                 to={`/accessories/${category.slug}`}
@@ -177,18 +174,6 @@ export default function Azhak() {
               </Link>
             ))}
           </div>
-          {allCategories.length > CATEGORY_BATCH_SIZE && (
-            <button
-              type="button"
-              className="azhak-see-more"
-              onClick={() => setVisibleCategoryCount((count) => (
-                count >= allCategories.length ? CATEGORY_BATCH_SIZE : count + CATEGORY_BATCH_SIZE
-              ))}
-            >
-              {visibleCategoryCount >= allCategories.length ? 'Show fewer' : 'See more categories'}
-              <ArrowRight size={15} />
-            </button>
-          )}
         </section>
         )}
 
@@ -223,7 +208,8 @@ export default function Azhak() {
                         />
                         <div className="azhak-product-info">
                           <h3>{entry.name}</h3>
-                          <span>BHD {Number(entry.price || 0).toFixed(2)}</span>
+                          <span>BHD {Number(entry.price || 0).toFixed(3)}</span>
+                          {entry.product.stock_quantity <= 0 && <span className="azhak-oos-label">Out of Stock</span>}
                         </div>
                       </Link>
                     ) : (
@@ -238,13 +224,13 @@ export default function Azhak() {
                         />
                         <div className="azhak-product-info">
                           <h3>{entry.name}</h3>
-                          <span>BHD {entry.price.toFixed(2)}</span>
+                          <span>BHD {entry.price.toFixed(3)}</span>
                         </div>
                       </div>
                     )}
                     {entry.product ? (
-                      <button type="button" className="azhak-add-button" onClick={() => handleAddToBag(entry.product!)}>
-                        <ShoppingBag size={15} /> Add to bag
+                      <button type="button" className="azhak-add-button" disabled={entry.product.stock_quantity <= 0} onClick={() => handleAddToBag(entry.product!)}>
+                        <ShoppingBag size={15} /> {entry.product.stock_quantity <= 0 ? 'Out of stock' : 'Add to bag'}
                       </button>
                     ) : (
                       <span className="azhak-sample-note">Preview only</span>
