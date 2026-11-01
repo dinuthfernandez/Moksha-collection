@@ -246,7 +246,6 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
                     ) : (
                       <div className="product-card-image placeholder" role="img" aria-label="Moksha Collections"><span className="mc-mark">mc</span></div>
                     )}
-                    {product.stock_quantity <= 0 && <span className="product-card-badge-oos">Out of Stock</span>}
                   </div>
                   <div className="product-card-body">
                     <h2>{product.name}</h2>

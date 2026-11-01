@@ -2,6 +2,7 @@ import re
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from postgrest.exceptions import APIError
 
 from ..database import get_supabase
 from ..deps import get_current_admin
@@ -82,40 +83,58 @@ def list_products(
         raise HTTPException(status_code=422, detail="Minimum price cannot exceed maximum price")
 
     supabase = get_supabase()
-    query = supabase.table("products").select("*", count="exact")
-    if active_only:
-        query = query.eq("is_active", True)
-    if category:
-        query = query.eq("category_slug", category)
-    if category_slug:
-        # `category_slug` here is actually a Zoho Product Sub Category slug
-        # (e.g. "kurti", "earrings") — subcategory browsing pages pass it in.
-        query = query.eq("subcategory_slug", {"pattupavada": "pavada-blouse"}.get(category_slug, category_slug))
-    if not q:
-        # Listing/grid views show one card per design: the primary (smallest
-        # size) variant. A search query intentionally ignores this so every
-        # matching variant is still findable by its own SKU/name.
-        query = query.eq("is_primary_variant", True)
-    if q:
-        for token in _search_tokens(q):
-            query = query.or_(
-                f"name.ilike.%{token}%,description.ilike.%{token}%,color.ilike.%{token}%,"
-                f"subcategory_name.ilike.%{token}%,category_slug.ilike.%{token}%,"
-                f"product_code.ilike.%{token}%,zoho_sku.ilike.%{token}%"
-            )
-    if min_price is not None:
-        query = query.gte("price", min_price)
-    if max_price is not None:
-        query = query.lte("price", max_price)
+
+    def build(in_stock: bool):
+        query = supabase.table("products").select("*", count="exact")
+        query = query.gt("stock_quantity", 0) if in_stock else query.lte("stock_quantity", 0)
+        if active_only:
+            query = query.eq("is_active", True)
+        if category:
+            query = query.eq("category_slug", category)
+        if category_slug:
+            # `category_slug` here is actually a Zoho Product Sub Category slug
+            # (e.g. "kurti", "earrings") — subcategory browsing pages pass it in.
+            query = query.eq("subcategory_slug", {"pattupavada": "pavada-blouse"}.get(category_slug, category_slug))
+        if not q:
+            # Listing/grid views show one card per design: the primary (smallest
+            # size) variant. A search query intentionally ignores this so every
+            # matching variant is still findable by its own SKU/name.
+            query = query.eq("is_primary_variant", True)
+        if q:
+            for token in _search_tokens(q):
+                query = query.or_(
+                    f"name.ilike.%{token}%,description.ilike.%{token}%,color.ilike.%{token}%,"
+                    f"subcategory_name.ilike.%{token}%,category_slug.ilike.%{token}%,"
+                    f"product_code.ilike.%{token}%,zoho_sku.ilike.%{token}%"
+                )
+        if min_price is not None:
+            query = query.gte("price", min_price)
+        if max_price is not None:
+            query = query.lte("price", max_price)
+        return query.order("has_image", desc=True).order("created_at", desc=True)
 
     start = (page - 1) * page_size
     end = start + page_size - 1
 
+    def fetch(in_stock: bool, a: int, b: int) -> tuple[list, int]:
+        try:
+            res = build(in_stock).range(a, b).execute()
+            return list(res.data or []), res.count or 0
+        except APIError:
+            # Range starts beyond the last row: only the count is needed.
+            res = build(in_stock).range(0, 0).execute()
+            return [], res.count or 0
+
     def load() -> ProductListOut:
-        result = query.order("has_image", desc=True).order("created_at", desc=True).range(start, end).execute()
-        total = result.count or 0
+        # In-stock products first, out-of-stock last, with paging continuing across the boundary.
+        items, in_total = fetch(True, start, end)
+        out_start = max(0, start - in_total)
+        out_items, out_total = fetch(False, out_start, out_start + max(page_size - len(items), 1) - 1)
+        if len(items) < page_size:
+            items += out_items
+        total = in_total + out_total
         total_pages = max((total + page_size - 1) // page_size, 1)
-        return ProductListOut(items=result.data, total=total, page=page, page_size=page_size, total_pages=total_pages)
+        return ProductListOut(items=items, total=total, page=page, page_size=page_size, total_pages=total_pages)
 
     cache_key = f"products:{category}:{category_slug}:{active_only}:{page}:{page_size}:{q}:{min_price}:{max_price}"
     return cached(cache_key, 60, load)

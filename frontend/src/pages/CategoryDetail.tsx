@@ -88,7 +88,6 @@ export default function CategoryDetail() {
               <Link key={product.id} to={`/product/${product.slug}`} className="product-card">
                 <div className="product-card-image-wrap">
                   {product.image_url ? <img src={product.image_url} alt={product.name} className="product-card-image" loading="lazy" decoding="async" /> : <div className="product-card-image placeholder" role="img" aria-label="Moksha Collections"><span className="mc-mark">mc</span></div>}
-                  {product.stock_quantity <= 0 && <span className="product-card-badge-oos">Out of Stock</span>}
                 </div>
                 <div className="product-card-body">
                   <h2>{product.name}</h2>

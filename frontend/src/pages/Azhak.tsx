@@ -219,7 +219,6 @@ export default function Azhak() {
                         <div className="azhak-product-info">
                           <h3>{entry.name}</h3>
                           <span>BHD {Number(entry.price || 0).toFixed(3)}</span>
-                          {entry.product.stock_quantity <= 0 && <span className="azhak-oos-label">Out of Stock</span>}
                         </div>
                       </Link>
                     ) : (
