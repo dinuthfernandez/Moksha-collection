@@ -18,6 +18,23 @@ from .product_images import store_product_image
 
 logger = logging.getLogger(__name__)
 
+_progress_callback: Any = None
+
+
+def set_progress_callback(callback: Any) -> None:
+    """Registers a callable(percent, message) that sync steps report to (used by the super admin panel)."""
+    global _progress_callback
+    _progress_callback = callback
+
+
+def _report(percent: float, message: str) -> None:
+    if _progress_callback:
+        try:
+            _progress_callback(percent, message)
+        except Exception:
+            pass
+
+
 _ZOHO_RETRIES = 8
 _ZOHO_RETRY_STATUSES = {429, 500, 502, 503, 504}
 _LIGHT_SYNC_FIELDS = ("name", "description", "zoho_sku", "stock_quantity", "category_slug", "subcategory_name", "subcategory_slug")
@@ -167,6 +184,7 @@ class ZohoInventoryClient:
                 seen_ids.add(entry_id)
                 items.append(entry)
 
+            _report(min(20.0, 2.0 + page * 1.5), f"Fetched {len(items)} items from Zoho (page {page})")
             has_more = (result.get("page_context") or {}).get("has_more_page")
             if has_more is False or (has_more is None and len(batch) < page_size):
                 break
@@ -475,8 +493,15 @@ def _fetch_group_descriptions(client: "ZohoInventoryClient", group_ids: set[str]
             logger.warning("Could not fetch Zoho item group %s", gid)
             return gid, None
 
+    result: dict[str, str] = {}
+    total = len(group_ids)
     with ThreadPoolExecutor(max_workers=_WRITE_WORKERS) as pool:
-        return {gid: desc for gid, desc in pool.map(one, group_ids) if desc is not None}
+        for done, (gid, desc) in enumerate(pool.map(one, group_ids), 1):
+            if desc is not None:
+                result[gid] = desc
+            if done % 50 == 0 or done == total:
+                _report(25 + 25 * done / max(total, 1), f"Descriptions: {done}/{total} item groups")
+    return result
 
 
 def _extract_item_id(item: dict[str, Any]) -> str | None:
@@ -1103,11 +1128,14 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
     existing_records: list[tuple[dict[str, Any], dict[str, Any]]] = []
     processed = 0
     category_changed = False
+    _report(50, f"Processing {len(online_items)} online items (names, images, categories)")
     for item in online_items:
         item_id = _extract_item_id(item)
         if not item_id:
             continue
         processed += 1
+        if processed % 100 == 0:
+            _report(50 + 30 * processed / max(len(online_items), 1), f"Processed {processed}/{len(online_items)} items")
         row = existing_map.get(item_id)
 
         if row is not None and light:
@@ -1149,6 +1177,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
     elif new_records:
         updates.extend(_primary_variant_updates(existing_rows, new_records))
 
+    _report(82, f"Writing to Supabase: {len(updates)} updates, {len(new_records)} new products")
     _apply_updates(supabase, updates)
     for start in range(0, len(new_records), 100):
         batch = new_records[start : start + 100]
@@ -1196,6 +1225,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
     )
     if updates or new_records or disabled_item_ids or deleted_item_ids:
         invalidate_catalog()
+    _report(98, "Finalising")
     return processed
 
 

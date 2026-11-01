@@ -220,10 +220,11 @@ export default function SuperAdmin() {
             <h2>Quick actions</h2>
             <div className="sa-row">
               <button onClick={() => runAction('clear-cache')}>Clear catalog cache</button>
-              <button onClick={() => runAction('zoho-sync')}>Run Zoho sync now</button>
               <button className="sa-ghost" onClick={loadOverview}>Refresh</button>
             </div>
           </div>
+
+          <ZohoSyncCard token={token} onDone={loadOverview} />
         </section>
       )}
 
@@ -231,6 +232,84 @@ export default function SuperAdmin() {
       {tab === 'Logs' && <LogsTab token={token} guard={guard} />}
       {tab === 'Data' && <DataTab token={token} guard={guard} />}
       {tab === 'Audit' && <AuditTab token={token} guard={guard} />}
+    </div>
+  )
+}
+
+interface SyncStatus {
+  running: boolean
+  status: 'idle' | 'running' | 'done' | 'failed'
+  percent: number
+  message: string
+  elapsed_seconds?: number
+  log_total: number
+  logs: string[]
+}
+
+function ZohoSyncCard({ token, onDone }: { token: string | null; onDone: () => void }) {
+  const [sync, setSync] = useState<SyncStatus | null>(null)
+  const [logs, setLogs] = useState<string[]>([])
+  const [error, setError] = useState('')
+  const seen = useRef(0)
+  const logBox = useRef<HTMLPreElement>(null)
+  const wasRunning = useRef(false)
+
+  const poll = useCallback(async () => {
+    try {
+      const s = await call<SyncStatus>(`/zoho-sync/status?since=${seen.current}`, token)
+      seen.current = s.log_total
+      if (s.logs.length) setLogs((l) => [...l, ...s.logs].slice(-500))
+      setSync(s)
+      setError('')
+      if (wasRunning.current && !s.running) onDone()
+      wasRunning.current = s.running
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }, [token, onDone])
+
+  useEffect(() => {
+    poll()
+    const id = setInterval(poll, 1500)
+    return () => clearInterval(id)
+  }, [poll])
+
+  useEffect(() => {
+    if (logBox.current) logBox.current.scrollTop = logBox.current.scrollHeight
+  }, [logs])
+
+  const start = async () => {
+    if (!window.confirm('Run a full sync from Zoho to the website now? This can take several minutes.')) return
+    try {
+      seen.current = 0
+      setLogs([])
+      await call('/zoho-sync/start', token, {})
+      wasRunning.current = true
+      poll()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  const running = !!sync?.running
+  const percent = Math.round(sync?.percent ?? 0)
+  return (
+    <div className="sa-card sa-sync">
+      <h2>Zoho → Supabase sync</h2>
+      <p className="sa-status">
+        {running ? `● Running (${sync?.elapsed_seconds ?? 0}s)` : sync?.status === 'done' ? '● Last run finished' : sync?.status === 'failed' ? '● Last run failed' : '● Idle'}
+      </p>
+      <div className="sa-progress" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
+        <div className={`sa-progress-bar ${sync?.status === 'failed' ? 'failed' : ''}`} style={{ width: `${percent}%` }} />
+        <span>{percent}%</span>
+      </div>
+      <p className="sa-status" style={{ fontSize: 12 }}>{sync?.message ?? '—'}</p>
+      {error && <p className="sa-error">{error}</p>}
+      <div className="sa-row">
+        <button className="sa-go" disabled={running} onClick={start}>{running ? 'Syncing…' : 'Run full sync now'}</button>
+      </div>
+      <p className="sa-status" style={{ fontSize: 12 }}>Syncs names, descriptions, prices, stock, images, categories, colors and sizes.</p>
+      <pre className="sa-sync-log" ref={logBox}>{logs.length ? logs.join('\n') : 'Live log will appear here when a sync runs.'}</pre>
     </div>
   )
 }

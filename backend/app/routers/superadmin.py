@@ -157,6 +157,22 @@ async def run_action(action: Literal["clear-cache", "zoho-sync"], request: Reque
     return {"message": f"Zoho sync finished: {total} item(s) processed."}
 
 
+@protected.post("/zoho-sync/start")
+async def start_zoho_sync(request: Request):
+    state.audit("action_zoho-sync", _client_ip(request))
+    from ..services import zoho_sync_job
+
+    started = zoho_sync_job.start()
+    return {"started": started, **zoho_sync_job.snapshot()}
+
+
+@protected.get("/zoho-sync/status")
+def zoho_sync_status(since: int = 0):
+    from ..services import zoho_sync_job
+
+    return zoho_sync_job.snapshot(max(0, since))
+
+
 @protected.get("/logs")
 def logs(limit: int = 200):
     return {"lines": state.recent_logs(max(1, min(limit, 400)))}
