@@ -454,11 +454,29 @@ def _extract_name(item: dict[str, Any]) -> str:
 
 
 def _extract_description(item: dict[str, Any]) -> str | None:
+    # Zoho's "Item Description" is stored on the item group; the item's own description is the
+    # Sales Information one, which is intentionally left empty.
+    if "_group_description" in item:
+        return item["_group_description"] or None
     for key in ("description", "item_description", "product_description"):
         value = item.get(key)
         if value not in (None, ""):
             return str(value)
     return None
+
+
+def _fetch_group_descriptions(client: "ZohoInventoryClient", group_ids: set[str]) -> dict[str, str]:
+    """Item Description per item group. Groups that cannot be fetched are left out of the result."""
+    def one(gid: str) -> tuple[str, str | None]:
+        try:
+            result = client._request_json(f"/itemgroups/{gid}", {"organization_id": client.organization_id})
+            return gid, str((result.get("item_group") or {}).get("description") or "")
+        except Exception:
+            logger.warning("Could not fetch Zoho item group %s", gid)
+            return gid, None
+
+    with ThreadPoolExecutor(max_workers=_WRITE_WORKERS) as pool:
+        return {gid: desc for gid, desc in pool.map(one, group_ids) if desc is not None}
 
 
 def _extract_item_id(item: dict[str, Any]) -> str | None:
@@ -1068,6 +1086,16 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
     online_item_ids = {_extract_item_id(item) for item in online_items}
     online_item_ids.discard(None)
 
+    # The light sync leaves existing products' descriptions alone; only new products and full syncs read them.
+    needs_group = [i for i in online_items if not light or existing_map.get(_extract_item_id(i)) is None]
+    group_descriptions = _fetch_group_descriptions(client, {str(i["group_id"]) for i in needs_group if i.get("group_id")})
+    for item in needs_group:
+        if not item.get("group_id"):
+            continue
+        fetched = group_descriptions.get(str(item["group_id"]))
+        previous = existing_map.get(_extract_item_id(item)) or {}
+        item["_group_description"] = fetched if fetched is not None else previous.get("description")
+
     now = datetime.now(timezone.utc).isoformat()
     subcategories_seen: dict[tuple[str, str], str] = {}  # (type, slug) -> name
     updates: list[tuple[str, dict[str, Any]]] = []
@@ -1084,6 +1112,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
 
         if row is not None and light:
             record = {**_light_record(item), **_category_fields(item, subcategories_seen)}
+            record.pop("description", None)
             if not row.get("is_active"):
                 record["is_active"] = True
             changed = _changed_fields(row, record)
@@ -1204,6 +1233,10 @@ def refresh_product_from_zoho(sku: str) -> dict[str, Any]:
     if item is None:
         raise LookupError(f"SKU {sku} was not found in Zoho Inventory")
     item_id = _extract_item_id(item) or item_id
+
+    if item.get("group_id"):
+        group_desc = _fetch_group_descriptions(client, {str(item["group_id"])}).get(str(item["group_id"]))
+        item["_group_description"] = group_desc if group_desc is not None else row.get("description")
 
     image = {"image_url": row.get("image_url"), "image_source_id": row.get("image_source_id")}
     image_refreshed = False
