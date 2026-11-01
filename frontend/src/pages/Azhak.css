@@ -102,6 +102,12 @@
   white-space: nowrap;
 }
 
+.azhak-view-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 22px;
+}
+
 .azhak-category-grid,
 .azhak-product-grid {
   display: grid;

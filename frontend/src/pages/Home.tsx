@@ -48,21 +48,21 @@ export default function Home() {
           <p>Distinct edits, thoughtfully selected. Find the pieces that feel like you.</p>
         </div>
         <div className="mh-category-grid">
-          <Link className="mh-category-card" to="/clothing/top">
-            <img src="/assets/category/DSC_5516.jpg.webp" alt="Kurti collection" />
-            <span className="mh-category-copy"><span>01 · Everyday</span><strong>Kurtis</strong><ArrowRight size={17} /></span>
+          <Link className="mh-category-card" to="/clothing/kurti">
+            <img src="/assets/category-tiles/kurti.jpg" alt="Kurti collection" />
+            <span className="mh-category-copy"><span>01 · Everyday</span><strong>Kurti</strong><ArrowRight size={17} /></span>
           </Link>
-          <Link className="mh-category-card" to="/clothing/saree">
-            <img src="/assets/category/DSC_5685.jpg.webp" alt="Saree collection" />
-            <span className="mh-category-copy"><span>02 · Occasion</span><strong>Sarees</strong><ArrowRight size={17} /></span>
+          <Link className="mh-category-card" to="/clothing/co-ord-set">
+            <img src="/assets/category-tiles/co-ord-set.jpg" alt="Co-ord set collection" />
+            <span className="mh-category-copy"><span>02 · Matching sets</span><strong>Co-ord Set</strong><ArrowRight size={17} /></span>
           </Link>
-          <Link className="mh-category-card" to="/clothing/co-ord-sets">
-            <img src="/assets/category/DSC_5742.jpg.webp" alt="Co-ord sets collection" />
-            <span className="mh-category-copy"><span>03 · Matching sets</span><strong>Co-ord sets</strong><ArrowRight size={17} /></span>
+          <Link className="mh-category-card" to="/accessories/earrings">
+            <img src="/assets/category-tiles/earrings.jpg" alt="Earrings collection" />
+            <span className="mh-category-copy"><span>03 · Accessories</span><strong>Earrings</strong><ArrowRight size={17} /></span>
           </Link>
-          <Link className="mh-category-card" to="/clothing/western-outfits">
-            <img src="/assets/category/DSC_5704.jpg.webp" alt="Western clothing collection" />
-            <span className="mh-category-copy"><span>04 · Modern silhouettes</span><strong>Western wear</strong><ArrowRight size={17} /></span>
+          <Link className="mh-category-card" to="/accessories/bangles">
+            <img src="/assets/category-tiles/bangles.jpg" alt="Bangles collection" />
+            <span className="mh-category-copy"><span>04 · Accessories</span><strong>Bangles</strong><ArrowRight size={17} /></span>
           </Link>
         </div>
       </section>

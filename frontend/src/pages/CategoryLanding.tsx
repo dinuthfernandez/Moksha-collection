@@ -7,6 +7,7 @@ import type { Category, Product } from '../types'
 import EmptyState from '../components/ui/EmptyState'
 import CategoryHeroCarousel from '../components/ui/CategoryHeroCarousel'
 import PlaceholderImage from '../components/ui/PlaceholderImage'
+import { useCategoryLimit } from '../utils/useCategoryLimit'
 import Reveal from '../components/ui/Reveal'
 import './CategoryLanding.css'
 import './Azhak.css'
@@ -154,7 +155,9 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
 
   const content = type === 'saree' ? SAREE_CONTENT : CONTENT
   const allCategories = categories
-
+  const categoryLimit = useCategoryLimit()
+  const [showAllCategories, setShowAllCategories] = useState(false)
+  const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, categoryLimit)
   const handleAddToBag = async (product: Product) => {
     const reserved = await addItem({
       id: product.id,
@@ -196,7 +199,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
             <span>{allCategories.length} categories</span>
           </div>
           <div className="azhak-category-grid" aria-busy={categoriesLoading}>
-            {allCategories.map((category) => (
+            {visibleCategories.map((category) => (
               <Link key={category.id} to={`/${type}/${category.slug}`} className="azhak-category-card">
                 <PlaceholderImage
                   src={category.image_url}
@@ -212,6 +215,13 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
               </Link>
             ))}
           </div>
+          {allCategories.length > categoryLimit && (
+            <div className="azhak-view-more">
+              <button type="button" className="btn btn-outline" onClick={() => setShowAllCategories((v) => !v)}>
+                {showAllCategories ? 'View less' : 'View more'}
+              </button>
+            </div>
+          )}
         </section>
         )}
 

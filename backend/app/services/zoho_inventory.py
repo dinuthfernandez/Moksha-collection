@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 _ZOHO_RETRIES = 8
 _ZOHO_RETRY_STATUSES = {429, 500, 502, 503, 504}
-_LIGHT_SYNC_FIELDS = ("name", "description", "zoho_sku", "stock_quantity")
+_LIGHT_SYNC_FIELDS = ("name", "description", "zoho_sku", "stock_quantity", "category_slug", "subcategory_name", "subcategory_slug")
 _WRITE_WORKERS = 6
 
 WEBSITE_CONTACT_NAME = "Online Customer"
@@ -699,7 +699,6 @@ ALLOWED_SUBCATEGORIES: dict[str, dict[str, str]] = {
         "glass-bangles": "Glass Bangles",
         "tic-tac": "Tic Tac",
         "bracelets": "Bracelets",
-        "mala": "Mala",
         "eye-liner": "Eye Liner",
         "ear-chain": "Ear Chain",
         "safety-pin": "Safety Pin",
@@ -724,7 +723,7 @@ _SUBCATEGORY_ALIASES = {
     "coord-set": "co-ord-set",
     "co-ord-sets": "co-ord-set",
     "fork": "frock",
-    "pattupavada": "pavada",
+    "pattupavada": "pavada-blouse",
     "pavadai": "pavada",
     "pavada-blouses": "pavada-blouse",
     "set-mund": "set-mundu",
@@ -735,30 +734,28 @@ _SUBCATEGORY_ALIASES = {
     "earring": "earrings",
     "bangle": "bangles",
     "anklet": "anklets",
+    "mala": "necklace",
+    "malas": "necklace",
+    "necklaces": "necklace",
 }
 
 _CATEGORY_IMAGES: dict[str, str] = {
-    "kurti": "/assets/category-tiles/kurti.jpg",
-    "saree": "/assets/category-tiles/saree.jpg",
-    "3-piece-set": "/assets/category-tiles/3-piece-set.jpg",
-    "frock": "/assets/category-tiles/frock.jpg",
-    "set-mundu": "/assets/category-tiles/set-mundu.jpg",
-    "pavada": "/assets/category-tiles/pavada.jpg",
-    "pavada-blouse": "/assets/category-tiles/blouse.jpg",
-    "dupatta": "/assets/category-tiles/dupatta.jpeg",
-    "2-piece-set": "/assets/category-tiles/2-piece-set.jpg",
-    "dhavani-set": "/assets/category-tiles/dhavani-set.jpeg",
-    "blouse": "/assets/category-tiles/blouse.jpg",
-    "kaftan": "/assets/category-tiles/kaftan.jpg",
-    "pant": "/assets/category-tiles/pant.jpg",
-    "set-saree": "/assets/category-tiles/set-saree.jpg",
-    "earrings": "/assets/category-tiles/earrings.jpg",
-    "necklace": "/assets/category-tiles/necklace.jpg",
-    "bangles": "/assets/category-tiles/bangles.jpg",
-    "glass-bangles": "/assets/category-tiles/glass-bangles.jpg",
-    "bracelets": "/assets/category-tiles/bracelets.jpg",
+    **{
+        slug: f"/assets/category-tiles/{slug}.{ext}"
+        for slug, ext in {
+            "kurti": "jpg", "top": "jpg", "saree": "jpg", "co-ord-set": "jpg", "3-piece-set": "jpg",
+            "frock": "jpg", "set-mundu": "jpg", "pavada": "jpg", "pavada-blouse": "jpg", "set-saree": "jpg", "dupatta": "jpeg",
+            "2-piece-set": "jpg", "dress-material": "jpg", "dhavani-set": "jpeg", "blouse": "jpg",
+            "kaftan": "jpg", "short-top": "jpg", "pant": "jpg", "skirt-top": "jpg",
+            "bindi": "jpg", "earrings": "jpg", "necklace": "jpg", "bangles": "jpg", "hair-clip": "jpg",
+            "glass-bangles": "jpg", "tic-tac": "jpg", "bracelets": "jpg", "eye-liner": "jpg",
+            "ear-chain": "jpg", "safety-pin": "jpg", "nose-pin": "jpg", "ear-supporters": "jpg",
+            "anklets": "jpg", "hip-chain": "jpg", "nettichutti": "jpg", "sticker": "jpg", "saree-pin": "jpg",
+        }.items()
+    },
     "others": "/assets/category-tiles/others.jpeg",
     "accessories-others": "/assets/category-tiles/accessories-others.jpg",
+    "saree-others": "/assets/category-tiles/saree-others.jpg",
 }
 _CATEGORY_DISPLAY_ORDER = (
     ("clothing", "kurti"),
@@ -788,7 +785,6 @@ _CATEGORY_DISPLAY_ORDER = (
     ("accessories", "glass-bangles"),
     ("accessories", "tic-tac"),
     ("accessories", "bracelets"),
-    ("accessories", "mala"),
     ("accessories", "eye-liner"),
     ("accessories", "ear-chain"),
     ("accessories", "safety-pin"),
@@ -828,26 +824,6 @@ def _sync_subcategories_to_categories(supabase: Any, subcategories_seen: dict[tu
 
     existing = supabase.table("categories").select("id,name,slug,type,image_url,display_order,is_active").execute()
     existing_rows = existing.data or []
-
-    pavada_rows = [
-        row
-        for row in existing_rows
-        if row.get("type") == "clothing" and row.get("slug") == "pattupavada"
-    ]
-    pavada_exists = any(row.get("type") == "clothing" and row.get("slug") == "pavada" for row in existing_rows)
-    for row in pavada_rows:
-        if pavada_exists:
-            supabase.table("categories").update({"is_active": False}).eq("id", row["id"]).execute()
-            continue
-        supabase.table("categories").update(
-            {
-                "name": "Pavada",
-                "slug": "pavada",
-                "image_url": _CATEGORY_IMAGES["pavada"],
-            }
-        ).eq("id", row["id"]).execute()
-        row.update({"name": "Pavada", "slug": "pavada"})
-        pavada_exists = True
 
     existing_by_slug = {row["slug"]: row for row in existing_rows if row.get("slug")}
     new_rows: list[dict[str, Any]] = []
@@ -976,13 +952,7 @@ def _light_record(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _full_record(
-    item: dict[str, Any],
-    item_id: str,
-    slug: str,
-    image: dict[str, Any],
-    subcategories_seen: dict[tuple[str, str], str],
-) -> dict[str, Any]:
+def _category_fields(item: dict[str, Any], subcategories_seen: dict[tuple[str, str], str]) -> dict[str, Any]:
     category_slug = _extract_category_slug(item)
     subcategory_name = _extract_subcategory_name(item)
     raw_sub_slug = _slugify(subcategory_name, "") if subcategory_name else ""
@@ -991,15 +961,26 @@ def _full_record(
     subcategory_name, subcategory_slug = _normalize_subcategory(category_slug, subcategory_name)
     if category_slug and subcategory_name and subcategory_slug:
         subcategories_seen[(category_slug, subcategory_slug)] = subcategory_name
+    return {
+        "category_slug": category_slug,
+        "subcategory_name": subcategory_name,
+        "subcategory_slug": subcategory_slug,
+    }
 
+
+def _full_record(
+    item: dict[str, Any],
+    item_id: str,
+    slug: str,
+    image: dict[str, Any],
+    subcategories_seen: dict[tuple[str, str], str],
+) -> dict[str, Any]:
     return {
         "zoho_item_id": item_id,
         "slug": slug,
         "price": _extract_price(item),
         "compare_at_price": _extract_price(item),
-        "category_slug": category_slug,
-        "subcategory_name": subcategory_name,
-        "subcategory_slug": subcategory_slug,
+        **_category_fields(item, subcategories_seen),
         "website_serial": _extract_website_serial(item),
         "color": _extract_color(item),
         "size": _extract_size(item),
@@ -1093,6 +1074,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
     new_records: list[dict[str, Any]] = []
     existing_records: list[tuple[dict[str, Any], dict[str, Any]]] = []
     processed = 0
+    category_changed = False
     for item in online_items:
         item_id = _extract_item_id(item)
         if not item_id:
@@ -1101,12 +1083,14 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
         row = existing_map.get(item_id)
 
         if row is not None and light:
-            record = _light_record(item)
+            record = {**_light_record(item), **_category_fields(item, subcategories_seen)}
             if not row.get("is_active"):
                 record["is_active"] = True
             changed = _changed_fields(row, record)
             if changed:
                 updates.append((row["id"], {**changed, "last_synced_at": now}))
+                if "subcategory_slug" in changed or "category_slug" in changed:
+                    category_changed = True
             continue
 
         if row is not None:
@@ -1141,7 +1125,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
         batch = new_records[start : start + 100]
         _with_retry(lambda: supabase.table("products").insert(batch).execute())
 
-    if not light or new_records:
+    if not light or new_records or category_changed:
         _sync_subcategories_to_categories(supabase, subcategories_seen)
 
     # Keep Zoho items that are still present but not online; physically remove confirmed-deleted items.

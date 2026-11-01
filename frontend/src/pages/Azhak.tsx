@@ -5,6 +5,7 @@ import { getCategoryTree, getProducts } from '../api/categories'
 import { useCart } from '../context/CartContext'
 import type { Category, Product } from '../types'
 import PlaceholderImage from '../components/ui/PlaceholderImage'
+import { useCategoryLimit } from '../utils/useCategoryLimit'
 import './Azhak.css'
 
 const PRODUCT_PAGE_SIZE = 8
@@ -107,7 +108,9 @@ export default function Azhak() {
   }, [page])
 
   const allCategories = categories
-
+  const categoryLimit = useCategoryLimit()
+  const [showAllCategories, setShowAllCategories] = useState(false)
+  const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, categoryLimit)
   const handleAddToBag = async (product: Product) => {
     const reserved = await addItem({
       id: product.id,
@@ -154,7 +157,7 @@ export default function Azhak() {
             <span>{allCategories.length} categories</span>
           </div>
           <div className="azhak-category-grid" aria-busy={categoriesLoading}>
-            {allCategories.map((category) => (
+            {visibleCategories.map((category) => (
               <Link
                 key={category.id}
                 to={`/accessories/${category.slug}`}
@@ -174,6 +177,13 @@ export default function Azhak() {
               </Link>
             ))}
           </div>
+          {allCategories.length > categoryLimit && (
+            <div className="azhak-view-more">
+              <button type="button" className="btn btn-outline" onClick={() => setShowAllCategories((v) => !v)}>
+                {showAllCategories ? 'View less' : 'View more'}
+              </button>
+            </div>
+          )}
         </section>
         )}
 

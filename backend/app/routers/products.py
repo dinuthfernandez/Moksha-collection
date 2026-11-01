@@ -17,7 +17,7 @@ _SEARCH_ALIASES = {
     "sari": "saree", "sarees": "saree", "saris": "saree", "kurthi": "kurti", "kurta": "kurti", "kurtis": "kurti",
     "kaftans": "kaftan", "frocks": "frock", "dresses": "dress", "tops": "top", "pants": "pant", "bangle": "bangles",
     "earring": "earrings", "stud": "studs", "bracelet": "bracelets", "necklaces": "necklace", "mundu": "mundu",
-    "pavada": "pavada", "pavadai": "pavada", "pattupavada": "pavada",
+    "pavada": "pavada", "pavadai": "pavada", "pattupavada": "pavada-blouse",
     "dupata": "dupatta", "duppatta": "dupatta",
 }
 
@@ -90,8 +90,7 @@ def list_products(
     if category_slug:
         # `category_slug` here is actually a Zoho Product Sub Category slug
         # (e.g. "kurti", "earrings") — subcategory browsing pages pass it in.
-        category_slug = {"pattupavada": "pavada"}.get(category_slug, category_slug)
-        query = query.eq("subcategory_slug", category_slug)
+        query = query.eq("subcategory_slug", {"pattupavada": "pavada-blouse"}.get(category_slug, category_slug))
     if not q:
         # Listing/grid views show one card per design: the primary (smallest
         # size) variant. A search query intentionally ignores this so every
