@@ -233,16 +233,22 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 .azhak-product-info h3 {
+  display: -webkit-box;
+  min-width: 0;
   overflow: hidden;
   color: var(--catalog-ink);
   font-family: var(--font-sans);
   font-size: 0.88rem;
   font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .azhak-product-info > span {
@@ -470,9 +476,13 @@
   }
 
   .azhak-product-info {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
     gap: 4px;
+  }
+
+  .azhak-product-info h3 {
+    min-height: calc(2 * 1.3em);
   }
 }
 
