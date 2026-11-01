@@ -273,7 +273,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
             <>
               <div className="azhak-product-grid">
                 {products.map((entry) => (
-                  <article key={entry.id} className="azhak-product-card">
+                  <article key={entry.id} className={`azhak-product-card${entry.product && entry.product.stock_quantity <= 0 ? ' is-out-of-stock' : ''}`}>
                     {entry.product ? (
                       <Link to={`/product/${entry.product.slug}`} className="azhak-product-link">
                         <PlaceholderImage src={entry.image_url} alt={entry.name} label="Product image — 1000 × 1250 px" ratio="4 / 5" className="azhak-product-image" />
@@ -293,8 +293,8 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
                       </div>
                     )}
                     {entry.product ? (
-                      <button type="button" className="azhak-add-button" onClick={() => handleAddToBag(entry.product!)}>
-                        <ShoppingBag size={15} /> Add to bag
+                      <button type="button" className="azhak-add-button" disabled={entry.product.stock_quantity <= 0} onClick={() => handleAddToBag(entry.product!)}>
+                        <ShoppingBag size={15} /> {entry.product.stock_quantity <= 0 ? 'Out of stock' : 'Add to bag'}
                       </button>
                     ) : (
                       <span className="azhak-sample-note">Preview only</span>

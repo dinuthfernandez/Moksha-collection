@@ -312,6 +312,18 @@
   color: inherit;
 }
 
+.azhak-product-card.is-out-of-stock .azhak-product-image {
+  opacity: 0.6;
+  filter: grayscale(0.4);
+}
+
+.azhak-product-card.is-out-of-stock .azhak-add-button:disabled {
+  opacity: 1;
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.45);
+  background: rgba(255, 107, 107, 0.08);
+}
+
 .azhak-oos-label {
   color: #ff6b6b;
   font-weight: 700;

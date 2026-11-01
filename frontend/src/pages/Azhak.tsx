@@ -206,7 +206,7 @@ export default function Azhak() {
             <>
               <div className="azhak-product-grid">
                 {products.map((entry) => (
-                  <article key={entry.id} className="azhak-product-card">
+                  <article key={entry.id} className={`azhak-product-card${entry.product && entry.product.stock_quantity <= 0 ? ' is-out-of-stock' : ''}`}>
                     {entry.product ? (
                       <Link to={`/product/${entry.product.slug}`} className="azhak-product-link">
                         <PlaceholderImage
