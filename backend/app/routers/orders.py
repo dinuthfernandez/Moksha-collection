@@ -194,6 +194,7 @@ async def create_order(payload: OrderIn, customer: dict = Depends(get_current_cu
                 payload.city,
                 payload.notes,
                 zoho_line_items,
+                delivery_charge,
             )
             zoho_invoice_id = invoice.get("invoice_id")
             zoho_invoice_number = invoice.get("invoice_number")

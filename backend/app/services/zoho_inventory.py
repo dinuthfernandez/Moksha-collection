@@ -347,6 +347,7 @@ class ZohoInventoryClient:
         address: str | None,
         city: str | None,
         notes: str | None,
+        shipping_charge: float = 0,
     ) -> dict[str, Any]:
         """Creates a detailed Zoho Inventory invoice for a real website order, with one line
         item per ordered product (referencing the Zoho item_id, quantity and rate)."""
@@ -365,6 +366,8 @@ class ZohoInventoryClient:
             "line_items": line_items,
             "notes": " | ".join(notes_parts),
         }
+        if shipping_charge and shipping_charge > 0:
+            payload["shipping_charge"] = round(float(shipping_charge), 3)
         result = self._request_json(
             "/invoices",
             {"organization_id": self.organization_id},
@@ -1327,6 +1330,7 @@ def create_invoice_for_order(
     city: str | None,
     notes: str | None,
     line_items: list[dict[str, Any]],
+    shipping_charge: float = 0,
 ) -> dict[str, Any]:
     """Creates a real, detailed Zoho Inventory invoice for a website order. Runs
     synchronously — callers on the async request path should wrap this in asyncio.to_thread."""
@@ -1348,4 +1352,5 @@ def create_invoice_for_order(
         address=address,
         city=city,
         notes=notes,
+        shipping_charge=shipping_charge,
     )
