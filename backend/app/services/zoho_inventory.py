@@ -337,6 +337,22 @@ class ZohoInventoryClient:
             method="POST",
         )
 
+    def _get_or_create_delivery_item_id(self) -> str:
+        name = "Delivery Charge"
+        found = self._request_json("/items", {"organization_id": self.organization_id, "name": name}).get("items") or []
+        for entry in found:
+            if str(entry.get("name", "")).strip().lower() == name.lower() and entry.get("item_id"):
+                return str(entry["item_id"])
+        created = self._request_json(
+            "/items",
+            {"organization_id": self.organization_id},
+            method="POST",
+            json_body={"name": name, "sku": "DELIVERY", "rate": 0, "product_type": "service", "item_type": "sales"},
+        ).get("item")
+        if not created or not created.get("item_id"):
+            raise RuntimeError("Could not create the Delivery Charge item in Zoho")
+        return str(created["item_id"])
+
     def create_invoice(
         self,
         contact_id: str,
@@ -361,13 +377,22 @@ class ZohoInventoryClient:
         if notes:
             notes_parts.append(f"Notes: {notes}")
 
+        invoice_lines = list(line_items)
+        if shipping_charge and shipping_charge > 0:
+            # VAT-registered orgs reject the shipping_charge field, so delivery is a service line item.
+            invoice_lines.append(
+                {
+                    "item_id": self._get_or_create_delivery_item_id(),
+                    "quantity": 1,
+                    "rate": round(float(shipping_charge), 3),
+                }
+            )
+
         payload = {
             "customer_id": contact_id,
-            "line_items": line_items,
+            "line_items": invoice_lines,
             "notes": " | ".join(notes_parts),
         }
-        if shipping_charge and shipping_charge > 0:
-            payload["shipping_charge"] = round(float(shipping_charge), 3)
         result = self._request_json(
             "/invoices",
             {"organization_id": self.organization_id},
