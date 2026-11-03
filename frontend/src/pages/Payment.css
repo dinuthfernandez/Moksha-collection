@@ -48,3 +48,63 @@
 .payment-whatsapp-btn {
   text-align: center;
 }
+
+.payment-copy-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.payment-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-warm-white);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.payment-copy-btn:hover {
+  border-color: var(--color-warm-white);
+}
+
+.payment-qr {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--color-crystal-silver);
+}
+
+.payment-qr img {
+  width: 132px;
+  height: 132px;
+  padding: 6px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--color-line);
+}
+
+@media (max-width: 480px) {
+  .payment-page {
+    padding: 16px 14px 100px;
+  }
+
+  .payment-card {
+    padding: 16px;
+  }
+
+  .payment-qr img {
+    width: 120px;
+    height: 120px;
+  }
+}

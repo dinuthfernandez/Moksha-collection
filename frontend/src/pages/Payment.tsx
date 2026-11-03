@@ -1,9 +1,40 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { Check, Copy } from 'lucide-react'
 import { getPublicSettings } from '../api/settings'
 import { buildWhatsAppLink } from '../utils/whatsapp'
 import type { OrderCreateResult, PublicSettings } from '../types'
 import './Payment.css'
+
+const SWIFT_CODE = 'BBKUBHBMHTN'
+
+function CopyButton({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      const area = document.createElement('textarea')
+      area.value = value
+      area.style.position = 'fixed'
+      area.style.opacity = '0'
+      document.body.appendChild(area)
+      area.select()
+      document.execCommand('copy')
+      document.body.removeChild(area)
+    }
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1800)
+  }
+
+  return (
+    <button type="button" className="payment-copy-btn" onClick={copy} aria-label={`Copy ${label}`}>
+      {copied ? <Check size={14} /> : <Copy size={14} />}
+      <span>{copied ? 'Copied' : 'Copy'}</span>
+    </button>
+  )
+}
 
 export default function Payment() {
   const location = useLocation() as { state?: { order?: OrderCreateResult } }
@@ -60,12 +91,27 @@ export default function Payment() {
         </div>
         <div className="payment-row">
           <span>IBAN Number</span>
-          <strong>{settings?.iban_number || 'Not set — please contact us'}</strong>
+          <span className="payment-copy-value">
+            <strong>{settings?.iban_number || 'Not set — please contact us'}</strong>
+            {settings?.iban_number && <CopyButton value={settings.iban_number} label="IBAN" />}
+          </span>
+        </div>
+        <div className="payment-row">
+          <span>SWIFT/BIC Code</span>
+          <span className="payment-copy-value">
+            <strong>{SWIFT_CODE}</strong>
+            <CopyButton value={SWIFT_CODE} label="SWIFT/BIC code" />
+          </span>
+        </div>
+
+        <div className="payment-qr">
+          <img src="/assets/payment/qr.png" alt="Payment QR code" width={132} height={132} />
+          <span>Scan to pay</span>
         </div>
 
         <p className="payment-instructions">
-          Please transfer the total amount to the IBAN above, then send us your payment receipt on WhatsApp with your
-          order ID and amount already filled in below.
+          Please transfer the total amount to the IBAN above or scan the QR code, then send us your payment receipt on
+          WhatsApp with your order ID and amount already filled in below.
         </p>
 
         <a href={whatsappLink} target="_blank" rel="noreferrer" className="btn btn-whatsapp payment-whatsapp-btn">
