@@ -9,7 +9,7 @@
   overflow: hidden;
   background: radial-gradient(circle at 30% 20%, #1d1030 0%, #0e0a14 55%, #07050b 100%);
   color: #faf7f2;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: 'Source Sans 3', Arial, sans-serif;
 }
 
 .mt-orb {
@@ -49,13 +49,13 @@
 }
 
 .mt-logo { display: flex; flex-direction: column; align-items: center; margin-bottom: 26px; }
-.mt-logo-script { font-family: Georgia, 'Playfair Display', serif; font-style: italic; font-size: 38px; color: #e10a8c; line-height: 1; }
+.mt-logo-script { font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 38px; color: #e10a8c; line-height: 1; }
 .mt-logo-sub { font-size: 12px; letter-spacing: 4px; text-transform: uppercase; margin-top: 6px; opacity: 0.85; }
 
 .mt-gear { color: #e10a8c; margin: 0 auto 18px; width: 64px; height: 64px; animation: mt-spin 9s linear infinite; }
 @keyframes mt-spin { to { transform: rotate(360deg); } }
 
-.mt-card h1 { font-family: Georgia, 'Playfair Display', serif; font-weight: 400; font-size: 28px; margin: 0 0 14px; }
+.mt-card h1 { font-family: 'Source Sans 3', system-ui, sans-serif; font-weight: 400; font-size: 28px; margin: 0 0 14px; }
 .mt-message { margin: 0 auto 26px; max-width: 400px; line-height: 1.65; color: rgba(250, 247, 242, 0.78); font-size: 15px; white-space: pre-line; }
 
 .mt-bar { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); overflow: hidden; margin: 0 auto 24px; max-width: 300px; }

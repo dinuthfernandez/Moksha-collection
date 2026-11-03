@@ -2,7 +2,7 @@
 import threading
 import time
 
-COUNTDOWN_SECONDS = 10
+COUNTDOWN_SECONDS = 60
 # A trigger older than this is stale (e.g. someone opens /launch hours later).
 STALE_AFTER_SECONDS = COUNTDOWN_SECONDS + 8
 

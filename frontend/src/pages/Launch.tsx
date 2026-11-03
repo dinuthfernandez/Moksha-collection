@@ -4,7 +4,7 @@ import { createAudioContext, startLaunchMusic, type LaunchMusic } from '../utils
 import './Launch.css'
 
 const API = import.meta.env.VITE_API_BASE_URL || '/api'
-const COUNTDOWN_SECONDS = 10
+const COUNTDOWN_SECONDS = 60
 const POLL_MS = 600
 const RING = 2 * Math.PI * 90
 

@@ -114,6 +114,58 @@ export function startLaunchMusic(seconds: number, existing?: AudioContext | null
     o.stop(end + 2.5)
   })
 
+  // Boom at zero: sub-bass drop, filtered noise blast and a sharp crack. Routed straight
+  // to the output (not through `master`, which fades out at the end of the countdown).
+  const boomOut = ctx.createGain()
+  boomOut.gain.value = 1
+  const limiter = ctx.createDynamicsCompressor()
+  limiter.threshold.value = -10
+  limiter.ratio.value = 12
+  boomOut.connect(limiter).connect(ctx.destination)
+
+  const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 4), ctx.sampleRate)
+  const noiseData = noiseBuffer.getChannelData(0)
+  for (let i = 0; i < noiseData.length; i++) noiseData[i] = Math.random() * 2 - 1
+
+  const sub = ctx.createOscillator()
+  const subGain = ctx.createGain()
+  sub.type = 'sine'
+  sub.frequency.setValueAtTime(130, end)
+  sub.frequency.exponentialRampToValueAtTime(26, end + 1.1)
+  subGain.gain.setValueAtTime(0.0001, end)
+  subGain.gain.exponentialRampToValueAtTime(1, end + 0.015)
+  subGain.gain.exponentialRampToValueAtTime(0.0001, end + 2.8)
+  sub.connect(subGain).connect(boomOut)
+  sub.start(end)
+  sub.stop(end + 2.9)
+
+  const blast = ctx.createBufferSource()
+  const blastFilter = ctx.createBiquadFilter()
+  const blastGain = ctx.createGain()
+  blast.buffer = noiseBuffer
+  blastFilter.type = 'lowpass'
+  blastFilter.frequency.setValueAtTime(5000, end)
+  blastFilter.frequency.exponentialRampToValueAtTime(120, end + 1.8)
+  blastGain.gain.setValueAtTime(0.0001, end)
+  blastGain.gain.exponentialRampToValueAtTime(0.9, end + 0.01)
+  blastGain.gain.exponentialRampToValueAtTime(0.0001, end + 2.4)
+  blast.connect(blastFilter).connect(blastGain).connect(boomOut)
+  blast.start(end)
+  blast.stop(end + 2.5)
+
+  const crack = ctx.createBufferSource()
+  const crackFilter = ctx.createBiquadFilter()
+  const crackGain = ctx.createGain()
+  crack.buffer = noiseBuffer
+  crackFilter.type = 'highpass'
+  crackFilter.frequency.value = 1500
+  crackGain.gain.setValueAtTime(0.0001, end)
+  crackGain.gain.exponentialRampToValueAtTime(0.7, end + 0.004)
+  crackGain.gain.exponentialRampToValueAtTime(0.0001, end + 0.25)
+  crack.connect(crackFilter).connect(crackGain).connect(boomOut)
+  crack.start(end)
+  crack.stop(end + 0.3)
+
   return {
     stop: () => {
       const now = ctx.currentTime

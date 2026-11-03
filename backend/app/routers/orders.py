@@ -10,7 +10,9 @@ from ..schemas import CustomerOrderCancelIn, OrderDetailOut, OrderIn, OrderOut
 from ..services.email import send_sales_email
 from ..services.email_templates import render_order_placed_email
 from ..services.zoho_inventory import create_invoice_for_order, validate_zoho_inventory_connection
+from ..services.zoho_creator import push_online_order
 from ..services.coupons import calculate_coupon_discount, get_current_coupons, select_coupon
+from ..services.discounts import effective_price
 from ..services.order_inventory import load_order_items, refresh_order_return_status, restock_order_items
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -94,7 +96,7 @@ async def create_order(payload: OrderIn, customer: dict = Depends(get_current_cu
     zoho_line_items = []
     for item in payload.items:
         product = products_by_id[item.product_id]
-        price = float(product.get("price") or 0)
+        price = effective_price(product)
         subtotal_amount += price * item.quantity
         order_items_records.append(
             {
@@ -204,6 +206,16 @@ async def create_order(payload: OrderIn, customer: dict = Depends(get_current_cu
             supabase.table("orders").update({"notes": f"{payload.notes or ''} | Zoho invoice failed: {exc}"}).eq(
                 "id", order["id"]
             ).execute()
+
+    asyncio.create_task(
+        asyncio.to_thread(
+            push_online_order,
+            order,
+            order_items_records,
+            zoho_invoice_id,
+            zoho_invoice_number,
+        )
+    )
 
     if payload.email:
         try:

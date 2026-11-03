@@ -1,0 +1,2 @@
+Order Number,Order Date,Customer Name,Phone,Email,Address,City,Items Summary,Items Count,Subtotal,Discount,Delivery Fee,Total,Currency,Payment Method,Payment Status,Books Invoice ID,Books Invoice URL,Notes
+SAMPLE-0001,2026-11-03 19:00,Sample Customer,+97300000000,sample@example.com,Sample address,Manama,KUR-001 x2 @ 12.5,2,25,0,2,27,BHD,Card,Pending,,,Delete this sample row

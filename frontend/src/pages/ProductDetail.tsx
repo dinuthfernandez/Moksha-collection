@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { getPublicSettings } from '../api/settings'
 import { getAddressTier } from '../data/addressTiers'
 import ProductReviews from '../components/ui/ProductReviews'
+import PriceTag from '../components/ui/PriceTag'
 import ProductQuantitySelector from '../components/ui/ProductQuantitySelector'
 import { TERMS_AND_CONDITIONS_SECTIONS } from '../data/policies'
 import type { Address, DeliveryRate, Product, ProductVariant } from '../types'
@@ -281,7 +282,7 @@ export default function ProductDetail() {
             <strong>{reviewSummary.average_rating.toFixed(1)}</strong>
             <span>{reviewSummary.total} {reviewSummary.total === 1 ? 'review' : 'reviews'}</span>
           </div>
-          <p className="product-detail-price">BHD {Number(product.price || 0).toFixed(3)}</p>
+          <p className="product-detail-price"><PriceTag price={product.price} originalPrice={product.original_price} /></p>
           <p className={`product-detail-stock ${inStock ? 'in-stock' : 'out-of-stock'}`}>
             {inStock ? `In Stock (${product.stock_quantity} available)` : 'Out of Stock'}
           </p>

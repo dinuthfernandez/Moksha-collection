@@ -117,68 +117,71 @@
 
 .azhak-category-card {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  aspect-ratio: 4 / 5;
-  border: 1px solid var(--color-line-soft);
-  border-radius: var(--radius-md);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
   color: inherit;
-  background: var(--color-onyx-elevated);
+  background: var(--card-panel);
+  box-shadow: var(--card-shadow);
+  transition: transform 0.5s var(--ease-luxury), box-shadow 0.5s var(--ease-luxury), border-color 0.5s ease;
+}
+
+.azhak-category-card:hover {
+  transform: translateY(-12px);
+  border-color: var(--color-magenta);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .azhak-category-image {
-  position: absolute;
-  inset: 0;
+  position: relative;
   width: 100%;
-  height: 100%;
-  aspect-ratio: auto;
+  aspect-ratio: 1;
   border-radius: 0;
   background: var(--color-onyx-elevated);
-  transition: transform 500ms var(--ease-luxury);
 }
 
 .azhak-category-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 500ms var(--ease-luxury);
 }
 
-.azhak-category-card:hover .azhak-category-image {
-  transform: scale(1.035);
+.azhak-category-card:hover .azhak-category-image img {
+  transform: scale(1.05);
 }
 
 .azhak-category-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 18px;
-  background: linear-gradient(180deg, transparent 38%, rgba(14, 10, 20, 0.8) 100%);
+  padding: 20px 16px;
+  background: var(--card-panel);
+  text-align: center;
 }
 
 .azhak-category-overlay h2 {
-  color: var(--fixed-white);
+  color: var(--color-warm-white);
   font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 400;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  transition: color 0.3s ease;
 }
 
 .azhak-category-overlay span {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--fixed-white);
-  font-size: 0.72rem;
+  color: var(--color-magenta);
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.8px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  transition: color 180ms ease;
 }
 
-.azhak-category-card:hover .azhak-category-overlay span {
+.azhak-category-card:hover .azhak-category-overlay h2 {
   color: var(--color-magenta);
 }
 
@@ -212,50 +215,70 @@
 }
 
 .azhak-product-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--color-line-soft);
+  overflow: hidden;
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--card-panel);
+  box-shadow: var(--card-shadow);
+  transition: transform 0.5s var(--ease-luxury), box-shadow 0.5s var(--ease-luxury), border-color 0.5s ease;
+}
+
+.azhak-product-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--color-magenta);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .azhak-product-link {
   position: relative;
   display: block;
+  flex: 1;
   color: inherit;
 }
 
 .azhak-product-image {
-  margin-bottom: 10px;
-  border-radius: var(--radius-sm);
+  margin-bottom: 0;
+  border-radius: 0;
 }
 
 .azhak-product-info {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
+  padding: 16px 14px 4px;
+  text-align: center;
 }
 
 .azhak-product-info h3 {
   display: -webkit-box;
   min-width: 0;
   overflow: hidden;
-  color: var(--catalog-ink);
+  color: var(--color-warm-white);
   font-family: var(--font-sans);
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+  transition: color 0.3s ease;
+}
+
+.azhak-product-card:hover .azhak-product-info h3 {
+  color: var(--color-magenta);
 }
 
 .azhak-product-info > span {
   flex: 0 0 auto;
-  color: var(--catalog-highlight);
-  font-size: 0.82rem;
-  font-weight: 600;
+  color: var(--color-magenta);
+  font-size: 0.85rem;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -279,23 +302,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 10px;
+  margin: 12px 14px 14px;
   border: 1px solid var(--color-line-soft);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   color: var(--catalog-muted);
   font-size: 0.72rem;
 }
 
 .azhak-add-button {
-  width: 100%;
+  width: calc(100% - 28px);
   min-height: 39px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 10px;
+  margin: 12px 14px 14px;
   border: 1px solid var(--color-line-strong);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: transparent;
   color: var(--catalog-ink);
   font-size: 0.74rem;
@@ -337,7 +360,7 @@
 
 .azhak-product-skeleton {
   aspect-ratio: 4 / 6;
-  border-radius: var(--radius-sm);
+  border-radius: var(--card-radius);
   background: linear-gradient(100deg, var(--color-onyx-soft) 30%, var(--color-onyx-elevated) 50%, var(--color-onyx-soft) 70%);
   background-size: 200% 100%;
   animation: azhak-shimmer 1.3s linear infinite;

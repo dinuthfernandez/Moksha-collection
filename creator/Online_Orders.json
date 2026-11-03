@@ -1,0 +1,24 @@
+{
+  "form": { "display_name": "Online Orders", "link_name": "Online_Orders" },
+  "fields": [
+    { "display_name": "Order Number", "link_name": "Order_Number", "type": "Single Line", "unique": true },
+    { "display_name": "Order Date", "link_name": "Order_Date", "type": "Single Line" },
+    { "display_name": "Customer Name", "link_name": "Customer_Name", "type": "Single Line" },
+    { "display_name": "Phone", "link_name": "Phone", "type": "Single Line" },
+    { "display_name": "Email", "link_name": "Email", "type": "Single Line" },
+    { "display_name": "Address", "link_name": "Address", "type": "Single Line" },
+    { "display_name": "City", "link_name": "City", "type": "Single Line" },
+    { "display_name": "Items Summary", "link_name": "Items_Summary", "type": "Single Line" },
+    { "display_name": "Items Count", "link_name": "Items_Count", "type": "Single Line" },
+    { "display_name": "Subtotal", "link_name": "Subtotal", "type": "Single Line" },
+    { "display_name": "Discount", "link_name": "Discount", "type": "Single Line" },
+    { "display_name": "Delivery Fee", "link_name": "Delivery_Fee", "type": "Single Line" },
+    { "display_name": "Total", "link_name": "Total", "type": "Single Line" },
+    { "display_name": "Currency", "link_name": "Currency", "type": "Single Line" },
+    { "display_name": "Payment Method", "link_name": "Payment_Method", "type": "Single Line" },
+    { "display_name": "Payment Status", "link_name": "Payment_Status", "type": "Single Line", "default": "Pending" },
+    { "display_name": "Books Invoice ID", "link_name": "Books_Invoice_ID", "type": "Single Line" },
+    { "display_name": "Books Invoice URL", "link_name": "Books_Invoice_URL", "type": "Single Line" },
+    { "display_name": "Notes", "link_name": "Notes", "type": "Single Line" }
+  ]
+}

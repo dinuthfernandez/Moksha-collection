@@ -70,7 +70,7 @@
   max-width: 720px;
   margin: 0;
   color: #fff;
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: 5rem;
   font-weight: 400;
   line-height: 1.04;
@@ -181,61 +181,66 @@
 }
 
 .mh-category-card {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: var(--color-onyx-elevated);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--card-panel);
+  box-shadow: var(--card-shadow);
+  transition: transform 0.5s var(--ease-luxury), box-shadow 0.5s var(--ease-luxury), border-color 0.5s ease;
+}
+
+.mh-category-card:hover {
+  transform: translateY(-12px);
+  border-color: var(--color-magenta);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .mh-category-card > img {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 1;
+  flex: 1 1 auto;
   object-fit: cover;
   transition: transform 550ms var(--ease-luxury);
 }
 
 .mh-category-card:hover > img {
-  transform: scale(1.035);
-}
-
-.mh-category-card::after {
-  position: absolute;
-  inset: 35% 0 0;
-  background: linear-gradient(transparent, rgba(14, 10, 20, 0.7));
-  content: '';
-  pointer-events: none;
+  transform: scale(1.05);
 }
 
 .mh-category-copy {
-  position: absolute;
-  inset: auto 17px 18px;
+  position: relative;
   z-index: 1;
-  display: block;
-  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  background: var(--card-panel);
+  text-align: center;
 }
 
 .mh-category-copy > span {
-  display: block;
-  margin-bottom: 6px;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.62rem;
-  letter-spacing: 1.1px;
+  color: var(--color-magenta);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
 }
 
 .mh-category-copy strong {
-  display: block;
-  padding-right: 24px;
+  color: var(--color-warm-white);
   font-family: var(--font-display);
-  font-size: 1.28rem;
-  font-weight: 400;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  transition: color 0.3s ease;
 }
 
-.mh-category-copy svg {
-  position: absolute;
-  right: 0;
-  bottom: 2px;
+.mh-category-card:hover .mh-category-copy strong {
+  color: var(--color-magenta);
 }
 
 .mh-arrivals {
@@ -243,12 +248,26 @@
 }
 
 .mh-arrival-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  overflow: hidden;
   color: inherit;
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--card-panel);
+  box-shadow: var(--card-shadow);
+  transition: transform 0.5s var(--ease-luxury), box-shadow 0.5s var(--ease-luxury), border-color 0.5s ease;
+}
+
+.mh-arrival-card:hover {
+  transform: translateY(-12px);
+  border-color: var(--color-magenta);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .mh-arrival-card > div {
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1;
   overflow: hidden;
   background: var(--color-onyx-elevated);
 }
@@ -261,30 +280,40 @@
 }
 
 .mh-arrival-card:hover img {
-  transform: scale(1.03);
+  transform: scale(1.05);
 }
 
 .mh-arrival-card > span {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
   gap: 8px;
-  padding-top: 12px;
+  padding: 20px 16px;
+  text-align: center;
 }
 
 .mh-arrival-card strong {
   overflow: hidden;
-  color: var(--home-ink);
-  font-size: 0.81rem;
-  font-weight: 500;
+  max-width: 100%;
+  color: var(--color-warm-white);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.mh-arrival-card:hover strong {
+  color: var(--color-magenta);
 }
 
 .mh-arrival-card small {
-  flex: 0 0 auto;
-  color: var(--home-muted);
-  font-size: 0.68rem;
+  color: var(--color-magenta);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }
 
 .mh-story {

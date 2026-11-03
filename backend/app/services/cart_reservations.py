@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime, timedelta, timezone
 
 from ..config import get_settings
 from ..database import get_supabase
@@ -7,6 +8,8 @@ from .cache import invalidate_catalog
 from .zoho_inventory import ZohoInventoryClient
 
 logger = logging.getLogger(__name__)
+
+CART_HOLD_HOURS = 4
 
 
 class ReservationError(RuntimeError):
@@ -35,7 +38,7 @@ def set_cart_product_reservation(cart_id: str, product_id: str, quantity: int) -
             "p_cart_id": cart_id,
             "p_product_id": product_id,
             "p_quantity": quantity,
-            "p_expires_at": None,
+            "p_expires_at": (datetime.now(timezone.utc) + timedelta(hours=CART_HOLD_HOURS)).isoformat(),
         },
     ).execute()
     if not result.data:

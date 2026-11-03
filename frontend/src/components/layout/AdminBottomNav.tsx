@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, PackageSearch, Undo2, Megaphone, Users, ChartNoAxesCombined, RefreshCw } from 'lucide-react'
+import { LayoutDashboard, PackageSearch, Undo2, Megaphone, Users, ChartNoAxesCombined, RefreshCw, Percent } from 'lucide-react'
 import './AdminBottomNav.css'
 
 const ADMIN_BASE = '/mokshacollectionadminpanel'
@@ -11,6 +11,7 @@ const LINKS = [
   { label: 'Campaigns', to: `${ADMIN_BASE}/campaigns`, icon: Megaphone },
   { label: 'Customers', to: `${ADMIN_BASE}/customers`, icon: Users },
   { label: 'Zoho Sync', to: `${ADMIN_BASE}/zoho-sync`, icon: RefreshCw },
+  { label: 'Discounts', to: `${ADMIN_BASE}/discounts`, icon: Percent },
   { label: 'Analytics', to: `${ADMIN_BASE}/analytics`, icon: ChartNoAxesCombined },
 ]
 

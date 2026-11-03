@@ -34,6 +34,10 @@ export function getProducts(
   return cachedGet<PaginatedProducts>(`/products?${params.toString()}`)
 }
 
+export function getNewArrivals(category: 'clothing' | 'accessories' | 'saree', limit = 8) {
+  return cachedGet<PaginatedProducts>(`/products/new-arrivals?category=${category}&limit=${limit}`)
+}
+
 export function searchProducts(
   query: string,
   page = 1,

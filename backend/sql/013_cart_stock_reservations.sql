@@ -100,7 +100,7 @@ begin
   else
     v_expiry := case
       when v_previous_quantity > 0 then v_previous_expiry
-      else coalesce(p_expires_at, now() + interval '24 hours')
+      else coalesce(p_expires_at, now() + interval '4 hours')
     end;
     insert into cart_stock_reservations (cart_id, product_id, quantity, expires_at, status, release_claimed_at)
       values (p_cart_id, p_product_id, p_quantity, v_expiry, 'active', null)

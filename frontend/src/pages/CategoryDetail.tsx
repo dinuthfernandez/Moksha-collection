@@ -1,4 +1,5 @@
 import BrandLoader from '../components/ui/BrandLoader'
+import PriceTag from '../components/ui/PriceTag'
 import { useEffect, useState } from 'react'
 import { useLocation, useParams, Link } from 'react-router-dom'
 import { useSeo } from '../utils/seo'
@@ -91,7 +92,7 @@ export default function CategoryDetail() {
                 </div>
                 <div className="product-card-body">
                   <h2>{product.name}</h2>
-                  <p className="product-card-price">BHD {Number(product.price || 0).toFixed(3)}</p>
+                  <p className="product-card-price"><PriceTag price={product.price} originalPrice={product.original_price} /></p>
                   <p className={`product-card-stock${product.stock_quantity <= 0 ? ' out-of-stock' : ''}`}>{product.stock_quantity > 0 ? `Stock on Hand: ${product.stock_quantity}` : 'Out of Stock'}</p>
                   {product.description && <p className="product-card-description">{product.description}</p>}
                 </div>

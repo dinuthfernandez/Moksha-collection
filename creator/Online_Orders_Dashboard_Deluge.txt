@@ -1,0 +1,77 @@
+=====================================================================
+ONLINE ORDERS DASHBOARD  -  Creator version (no JavaScript)
+=====================================================================
+Page "Online_Orders" = HTML snippet (stat cards) + embedded report (orders,
+search, buttons).
+
+---------------------------------------------------------------------
+STEP 1. HTML snippet on the page (replace everything in it with this)
+---------------------------------------------------------------------
+<%{
+allCount = Online_Orders_Report[ID != 0].count();
+confRows = Online_Orders_Report[Payment_Status == "Confirmed"];
+confCount = confRows.count();
+pendCount = allCount - confCount;
+revenue = 0.0;
+for each r in confRows
+{
+	if(r.Total != null && r.Total != "")
+	{
+		revenue = revenue + r.Total.toDecimal();
+	}
+}
+%>
+<style>
+.od-stats{display:flex;flex-wrap:wrap;gap:12px;padding:8px 0}
+.od-stat{flex:1;min-width:170px;background:#fff;border:1px solid #f1d3e0;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(214,51,132,.08)}
+.od-stat small{display:block;color:#8a6577;font-size:12px;text-transform:uppercase}
+.od-stat b{font-size:26px;color:#c2185b}
+</style>
+<div class="od-stats">
+<div class="od-stat"><small>Total orders</small><b><%=allCount%></b></div>
+<div class="od-stat"><small>Pending</small><b><%=pendCount%></b></div>
+<div class="od-stat"><small>Confirmed</small><b><%=confCount%></b></div>
+<div class="od-stat"><small>Revenue (confirmed)</small><b><%=revenue.round(3)%></b></div>
+</div>
+<%
+}%>
+
+---------------------------------------------------------------------
+STEP 2. Embed the report under the snippet
+---------------------------------------------------------------------
+In the page builder drag "Report" from the Embed list and pick
+"All Online Orders Reports". Make sure the report shows ALL columns.
+The report already has a search bar and filters (Payment Status).
+
+---------------------------------------------------------------------
+STEP 3. Custom action "Confirm Payment" on the report
+---------------------------------------------------------------------
+Report builder > the report > Actions / Custom Actions > + New > name it
+"Confirm Payment", place it in the record row/hover menu. Script:
+
+for each rec in records
+{
+	rec.Payment_Status = "Confirmed";
+}
+
+(If the editor names the variable differently, use the name shown in its
+parameter list.)  Optional: set the action's criteria to
+Payment_Status != "Confirmed" so it only shows on pending orders.
+
+---------------------------------------------------------------------
+STEP 4. Custom action "Open Invoice"
+---------------------------------------------------------------------
+for each rec in records
+{
+	if(rec.Books_Invoice_URL != null && rec.Books_Invoice_URL != "")
+	{
+		openUrl(rec.Books_Invoice_URL, "new window");
+	}
+}
+
+---------------------------------------------------------------------
+STEP 5. Refresh the stat cards after confirming
+---------------------------------------------------------------------
+The counts are calculated when the page loads, so reload the page after
+confirming. (Or add  openUrl("#Page:Online_Orders", "same window");  as the
+last line of the Confirm Payment script.)

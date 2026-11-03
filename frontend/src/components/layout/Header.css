@@ -35,81 +35,49 @@
 .site-nav {
   display: none;
   align-items: center;
-  gap: 28px;
+  gap: 8px;
 }
 
 .site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.4px;
-  color: var(--color-crystal-silver);
-  padding: 8px 2px;
+  color: var(--on-brand-text);
+  padding: 9px 14px;
   position: relative;
-  transition: color 0.2s ease;
+  border: 1px solid rgba(225, 10, 140, 0.48);
+  border-radius: 999px;
+  background: rgba(225, 10, 140, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  white-space: nowrap;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .site-nav-link::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 0;
-  height: 2px;
-  background: var(--color-magenta);
-  transition: width 0.25s var(--ease-luxury);
+  display: none;
 }
 
 .site-nav-link:hover,
 .site-nav-link.is-active {
-  color: var(--color-warm-white);
+  color: var(--on-brand-text);
+  border-color: rgba(225, 10, 140, 0.8);
+  background: rgba(225, 10, 140, 0.3);
+  box-shadow: 0 4px 18px rgba(225, 10, 140, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.site-nav-link:hover::after,
-.site-nav-link.is-active::after {
-  width: 100%;
+.site-nav-link:hover {
+  transform: translateY(-1px);
 }
 
-.site-nav-more { position: relative; }
-.site-nav-more-btn { background: none; border: 0; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px; }
-.site-nav-more-btn svg { transition: transform 0.2s ease; }
-.site-nav-more-btn svg.is-flipped { transform: rotate(180deg); }
-.site-nav-more-menu {
-  position: absolute; top: calc(100% + 8px); right: 0; min-width: 170px; z-index: 60;
-  display: flex; flex-direction: column; padding: 6px;
-  background: var(--color-surface, #1c1c1c); border: 1px solid var(--color-border, rgba(255,255,255,.12));
-  border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,.35);
-}
-.site-nav-more-item { padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: var(--color-crystal-silver); white-space: nowrap; }
-.site-nav-more-item:hover, .site-nav-more-item.is-active { background: rgba(255,255,255,.08); color: var(--color-warm-white); }
-.mobile-nav-heading { display: block; padding: 14px 20px 4px; font-size: .7rem; text-transform: uppercase; letter-spacing: .12em; opacity: .55; }
-.mobile-nav-sub { padding-left: 34px; }
-
-/* Azhak (accessories sub-brand) nav item — logo mark + label, set apart
-   from plain text links with a subtle pill so it reads as its own edit. */
 .azhak-nav-link {
-  display: inline-flex;
-  align-items: center;
   gap: 8px;
-  padding: 6px 12px 6px 6px !important;
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-  background: var(--surface-tint);
 }
 
-.azhak-nav-link::after {
-  display: none;
-}
-
-.azhak-nav-link:hover,
-.azhak-nav-link.is-active {
-  border-color: var(--color-magenta);
-}
-
-/* The Azhak logo is mostly black line-art (only the tagline text is pale),
-   so it needs a fixed light backdrop to stay visible in both the black
-   (dark theme) and white (light theme) header background. The badge also
-   crops out the tiny "By Moksha Collections" tagline, which is illegible
-   at nav-icon size — only the recognisable face/jewellery mark is shown. */
 .azhak-nav-badge {
   position: relative;
   display: block;
@@ -126,6 +94,7 @@
   align-items: center;
   justify-content: center;
 }
+
 .saree-nav-badge .mc-mark {
   font-size: 1.05rem;
   line-height: 1;
@@ -141,23 +110,18 @@
   height: auto;
 }
 
-.mobile-nav-link.azhak-nav-link {
-  display: inline-flex;
-  width: fit-content;
-  min-height: 54px;
-  margin: 10px 24px;
-  padding: 9px 16px 9px 8px !important;
+.site-nav-more { position: relative; }
+.site-nav-more-btn { cursor: pointer; font-family: inherit; }
+.site-nav-more-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; min-width: 170px; z-index: 60;
+  display: flex; flex-direction: column; padding: 6px;
+  background: var(--color-surface, #1c1c1c); border: 1px solid var(--color-border, rgba(255,255,255,.12));
+  border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,.35);
 }
-
-.mobile-nav-link.azhak-nav-link .azhak-nav-badge {
-  width: 42px;
-  height: 32px;
-}
-
-.mobile-nav-link.azhak-nav-link .azhak-nav-logo {
-  width: 50px;
-  top: -2px;
-}
+.site-nav-more-item { margin: 3px; padding: 10px 14px; border: 1px solid rgba(225, 10, 140, 0.48); border-radius: 16px; background: rgba(225, 10, 140, 0.16); font-size: 0.85rem; font-weight: 600; color: var(--on-brand-text); white-space: nowrap; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.site-nav-more-item:hover, .site-nav-more-item.is-active { background: rgba(225, 10, 140, 0.3); border-color: rgba(225, 10, 140, 0.8); color: var(--on-brand-text); }
+.mobile-nav-heading { display: block; padding: 14px 20px 4px; font-size: .7rem; text-transform: uppercase; letter-spacing: .12em; opacity: .55; }
+.mobile-nav-sub { margin-left: 18px; width: calc(100% - 36px); }
 
 .site-header-actions {
   display: flex;
@@ -339,14 +303,77 @@
 }
 
 .mobile-nav-link {
-  padding: 14px 24px;
+  display: block;
+  margin: 6px 16px;
+  padding: 12px 16px;
   font-size: 0.9rem;
-  color: var(--color-crystal-silver);
-  border-bottom: 1px solid var(--color-line-soft);
+  font-weight: 600;
+  color: var(--on-brand-text);
+  border: 1px solid rgba(225, 10, 140, 0.48);
+  border-radius: 18px;
+  background: rgba(225, 10, 140, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
+.mobile-nav-link:hover,
 .mobile-nav-link.is-active {
-  color: var(--color-magenta);
+  color: var(--on-brand-text);
+  border-color: rgba(225, 10, 140, 0.8);
+  background: rgba(225, 10, 140, 0.3);
+  box-shadow: 0 4px 18px rgba(225, 10, 140, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.mobile-nav-link:hover {
+  transform: translateY(-1px);
+}
+
+/* Light theme: the header surface turns white, so the light on-brand text
+   would vanish on the translucent pink cards — use deep magenta text instead. */
+:root[data-theme='light'] .site-nav-link,
+:root[data-theme='light'] .mobile-nav-link,
+:root[data-theme='light'] .site-nav-more-item {
+  color: var(--color-magenta-hover);
+  background: rgba(225, 10, 140, 0.1);
+  border-color: rgba(225, 10, 140, 0.4);
+  box-shadow: none;
+}
+
+:root[data-theme='light'] .site-nav-link:hover,
+:root[data-theme='light'] .site-nav-link.is-active,
+:root[data-theme='light'] .mobile-nav-link:hover,
+:root[data-theme='light'] .mobile-nav-link.is-active,
+:root[data-theme='light'] .site-nav-more-item:hover,
+:root[data-theme='light'] .site-nav-more-item.is-active {
+  color: #8f0659;
+  background: rgba(225, 10, 140, 0.2);
+  border-color: rgba(225, 10, 140, 0.75);
+  box-shadow: 0 4px 14px rgba(225, 10, 140, 0.14);
+}
+
+:root[data-theme='light'] .site-nav-more-menu {
+  background: var(--color-onyx-soft);
+  border-color: var(--color-line);
+  box-shadow: 0 14px 34px rgba(20, 14, 10, 0.14);
+}
+
+.mobile-nav-link.azhak-nav-link {
+  display: flex;
+  align-items: center;
+  width: auto;
+  min-height: 54px;
+}
+
+.mobile-nav-link.azhak-nav-link .azhak-nav-badge {
+  width: 42px;
+  height: 32px;
+}
+
+.mobile-nav-link.azhak-nav-link .azhak-nav-logo {
+  width: 50px;
+  top: -2px;
 }
 
 @media (min-width: 992px) {

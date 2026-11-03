@@ -4,6 +4,7 @@ import { Search, SlidersHorizontal } from 'lucide-react'
 import { searchProducts } from '../api/categories'
 import type { Product } from '../types'
 import SearchBox from '../components/ui/SearchBox'
+import PriceTag from '../components/ui/PriceTag'
 import './SearchResults.css'
 
 const PAGE_SIZE = 24
@@ -164,7 +165,7 @@ export default function SearchResults() {
                     </div>
                     <div className="search-product-body">
                       <h2>{product.name}</h2>
-                      <p className="search-product-price">BHD {Number(product.price || 0).toFixed(3)}</p>
+                      <p className="search-product-price"><PriceTag price={product.price} originalPrice={product.original_price} /></p>
                     </div>
                   </Link>
                 ))}

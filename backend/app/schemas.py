@@ -49,6 +49,10 @@ class ProductOut(BaseModel):
     description: Optional[str] = None
     price: float = 0
     compare_at_price: Optional[float] = None
+    original_price: Optional[float] = None
+    discount_price: Optional[float] = None
+    discount_starts_at: Optional[str] = None
+    discount_ends_at: Optional[str] = None
     is_active: bool = True
     is_new_arrival: bool = False
     is_on_sale: bool = False

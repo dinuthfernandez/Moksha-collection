@@ -1,0 +1,134 @@
+<%{ %>
+<script src="https://js.zohostatic.com/creator/widgets/version/2.0/widgetsdk-min.js"></script>
+<style>
+  .od{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2a1a24;padding:16px;max-width:1200px;margin:0 auto}
+  .od h2{margin:0 0 14px;font-size:22px}
+  .od-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+  .od-stat{background:#fff;border:1px solid #f1d3e0;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(214,51,132,.08)}
+  .od-stat small{display:block;color:#8a6577;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .od-stat b{font-size:26px;color:#c2185b}
+  .od-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+  .od-search{flex:1;min-width:220px;padding:11px 16px;border:1px solid #e8b9cf;border-radius:999px;font-size:14px;outline:none}
+  .od-tab{padding:9px 18px;border:1px solid #e8b9cf;border-radius:999px;background:#fff;cursor:pointer;font-size:13px}
+  .od-tab.on{background:#c2185b;color:#fff;border-color:#c2185b}
+  .od-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .od-card{background:#fff;border:1px solid #f1d3e0;border-radius:18px;padding:16px;box-shadow:0 2px 10px rgba(214,51,132,.08)}
+  .od-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .od-no{font-weight:700;font-size:13px;word-break:break-all}
+  .od-date{color:#8a6577;font-size:12px}
+  .od-badge{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+  .od-badge.p{background:#fff1dc;color:#b45f06}
+  .od-badge.c{background:#dff5e6;color:#1b7a3d}
+  .od-card p{margin:8px 0 0;font-size:13px;line-height:1.45}
+  .od-items{background:#fdf3f8;border-radius:10px;padding:8px 10px}
+  .od-total{display:flex;justify-content:space-between;margin-top:10px;font-size:14px}
+  .od-total b{color:#c2185b}
+  .od-actions{display:flex;gap:8px;margin-top:12px}
+  .od-btn{flex:1;padding:10px;border-radius:999px;border:1px solid #c2185b;background:#fff;color:#c2185b;font-weight:600;cursor:pointer;font-size:13px}
+  .od-btn.main{background:#c2185b;color:#fff}
+  .od-btn[disabled]{opacity:.5;cursor:wait}
+  .od-empty{padding:40px;text-align:center;color:#8a6577}
+</style>
+
+<div class="od">
+  <h2>Online Orders</h2>
+  <div class="od-stats">
+    <div class="od-stat"><small>Total orders</small><b id="s-all">0</b></div>
+    <div class="od-stat"><small>Pending</small><b id="s-pend">0</b></div>
+    <div class="od-stat"><small>Confirmed</small><b id="s-conf">0</b></div>
+    <div class="od-stat"><small>Revenue (confirmed)</small><b id="s-rev">0.000</b></div>
+  </div>
+  <div class="od-tools">
+    <input class="od-search" id="q" placeholder="Search order no, customer, phone, email...">
+    <button class="od-tab on" data-f="all">All</button>
+    <button class="od-tab" data-f="Pending">Pending</button>
+    <button class="od-tab" data-f="Confirmed">Confirmed</button>
+  </div>
+  <div class="od-grid" id="grid"><div class="od-empty">Loading orders...</div></div>
+</div>
+
+<script>
+  var APP = "moksha-dress-accessories";
+  var REPORT = "All_Online_Orders_Reports";
+  var rows = [], filter = "all";
+
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function num(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  function isConfirmed(r){ return String(r.Payment_Status || "").toLowerCase() === "confirmed"; }
+
+  function render(){
+    var q = document.getElementById("q").value.toLowerCase().trim();
+    var conf = rows.filter(isConfirmed);
+    document.getElementById("s-all").textContent = rows.length;
+    document.getElementById("s-conf").textContent = conf.length;
+    document.getElementById("s-pend").textContent = rows.length - conf.length;
+    document.getElementById("s-rev").textContent = conf.reduce(function(a, r){ return a + num(r.Total); }, 0).toFixed(3);
+
+    var list = rows.filter(function(r){
+      if (filter === "Confirmed" && !isConfirmed(r)) return false;
+      if (filter === "Pending" && isConfirmed(r)) return false;
+      if (!q) return true;
+      return [r.Order_Number, r.Customer_Name, r.Phone, r.Email].join(" ").toLowerCase().indexOf(q) > -1;
+    });
+    list.sort(function(a, b){ return String(b.Order_Date).localeCompare(String(a.Order_Date)); });
+
+    var grid = document.getElementById("grid");
+    if (!list.length){ grid.innerHTML = '<div class="od-empty">No orders found</div>'; return; }
+    grid.innerHTML = list.map(function(r){
+      var ok = isConfirmed(r);
+      return '<div class="od-card">' +
+        '<div class="od-top"><div><div class="od-no">#' + esc(r.Order_Number) + '</div><div class="od-date">' + esc(r.Order_Date) + '</div></div>' +
+        '<span class="od-badge ' + (ok ? 'c">Confirmed' : 'p">Pending') + '</span></div>' +
+        '<p><b>' + esc(r.Customer_Name) + '</b><br>' + esc(r.Phone) + (r.Email ? ' &middot; ' + esc(r.Email) : '') +
+        '<br>' + esc(r.Address) + (r.City ? ', ' + esc(r.City) : '') + '</p>' +
+        '<p class="od-items">' + esc(r.Items_Summary) + '<br><small>' + esc(r.Items_Count) + ' item(s)</small></p>' +
+        '<div class="od-total"><span>Subtotal ' + esc(r.Subtotal) + ' &middot; Disc ' + esc(r.Discount) + ' &middot; Delivery ' + esc(r.Delivery_Fee) +
+        '</span><b>' + esc(r.Currency || "BHD") + ' ' + esc(r.Total) + '</b></div>' +
+        '<div class="od-actions">' +
+        (r.Books_Invoice_URL ? '<button class="od-btn" data-inv="' + esc(r.Books_Invoice_URL) + '">Open Invoice</button>' : '') +
+        (ok ? '' : '<button class="od-btn main" data-confirm="' + esc(r.ID) + '">Confirm Payment</button>') +
+        '</div></div>';
+    }).join("");
+  }
+
+  function loadAll(page, acc){
+    return ZOHO.CREATOR.API.getAllRecords({ appName: APP, reportName: REPORT, page: page, pageSize: 200 })
+      .then(function(res){
+        var data = (res && res.data) || [];
+        acc = acc.concat(data);
+        return data.length === 200 ? loadAll(page + 1, acc) : acc;
+      });
+  }
+
+  document.addEventListener("click", function(e){
+    var t = e.target;
+    if (t.dataset.inv){ window.open(t.dataset.inv, "_blank"); return; }
+    if (t.dataset.f){
+      filter = t.dataset.f;
+      document.querySelectorAll(".od-tab").forEach(function(b){ b.classList.toggle("on", b === t); });
+      render(); return;
+    }
+    if (t.dataset.confirm){
+      t.disabled = true; t.textContent = "Confirming...";
+      ZOHO.CREATOR.API.updateRecord({
+        appName: APP, reportName: REPORT, id: t.dataset.confirm,
+        data: { data: { Payment_Status: "Confirmed" } }
+      }).then(function(res){
+        if (res && res.code === 3000){
+          rows.forEach(function(r){ if (r.ID === t.dataset.confirm) r.Payment_Status = "Confirmed"; });
+          render();
+        } else { t.disabled = false; t.textContent = "Confirm Payment"; alert("Could not confirm: " + JSON.stringify(res)); }
+      }).catch(function(err){ t.disabled = false; t.textContent = "Confirm Payment"; alert("Could not confirm: " + JSON.stringify(err)); });
+    }
+  });
+  document.getElementById("q").addEventListener("input", render);
+
+  ZOHO.CREATOR.init().then(function(){ return loadAll(1, []); }).then(function(all){
+    rows = all; render();
+    setInterval(function(){ loadAll(1, []).then(function(a){ rows = a; render(); }); }, 60000);
+  }).catch(function(err){
+    document.getElementById("grid").innerHTML = '<div class="od-empty">Could not load orders: ' + esc(JSON.stringify(err)) + '</div>';
+  });
+</script>
+<% }%>

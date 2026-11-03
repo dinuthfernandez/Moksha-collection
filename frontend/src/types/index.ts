@@ -31,6 +31,10 @@ export interface Product {
   description?: string | null
   price: number
   compare_at_price?: number | null
+  original_price?: number | null
+  discount_price?: number | null
+  discount_starts_at?: string | null
+  discount_ends_at?: string | null
   is_active: boolean
   is_new_arrival: boolean
   is_on_sale: boolean

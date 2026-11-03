@@ -50,19 +50,19 @@ export default function Home() {
         <div className="mh-category-grid">
           <Link className="mh-category-card" to="/clothing/kurti">
             <img src="/assets/category-tiles/kurti.jpg" alt="Kurti collection" />
-            <span className="mh-category-copy"><span>01 · Everyday</span><strong>Kurti</strong><ArrowRight size={17} /></span>
+            <span className="mh-category-copy"><strong>Kurti</strong><span>Shop Now</span></span>
           </Link>
           <Link className="mh-category-card" to="/clothing/co-ord-set">
             <img src="/assets/category-tiles/co-ord-set.jpg" alt="Co-ord set collection" />
-            <span className="mh-category-copy"><span>02 · Matching sets</span><strong>Co-ord Set</strong><ArrowRight size={17} /></span>
+            <span className="mh-category-copy"><strong>Co-ord Set</strong><span>Shop Now</span></span>
           </Link>
-          <Link className="mh-category-card" to="/accessories/earrings">
-            <img src="/assets/category-tiles/earrings.jpg" alt="Earrings collection" />
-            <span className="mh-category-copy"><span>03 · Accessories</span><strong>Earrings</strong><ArrowRight size={17} /></span>
+          <Link className="mh-category-card" to="/clothing/saree">
+            <img src="/assets/category-tiles/saree.jpg" alt="Saree collection" />
+            <span className="mh-category-copy"><strong>Saree</strong><span>Shop Now</span></span>
           </Link>
-          <Link className="mh-category-card" to="/accessories/bangles">
-            <img src="/assets/category-tiles/bangles.jpg" alt="Bangles collection" />
-            <span className="mh-category-copy"><span>04 · Accessories</span><strong>Bangles</strong><ArrowRight size={17} /></span>
+          <Link className="mh-category-card" to="/clothing/frock">
+            <img src="/assets/category-tiles/frock.jpg" alt="Frock collection" />
+            <span className="mh-category-copy"><strong>Frock</strong><span>Shop Now</span></span>
           </Link>
         </div>
       </section>

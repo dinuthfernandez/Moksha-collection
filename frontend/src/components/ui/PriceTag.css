@@ -1,0 +1,33 @@
+.price-tag {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.15rem 0.5rem;
+}
+
+.price-tag-was {
+  color: var(--color-crystal-silver);
+  font-size: 0.85em;
+  font-weight: 400;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  opacity: 0.85;
+}
+
+.price-tag-now {
+  color: var(--color-magenta, #e10a8c);
+  font-weight: 700;
+}
+
+.price-tag-off {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color-magenta, #e10a8c);
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  white-space: nowrap;
+}

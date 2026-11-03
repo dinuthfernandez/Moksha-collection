@@ -8,10 +8,17 @@ from ..database import get_supabase
 from ..deps import get_current_admin
 from ..schemas import ProductListOut, ProductOut, ProductStockAdjustIn
 from ..services.cache import cached, invalidate_catalog
+from ..services.discounts import apply_discount
 from ..services.zoho_inventory import ZohoInventoryClient
 from ..config import get_settings
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+
+def _with_discounts(result: ProductListOut) -> ProductListOut:
+    """Cached lists hold Zoho prices; live discounts are applied per request so they start and end on time."""
+    items = [ProductOut(**apply_discount(item.model_dump())) for item in result.items]
+    return result.model_copy(update={"items": items})
 
 # Common spellings shoppers use -> how products are actually named.
 _SEARCH_ALIASES = {
@@ -66,6 +73,33 @@ def suggest_products(q: str = Query(min_length=1, max_length=60)):
         return {"suggestions": out}
 
     return cached(key, 120, load)
+
+
+@router.get("/new-arrivals", response_model=ProductListOut)
+def list_new_arrivals(
+    category: Literal["clothing", "accessories", "saree"],
+    limit: int = Query(default=8, ge=1, le=24),
+):
+    """The most recently added products of a category that have a photo.
+
+    Products without a photo are skipped, so if only 7 of the latest 8 have one, the slot is
+    filled by the next most recent product that does.
+
+    `created_at` is stamped once, when the Zoho sync first inserts a product, and never changes on
+    later syncs, so it marks when the item first appeared on the website."""
+
+    def load() -> ProductListOut:
+        res = (
+            get_supabase().table("products").select("*")
+            .eq("is_active", True).eq("is_primary_variant", True).eq("category_slug", category)
+            .gt("stock_quantity", 0).eq("has_image", True)
+            .order("created_at", desc=True).order("id", desc=True)
+            .limit(limit).execute()
+        )
+        items = list(res.data or [])
+        return ProductListOut(items=items, total=len(items), page=1, page_size=limit, total_pages=1)
+
+    return _with_discounts(cached(f"new-arrivals:{category}:{limit}", 60, load))
 
 
 @router.get("", response_model=ProductListOut)
@@ -137,7 +171,7 @@ def list_products(
         return ProductListOut(items=items, total=total, page=page, page_size=page_size, total_pages=total_pages)
 
     cache_key = f"products:{category}:{category_slug}:{active_only}:{page}:{page_size}:{q}:{min_price}:{max_price}"
-    return cached(cache_key, 60, load)
+    return _with_discounts(cached(cache_key, 60, load))
 
 
 @router.get("/{slug}", response_model=ProductOut)
@@ -153,7 +187,7 @@ def get_product(slug: str):
         if website_serial:
             siblings = (
                 supabase.table("products")
-                .select("id,slug,name,color,size,kids_size,image_url,price,stock_quantity,is_primary_variant")
+                .select("*")
                 .eq("website_serial", website_serial)
                 .eq("is_active", True)
                 .execute()
@@ -163,7 +197,9 @@ def get_product(slug: str):
             product["variants"] = []
         return product
 
-    return cached(f"product:{slug}", 60, load)
+    product = dict(cached(f"product:{slug}", 60, load))
+    product["variants"] = [apply_discount(v) for v in product.get("variants", [])]
+    return apply_discount(product)
 
 
 @router.post("/sync", dependencies=[Depends(get_current_admin)])

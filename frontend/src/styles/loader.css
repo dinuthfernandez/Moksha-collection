@@ -12,7 +12,10 @@
   inset: 0;
   min-height: 100vh;
   z-index: 9999;
-  background: var(--bg, #fff);
+  background: var(--color-onyx-soft);
+}
+.brand-loader {
+  color: var(--color-warm-white);
 }
 .brand-loader__mark {
   position: relative;

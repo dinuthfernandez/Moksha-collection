@@ -1,7 +1,7 @@
 import { NavLink, Link } from 'react-router-dom'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, ShoppingBag, User, Heart, Search, ArrowRight, ChevronDown } from 'lucide-react'
+import { Menu, X, ShoppingBag, User, Heart, Search, ArrowRight } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { useWishlist } from '../../context/WishlistContext'
@@ -150,7 +150,7 @@ export default function Header() {
                 aria-expanded={moreOpen}
                 onClick={() => setMoreOpen((v) => !v)}
               >
-                More <ChevronDown size={14} aria-hidden="true" className={moreOpen ? 'is-flipped' : ''} />
+                More
               </button>
               {moreOpen && (
                 <div className="site-nav-more-menu" role="menu">

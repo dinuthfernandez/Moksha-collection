@@ -51,6 +51,7 @@ const AdminReturns = lazy(() => import('./pages/admin/AdminReturns'))
 const AdminCampaigns = lazy(() => import('./pages/admin/AdminCampaigns'))
 const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'))
 const AdminZohoSync = lazy(() => import('./pages/admin/AdminZohoSync'))
+const AdminDiscounts = lazy(() => import('./pages/admin/AdminDiscounts'))
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'))
 
 function AppShell() {
@@ -106,6 +107,7 @@ function AppShell() {
             <Route path="campaigns" element={<AdminCampaigns />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="zoho-sync" element={<AdminZohoSync />} />
+            <Route path="discounts" element={<AdminDiscounts />} />
             <Route path="analytics" element={<AdminAnalytics />} />
           </Route>
         </Route>

@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     zoho_organization_id: str = ""
     zoho_inventory_sync_interval_seconds: int = 3600
     zoho_offline_sale_webhook_secret: str = ""
+    zoho_creator_owner: str = ""
+    zoho_creator_app: str = ""
+    zoho_creator_api_url: str = "https://www.zohoapis.com/creator/v2.1"
+    zoho_creator_orders_form: str = ""
+    creator_webhook_secret: str = ""
+    zoho_invoice_url_template: str = "https://books.zoho.com/app/{org}#/invoices/{id}"
 
     jwt_secret_key: str = "dev-only-insecure-secret-change-me"
     jwt_algorithm: str = "HS256"

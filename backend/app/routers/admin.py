@@ -1,9 +1,11 @@
 import hashlib
 import logging
 import secrets
+from datetime import datetime, timezone
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from postgrest.exceptions import APIError
 from pydantic import BaseModel, Field
 
 from ..database import get_supabase
@@ -28,6 +30,7 @@ from ..schemas import (
     ReturnOrderOut,
 )
 from ..services.email import send_campaign_email, send_sales_email
+from ..services.cache import invalidate_catalog
 from ..services.email_templates import render_order_completed_email
 from ..services.order_inventory import complete_item_returns, load_order_items, restock_order_items
 
@@ -435,6 +438,78 @@ def search_products_by_sku(q: str = Query(min_length=1, max_length=120)):
     # An exact SKU match is always listed first.
     rows.sort(key=lambda r: (str(r.get("zoho_sku") or "").lower() != term.lower(),))
     return rows
+
+
+# ---------------------------------------------------------------------------
+# Scheduled product discounts
+# ---------------------------------------------------------------------------
+class DiscountIn(BaseModel):
+    discount_price: float = Field(gt=0)
+    starts_at: datetime
+    ends_at: datetime
+
+
+_DISCOUNT_COLUMNS = (
+    "id,zoho_sku,name,price,image_url,stock_quantity,is_active,discount_price,discount_starts_at,discount_ends_at"
+)
+_DISCOUNT_MIGRATION_HINT = "Discounts are not set up yet — run backend/sql/024_product_discounts.sql in the Supabase SQL editor"
+
+
+def _aware(value: datetime) -> datetime:
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
+@router.get("/discounts")
+def list_discounts():
+    try:
+        rows = (
+            get_supabase().table("products").select(_DISCOUNT_COLUMNS)
+            .not_.is_("discount_price", "null").order("discount_ends_at").execute().data
+            or []
+        )
+    except APIError as exc:
+        raise HTTPException(status_code=503, detail=_DISCOUNT_MIGRATION_HINT) from exc
+    return rows
+
+
+@router.put("/discounts/{product_id}")
+def set_discount(product_id: str, payload: DiscountIn):
+    starts, ends = _aware(payload.starts_at), _aware(payload.ends_at)
+    if ends <= starts:
+        raise HTTPException(status_code=422, detail="The end date must be after the start date")
+    if ends <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=422, detail="The end date is already in the past")
+    supabase = get_supabase()
+    found = supabase.table("products").select("id,price").eq("id", product_id).limit(1).execute().data
+    if not found:
+        raise HTTPException(status_code=404, detail="Product not found")
+    if payload.discount_price >= float(found[0].get("price") or 0):
+        raise HTTPException(status_code=422, detail="The discount price must be lower than the current price")
+    try:
+        rows = (
+            supabase.table("products")
+            .update({
+                "discount_price": round(payload.discount_price, 3),
+                "discount_starts_at": starts.isoformat(),
+                "discount_ends_at": ends.isoformat(),
+            })
+            .eq("id", product_id).execute().data
+        )
+    except APIError as exc:
+        raise HTTPException(status_code=503, detail=_DISCOUNT_MIGRATION_HINT) from exc
+    invalidate_catalog()
+    return supabase.table("products").select(_DISCOUNT_COLUMNS).eq("id", product_id).limit(1).execute().data[0] if rows else {}
+
+
+@router.delete("/discounts/{product_id}", status_code=204)
+def remove_discount(product_id: str):
+    try:
+        get_supabase().table("products").update(
+            {"discount_price": None, "discount_starts_at": None, "discount_ends_at": None}
+        ).eq("id", product_id).execute()
+    except APIError as exc:
+        raise HTTPException(status_code=503, detail=_DISCOUNT_MIGRATION_HINT) from exc
+    invalidate_catalog()
 
 
 @router.post("/zoho-sync/refresh")

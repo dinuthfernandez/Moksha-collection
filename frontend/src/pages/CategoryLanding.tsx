@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, ShoppingBag } from 'lucide-react'
-import { getCategoryTree, getProducts } from '../api/categories'
+import { getCategoryTree, getNewArrivals, getProducts } from '../api/categories'
 import { useCart } from '../context/CartContext'
 import type { Category, Product } from '../types'
 import EmptyState from '../components/ui/EmptyState'
 import CategoryHeroCarousel from '../components/ui/CategoryHeroCarousel'
 import PlaceholderImage from '../components/ui/PlaceholderImage'
+import PriceTag from '../components/ui/PriceTag'
 import { useCategoryLimit } from '../utils/useCategoryLimit'
 import Reveal from '../components/ui/Reveal'
 import './CategoryLanding.css'
@@ -106,7 +107,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
 
   useEffect(() => {
     let mounted = true
-    getProducts(type, 1, 8)
+    getNewArrivals(type, 8)
       .then((data) => mounted && setNewArrivals(data.items))
       .catch(() => mounted && setNewArrivals([]))
       .finally(() => mounted && setNewArrivalsLoading(false))
@@ -210,7 +211,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
                 />
                 <div className="azhak-category-overlay">
                   <h2>{category.name}</h2>
-                  <span>Explore <ArrowRight size={15} /></span>
+                  <span>Shop Now</span>
                 </div>
               </Link>
             ))}
@@ -249,7 +250,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
                   </div>
                   <div className="product-card-body">
                     <h2>{product.name}</h2>
-                    <p className="product-card-price">BHD {Number(product.price || 0).toFixed(3)}</p>
+                    <p className="product-card-price"><PriceTag price={product.price} originalPrice={product.original_price} /></p>
                     <p className={`product-card-stock${product.stock_quantity <= 0 ? ' out-of-stock' : ''}`}>{product.stock_quantity > 0 ? `Stock on Hand: ${product.stock_quantity}` : 'Out of Stock'}</p>
                   </div>
                 </Link>
@@ -279,7 +280,7 @@ export default function CategoryLanding({ type }: { type: 'clothing' | 'saree' }
                         <PlaceholderImage src={entry.image_url} alt={entry.name} label="Product image — 1000 × 1250 px" ratio="4 / 5" className="azhak-product-image" />
                         <div className="azhak-product-info">
                           <h3>{entry.name}</h3>
-                          <span>BHD {Number(entry.price || 0).toFixed(3)}</span>
+                          <PriceTag price={entry.price} originalPrice={entry.product.original_price} />
                         </div>
                       </Link>
                     ) : (

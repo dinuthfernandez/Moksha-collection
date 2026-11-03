@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, ShoppingBag } from 'lucide-react'
-import { getCategoryTree, getProducts } from '../api/categories'
+import { getCategoryTree, getNewArrivals, getProducts } from '../api/categories'
 import { useCart } from '../context/CartContext'
 import type { Category, Product } from '../types'
 import PlaceholderImage from '../components/ui/PlaceholderImage'
+import PriceTag from '../components/ui/PriceTag'
 import { useCategoryLimit } from '../utils/useCategoryLimit'
 import './Azhak.css'
 
@@ -43,6 +44,8 @@ const DEMO_PRODUCTS: CatalogEntry[] = [
 export default function Azhak() {
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [newArrivals, setNewArrivals] = useState<Product[]>([])
+  const [newArrivalsLoading, setNewArrivalsLoading] = useState(true)
   const [products, setProducts] = useState<CatalogEntry[]>([])
   const [productsLoading, setProductsLoading] = useState(true)
   const [demoCatalog, setDemoCatalog] = useState(false)
@@ -64,6 +67,17 @@ export default function Azhak() {
         setCategories([])
       })
       .finally(() => mounted && setCategoriesLoading(false))
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+    getNewArrivals('accessories', 8)
+      .then((data) => mounted && setNewArrivals(data.items))
+      .catch(() => mounted && setNewArrivals([]))
+      .finally(() => mounted && setNewArrivalsLoading(false))
     return () => {
       mounted = false
     }
@@ -172,7 +186,7 @@ export default function Azhak() {
                 />
                 <div className="azhak-category-overlay">
                   <h2>{category.name}</h2>
-                  <span>Explore <ArrowRight size={15} /></span>
+                  <span>Shop Now</span>
                 </div>
               </Link>
             ))}
@@ -186,6 +200,43 @@ export default function Azhak() {
           )}
         </section>
         )}
+
+        <section className="azhak-products-section azhak-new-arrivals" aria-labelledby="azhak-arrivals-title">
+          <div className="azhak-section-heading">
+            <h2 id="azhak-arrivals-title">New Arrivals</h2>
+            <span>Latest additions</span>
+          </div>
+          {newArrivalsLoading ? (
+            <div className="azhak-product-grid" aria-label="Loading new arrivals">
+              {Array.from({ length: 8 }, (_, index) => <div className="azhak-product-skeleton" key={index} />)}
+            </div>
+          ) : newArrivals.length > 0 ? (
+            <div className="azhak-product-grid">
+              {newArrivals.map((product) => (
+                <article key={product.id} className="azhak-product-card">
+                  <Link to={`/product/${product.slug}`} className="azhak-product-link">
+                    <PlaceholderImage
+                      src={product.image_url ?? null}
+                      alt={product.name}
+                      label="Product image — 1000 × 1250 px"
+                      ratio="4 / 5"
+                      className="azhak-product-image"
+                    />
+                    <div className="azhak-product-info">
+                      <h3>{product.name}</h3>
+                      <PriceTag price={product.price} originalPrice={product.original_price} />
+                    </div>
+                  </Link>
+                  <button type="button" className="azhak-add-button" onClick={() => handleAddToBag(product)}>
+                    <ShoppingBag size={15} /> Add to bag
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="azhak-catalog-empty">New arrivals will appear here as they are added.</div>
+          )}
+        </section>
 
         <section className="azhak-products-section" aria-labelledby="azhak-catalog-title">
           <div className="azhak-section-heading">
@@ -218,7 +269,7 @@ export default function Azhak() {
                         />
                         <div className="azhak-product-info">
                           <h3>{entry.name}</h3>
-                          <span>BHD {Number(entry.price || 0).toFixed(3)}</span>
+                          <PriceTag price={entry.price} originalPrice={entry.product.original_price} />
                         </div>
                       </Link>
                     ) : (

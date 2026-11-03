@@ -1,0 +1,248 @@
+.admin-discounts {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 1rem 1rem 6rem;
+  color: var(--color-warm-white);
+}
+
+.admin-discounts h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-discounts-lead {
+  color: var(--color-crystal-silver);
+  margin-bottom: 1rem;
+}
+
+.admin-discounts-results {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.admin-discounts-result {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  text-align: left;
+  padding: 0.6rem;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-onyx-soft);
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-discounts-result.is-selected {
+  border-color: var(--color-magenta);
+  background: rgba(225, 10, 140, 0.12);
+}
+
+.admin-discounts-result img,
+.admin-discounts-selected img,
+.admin-discount-card-top img {
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.admin-discounts-thumb {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--color-line);
+}
+
+.admin-discounts-thumb.big {
+  width: 56px;
+  height: 56px;
+}
+
+.admin-discounts-form {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-magenta);
+  border-radius: 16px;
+  background: var(--color-onyx-soft);
+}
+
+.admin-discounts-selected {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.admin-discounts-current b {
+  color: var(--color-magenta);
+}
+
+.admin-discounts-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--color-crystal-silver);
+}
+
+.admin-discounts-form input {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-warm-white);
+  font: inherit;
+}
+
+.admin-discounts-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.admin-discounts-percent {
+  margin: -0.4rem 0 0;
+  color: var(--color-magenta);
+  font-weight: 700;
+}
+
+.admin-discounts-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-discounts-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: transparent;
+  color: var(--color-warm-white);
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-discounts-actions .admin-discounts-save {
+  background: var(--color-magenta);
+  border-color: var(--color-magenta);
+  color: #fff;
+  font-weight: 600;
+}
+
+.admin-discounts-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-discounts-actions .admin-discounts-remove {
+  color: #ff6b81;
+  border-color: rgba(255, 107, 129, 0.5);
+}
+
+.admin-discounts-error {
+  color: #ff6b81;
+}
+
+.admin-discounts-notice {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  background: rgba(60, 180, 100, 0.15);
+  color: #5fd08a;
+}
+
+.admin-discounts-heading {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.admin-discounts-empty {
+  color: var(--color-crystal-silver);
+}
+
+.admin-discounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.9rem;
+}
+
+.admin-discount-card {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  background: var(--color-onyx-soft);
+}
+
+.admin-discount-card.is-active {
+  border-color: var(--color-magenta);
+}
+
+.admin-discount-card.is-expired {
+  opacity: 0.65;
+}
+
+.admin-discount-card-top {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.admin-discount-card-top > div {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+}
+
+.admin-discount-badge {
+  align-self: flex-start;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--color-line);
+}
+
+.admin-discount-badge.is-active {
+  background: var(--color-magenta);
+  color: #fff;
+}
+
+.admin-discount-badge.is-scheduled {
+  background: rgba(240, 180, 40, 0.25);
+  color: #f0b428;
+}
+
+.admin-discount-prices {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.admin-discount-prices s {
+  color: var(--color-crystal-silver);
+}
+
+.admin-discount-prices b {
+  color: var(--color-magenta);
+  font-size: 1.15rem;
+}
+
+.admin-discount-time {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 520px) {
+  .admin-discounts-dates {
+    grid-template-columns: 1fr;
+  }
+}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import './LaunchButton.css'
 
 const API = import.meta.env.VITE_API_BASE_URL || '/api'
-const LOCK_MS = 20_000
+const LOCK_MS = 70_000
 
 type Phase = 'ready' | 'sending' | 'launched' | 'error'
 

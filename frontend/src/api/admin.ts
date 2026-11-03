@@ -68,6 +68,28 @@ export const searchZohoSyncProducts = (q: string) =>
 export const refreshProductFromZoho = (sku: string) =>
   adminApi.post<ZohoRefreshResult>('/admin/zoho-sync/refresh', { sku })
 
+export interface DiscountedProduct {
+  id: string
+  zoho_sku: string
+  name: string
+  price: number
+  image_url: string | null
+  stock_quantity: number | null
+  is_active: boolean
+  discount_price: number
+  discount_starts_at: string
+  discount_ends_at: string
+}
+export interface DiscountPayload {
+  discount_price: number
+  starts_at: string
+  ends_at: string
+}
+export const getDiscounts = () => adminApi.get<DiscountedProduct[]>('/admin/discounts')
+export const saveDiscount = (productId: string, payload: DiscountPayload) =>
+  adminApi.put<DiscountedProduct>(`/admin/discounts/${productId}`, payload)
+export const removeDiscount = (productId: string) => adminApi.delete<void>(`/admin/discounts/${productId}`)
+
 export const getReturns = (status: 'requested' | 'completed' = 'requested') =>
   adminApi.get<ReturnOrder[]>(`/admin/returns?status=${status}`)
 export const completeReturn = (orderId: string) => adminApi.put<OrderDetail>(`/admin/returns/${orderId}/complete`, {})

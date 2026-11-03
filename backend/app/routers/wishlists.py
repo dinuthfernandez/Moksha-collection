@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from ..database import get_supabase
 from ..deps import get_current_customer
 from ..schemas import WishlistItemIn, WishlistItemOut
+from ..services.discounts import effective_price
 from ..services.variant_labels import display_size
 
 router = APIRouter(prefix="/wishlist", tags=["wishlist"])
@@ -24,7 +25,7 @@ def list_wishlist(customer: dict = Depends(get_current_customer)):
     if product_ids:
         products = (
             supabase.table("products")
-            .select("id,slug,size,kids_size,color,price,image_url,stock_quantity")
+            .select("*")
             .in_("id", product_ids)
             .execute()
             .data
@@ -41,7 +42,7 @@ def list_wishlist(customer: dict = Depends(get_current_customer)):
                 "color": product.get("color"),
                 "stock_quantity": product.get("stock_quantity"),
                 "product_slug": product.get("slug") or row.get("product_slug"),
-                "price": product.get("price") if product.get("price") is not None else row.get("price"),
+                "price": effective_price(product) if product.get("price") is not None else row.get("price"),
                 "image_url": product.get("image_url") or row.get("image_url"),
             }
         enriched.append(row)

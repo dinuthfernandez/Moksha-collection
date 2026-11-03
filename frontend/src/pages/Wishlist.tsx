@@ -22,7 +22,7 @@ export default function Wishlist() {
       color: item.color ?? undefined,
       quantity: 1,
     })
-    setCartMessage(reserved ? `${withVariant(item.product_name, item)} reserved in your cart for 24 hours.` : 'Could not reserve stock. Please try again.')
+    setCartMessage(reserved ? `${withVariant(item.product_name, item)} reserved in your cart for 4 hours.` : 'Could not reserve stock. Please try again.')
   }
 
   return (
