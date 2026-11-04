@@ -57,6 +57,7 @@ class ProductOut(BaseModel):
     is_new_arrival: bool = False
     is_on_sale: bool = False
     is_under_5bhd: bool = False
+    is_clearance: bool = False
     stock_quantity: int = 0
     image_url: Optional[str] = None
     zoho_sku: Optional[str] = None

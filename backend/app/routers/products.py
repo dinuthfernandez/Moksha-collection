@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timezone
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -112,6 +113,8 @@ def list_products(
     q: Optional[str] = Query(default=None, max_length=120),
     min_price: Optional[float] = Query(default=None, ge=0),
     max_price: Optional[float] = Query(default=None, ge=0),
+    clearance: bool = Query(default=False),
+    discounted: bool = Query(default=False),
 ):
     if min_price is not None and max_price is not None and min_price > max_price:
         raise HTTPException(status_code=422, detail="Minimum price cannot exceed maximum price")
@@ -141,6 +144,14 @@ def list_products(
                     f"subcategory_name.ilike.%{token}%,category_slug.ilike.%{token}%,"
                     f"product_code.ilike.%{token}%,zoho_sku.ilike.%{token}%"
                 )
+        if clearance:
+            query = query.eq("is_clearance", True)
+        if discounted:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            query = (
+                query.not_.is_("discount_price", "null")
+                .lte("discount_starts_at", now_iso).gt("discount_ends_at", now_iso)
+            )
         if min_price is not None:
             query = query.gte("price", min_price)
         if max_price is not None:
@@ -170,7 +181,7 @@ def list_products(
         total_pages = max((total + page_size - 1) // page_size, 1)
         return ProductListOut(items=items, total=total, page=page, page_size=page_size, total_pages=total_pages)
 
-    cache_key = f"products:{category}:{category_slug}:{active_only}:{page}:{page_size}:{q}:{min_price}:{max_price}"
+    cache_key = f"products:{category}:{category_slug}:{active_only}:{page}:{page_size}:{q}:    {min_price}:{max_price}:{clearance}:{discounted}"
     return _with_discounts(cached(cache_key, 60, load))
 
 

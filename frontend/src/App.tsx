@@ -17,12 +17,11 @@ import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute'
 import MaintenanceGate from './components/layout/MaintenanceGate'
 const SuperAdmin = lazy(() => import('./pages/SuperAdmin'))
 import BackButton from './components/ui/BackButton'
-import Home from './pages/Home'
+import HomeModern from './pages/HomeModern'
 const Launch = lazy(() => import('./pages/Launch'))
 const LaunchButton = lazy(() => import('./pages/LaunchButton'))
 const Categories = lazy(() => import('./pages/Categories'))
-const CategoryLanding = lazy(() => import('./pages/CategoryLanding'))
-const Azhak = lazy(() => import('./pages/Azhak'))
+const ClothingModern = lazy(() => import('./pages/ClothingModern'))
 const CategoryDetail = lazy(() => import('./pages/CategoryDetail'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const SizeCharts = lazy(() => import('./pages/SizeCharts'))
@@ -53,6 +52,7 @@ const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'))
 const AdminZohoSync = lazy(() => import('./pages/admin/AdminZohoSync'))
 const AdminDiscounts = lazy(() => import('./pages/admin/AdminDiscounts'))
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'))
+const AdminBanners = lazy(() => import('./pages/admin/AdminBanners'))
 
 function AppShell() {
   const { isLoading: authLoading } = useAuth()
@@ -109,26 +109,20 @@ function AppShell() {
             <Route path="zoho-sync" element={<AdminZohoSync />} />
             <Route path="discounts" element={<AdminDiscounts />} />
             <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="banners" element={<AdminBanners />} />
           </Route>
         </Route>
 
         <Route element={<Layout />}>
-          <Route index element={<Home />} />
+          <Route index element={<HomeModern />} />
           <Route path="search" element={<SearchResults />} />
           <Route path="categories" element={<Categories />} />
-          <Route
-            path="clothing"
-            element={
-              <CategoryLanding
-                type="clothing"
-              />
-            }
-          />
+          <Route path="clothing" element={<ClothingModern />} />
           <Route path="clothing/:slug" element={<CategoryDetail />} />
-          <Route path="saree" element={<CategoryLanding type="saree" />} />
+          <Route path="saree" element={<ClothingModern type="saree" />} />
           <Route path="saree/:slug" element={<CategoryDetail />} />
           <Route path="product/:slug" element={<ProductDetail />} />
-          <Route path="accessories" element={<Azhak />} />
+          <Route path="accessories" element={<ClothingModern type="accessories" />} />
           <Route path="accessories/:slug" element={<CategoryDetail />} />
           <Route path="size-charts" element={<SizeCharts />} />
           <Route path="about-us" element={<AboutUs />} />

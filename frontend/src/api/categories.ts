@@ -26,11 +26,15 @@ export function getProducts(
   pageSize = 24,
   query?: string,
   categorySlug?: string,
+  filters?: { maxPrice?: number; clearance?: boolean; discounted?: boolean },
 ) {
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
   if (category) params.set('category', category)
   if (query) params.set('q', query)
   if (categorySlug) params.set('category_slug', categorySlug)
+  if (filters?.maxPrice !== undefined) params.set('max_price', String(filters.maxPrice))
+  if (filters?.clearance) params.set('clearance', 'true')
+  if (filters?.discounted) params.set('discounted', 'true')
   return cachedGet<PaginatedProducts>(`/products?${params.toString()}`)
 }
 

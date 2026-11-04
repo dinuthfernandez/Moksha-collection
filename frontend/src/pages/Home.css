@@ -461,7 +461,7 @@
   }
 
   .mh-category-copy {
-    inset: auto 11px 12px;
+    padding: 14px 10px 16px;
   }
 
   .mh-category-copy strong {

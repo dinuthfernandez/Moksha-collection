@@ -8,14 +8,14 @@ import WebsiteVisitTracker from '../analytics/WebsiteVisitTracker'
 // Universal shell used by every route — header/footer are never hardcoded per-page.
 export default function Layout() {
   const { pathname } = useLocation()
-  const isAccessoriesCatalog = pathname === '/accessories'
+  const isHome = pathname === '/'
 
   return (
     <>
       <WebsiteVisitTracker />
       <Header />
-      <main className={`page${pathname === '/' ? ' home-page' : ''}${isAccessoriesCatalog ? ' accessories-page-shell' : ''}`}>
-        {pathname !== '/' && !isAccessoriesCatalog && <BackButton fallbackTo="/" fixedBelowHeader />}
+      <main className={`page${isHome ? ' home-page' : ''}`}>
+        {!isHome && <BackButton fallbackTo="/" fixedBelowHeader />}
         <Outlet />
       </main>
       <Footer />

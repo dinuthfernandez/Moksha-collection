@@ -104,7 +104,8 @@ export default function Header() {
           </button>
 
           <Link to="/" className="site-logo" onClick={() => setMenuOpen(false)}>
-            <img src="/assets/logo/logo.png" alt="Moksha Collections" />
+            <img src="/assets/logo/logo-light.svg" alt="Moksha Collections" className="logo-light" />
+            <img src="/assets/logo/logo-dark.svg" alt="" aria-hidden="true" className="logo-dark" />
           </Link>
 
           <nav className="site-nav" aria-label="Primary">

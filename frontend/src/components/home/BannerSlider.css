@@ -1,0 +1,65 @@
+.home-banner {
+  width: 100%;
+  padding: clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 3vw, 2rem);
+}
+
+.home-banner-frame {
+  position: relative;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  max-height: 80vh;
+  border-radius: clamp(12px, 2vw, 24px);
+  overflow: hidden;
+  background: var(--color-onyx-soft, #15131a);
+  border: 1px solid var(--color-line);
+}
+
+.home-banner-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  user-select: none;
+}
+
+.home-banner-slide.is-active {
+  opacity: 1;
+}
+
+.home-banner-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.home-banner-dots button {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: width 0.25s ease, background 0.25s ease;
+}
+
+.home-banner-dots button.is-active {
+  width: 24px;
+  background: var(--color-magenta);
+}
+
+/* Phones: a 4:3 frame crops the sides of a 16:9 image, so keep key content centred. */
+@media (max-width: 640px) {
+  .home-banner-frame {
+    aspect-ratio: 4 / 3;
+  }
+}

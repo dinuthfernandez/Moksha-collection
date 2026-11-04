@@ -15,7 +15,7 @@ _MIN_DIMENSION = 400
 _MIN_QUALITY = 40
 
 
-def compress_image(data: bytes, max_bytes: int = MAX_IMAGE_BYTES) -> bytes:
+def compress_image(data: bytes, max_bytes: int = MAX_IMAGE_BYTES, max_dimension: int = _MAX_DIMENSION) -> bytes:
     """Returns JPEG bytes no larger than `max_bytes` by lowering quality, then dimensions."""
     image = ImageOps.exif_transpose(Image.open(io.BytesIO(data)))
     if image.mode in ("RGBA", "LA", "P"):
@@ -26,8 +26,8 @@ def compress_image(data: bytes, max_bytes: int = MAX_IMAGE_BYTES) -> bytes:
     else:
         image = image.convert("RGB")
 
-    if max(image.size) > _MAX_DIMENSION:
-        image.thumbnail((_MAX_DIMENSION, _MAX_DIMENSION), Image.LANCZOS)
+    if max(image.size) > max_dimension:
+        image.thumbnail((max_dimension, max_dimension), Image.LANCZOS)
 
     best = b""
     while True:

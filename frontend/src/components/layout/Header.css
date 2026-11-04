@@ -20,17 +20,18 @@
   align-items: center;
   justify-content: center;
   margin-right: auto;
-  background-color: #000000;
-  border-radius: 12px;
-  padding: 8px 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .site-logo img {
-  height: 46px;
+  height: 52px;
   width: auto;
   object-fit: contain;
 }
+
+/* Black "collection" text on light theme, white on dark theme. */
+.site-logo .logo-dark { display: none; }
+[data-theme='dark'] .site-logo .logo-light { display: none; }
+[data-theme='dark'] .site-logo .logo-dark { display: block; }
 
 .site-nav {
   display: none;
@@ -391,7 +392,7 @@
     gap: 10px;
   }
   .site-logo img {
-    height: 36px;
+    height: 40px;
   }
   .site-header-actions {
     gap: 8px;

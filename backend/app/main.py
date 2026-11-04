@@ -18,6 +18,7 @@ from .routers import (
     analytics,
     announcements,
     auth,
+    banners,
     cart,
     categories,
     contact,
@@ -138,6 +139,8 @@ app.include_router(rider.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(admin_auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(banners.public_router, prefix="/api")
+app.include_router(banners.admin_router, prefix="/api")
 app.include_router(superadmin.router, prefix="/api")
 
 
