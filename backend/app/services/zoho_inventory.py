@@ -546,13 +546,9 @@ def _truthy_flag(value: str | None) -> bool | None:
     return str(value).strip().casefold() in {"true", "1", "yes", "y", "checked"}
 
 
-def _extract_online_flag(item: dict[str, Any]) -> bool | None:
-    """The Zoho "Online" checkbox. None means the field isn't on the item at all."""
-    for api_name, label in (("cf_online", "Online"), ("cf_show_in_online", "Show in Online"), ("cf_show_online", "Show Online")):
-        flag = _truthy_flag(_extract_custom_field(item, api_name, label))
-        if flag is not None:
-            return flag
-    return None
+def _extract_online_flag(item: dict[str, Any]) -> bool:
+    """The custom "Show in website" checkbox (cf_show_in_website). Zoho omits unticked checkboxes, so missing = False."""
+    return bool(_truthy_flag(_extract_custom_field(item, "cf_show_in_website", "Show in website")))
 
 
 def _extract_clearance(item: dict[str, Any]) -> bool:
@@ -564,13 +560,8 @@ def _extract_clearance(item: dict[str, Any]) -> bool:
 
 
 def _is_online_store_enabled(item: dict[str, Any]) -> bool:
-    # Zoho's native `show_in_storefront` flag is effectively unset for every item, so it is not used.
-    # An item is shown when it is active AND its custom "Online" checkbox is ticked. Items that don't
-    # carry the checkbox at all (field not created yet) fall back to active-only.
-    if item.get("status") != "active":
-        return False
-    flag = _extract_online_flag(item)
-    return True if flag is None else flag
+    # Shown on the website only when the item is active AND its "Show in website" box is ticked.
+    return item.get("status") == "active" and _extract_online_flag(item)
 
 
 def _extract_brand(item: dict[str, Any]) -> str | None:
