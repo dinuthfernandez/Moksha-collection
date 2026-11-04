@@ -540,13 +540,37 @@ def _extract_item_id(item: dict[str, Any]) -> str | None:
     return None
 
 
+def _truthy_flag(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    return str(value).strip().casefold() in {"true", "1", "yes", "y", "checked"}
+
+
+def _extract_online_flag(item: dict[str, Any]) -> bool | None:
+    """The Zoho "Online" checkbox. None means the field isn't on the item at all."""
+    for api_name, label in (("cf_online", "Online"), ("cf_show_in_online", "Show in Online"), ("cf_show_online", "Show Online")):
+        flag = _truthy_flag(_extract_custom_field(item, api_name, label))
+        if flag is not None:
+            return flag
+    return None
+
+
+def _extract_clearance(item: dict[str, Any]) -> bool:
+    for api_name, label in (("cf_clearance_sale", "Clearance Sale"), ("cf_clearance", "Clearance")):
+        flag = _truthy_flag(_extract_custom_field(item, api_name, label))
+        if flag is not None:
+            return flag
+    return False
+
+
 def _is_online_store_enabled(item: dict[str, Any]) -> bool:
-    # Zoho's native `show_in_storefront` flag belongs to Zoho's own storefront/
-    # commerce module (not our custom site) and is effectively unset for almost
-    # every item here, even after items were marked "Show in Online Store" in
-    # our workflow. Our storefront instead treats any non-archived Zoho item
-    # (status == "active") as eligible to sync/display.
-    return item.get("status") == "active"
+    # Zoho's native `show_in_storefront` flag is effectively unset for every item, so it is not used.
+    # An item is shown when it is active AND its custom "Online" checkbox is ticked. Items that don't
+    # carry the checkbox at all (field not created yet) fall back to active-only.
+    if item.get("status") != "active":
+        return False
+    flag = _extract_online_flag(item)
+    return True if flag is None else flag
 
 
 def _extract_brand(item: dict[str, Any]) -> str | None:
@@ -1020,6 +1044,7 @@ def _light_record(item: dict[str, Any]) -> dict[str, Any]:
         "description": _extract_description(item),
         "zoho_sku": _extract_sku(item),
         "stock_quantity": _extract_stock(item),
+        "is_clearance": _extract_clearance(item),
     }
 
 
@@ -1111,6 +1136,8 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
     )
 
     existing_rows = _load_products(supabase)
+    # Until SQL 025 adds the column, clearance is skipped so the sync keeps working.
+    has_clearance_column = any("is_clearance" in row for row in existing_rows)
     existing_map = {row.get("zoho_item_id"): row for row in existing_rows if row.get("zoho_item_id")}
     used_slugs = {row.get("slug") for row in existing_rows if row.get("slug")}
 
@@ -1169,6 +1196,8 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
         if row is not None and light:
             record = {**_light_record(item), **_category_fields(item, subcategories_seen)}
             record.pop("description", None)
+            if not has_clearance_column:
+                record.pop("is_clearance", None)
             if not row.get("is_active"):
                 record["is_active"] = True
             changed = _changed_fields(row, record)
@@ -1191,6 +1220,8 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
 
         image = _resolve_product_image(client, item, item_id, row)
         record = _full_record(item, item_id, slug, image, subcategories_seen)
+        if not has_clearance_column:
+            record.pop("is_clearance", None)
         if row is None:
             new_records.append(record)
         else:
@@ -1225,14 +1256,23 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
         deleted_item_ids = []
 
     # Safety net: a partial/odd Zoho response must never wipe out the catalogue.
-    removal_count = len(disabled_item_ids) + len(deleted_item_ids)
+    # Items explicitly unticked in Zoho are an intentional change, so they don't count toward the safety net.
+    unticked_ids = {
+        zoho_item_id
+        for zoho_item_id in disabled_item_ids
+        if any(
+            _extract_item_id(i) == zoho_item_id and i.get("status") == "active" and _extract_online_flag(i) is False
+            for i in items
+        )
+    }
+    removal_count = len(disabled_item_ids) - len(unticked_ids) + len(deleted_item_ids)
     if existing_map and removal_count > 20 and removal_count > len(existing_map) * 0.3:
         logger.warning(
             "Zoho sync skipped deactivating/deleting %s of %s products (suspicious response)",
             removal_count,
             len(existing_map),
         )
-        disabled_item_ids = []
+        disabled_item_ids = [i for i in disabled_item_ids if i in unticked_ids]
         deleted_item_ids = []
 
     for start in range(0, len(disabled_item_ids), 100):
@@ -1305,6 +1345,8 @@ def refresh_product_from_zoho(sku: str) -> dict[str, Any]:
         image_refreshed = True
 
     record = _full_record(item, item_id, row["slug"], image, {})
+    if "is_clearance" not in row:
+        record.pop("is_clearance", None)
     record["is_active"] = _is_online_store_enabled(item)
 
     old_serial = row.get("website_serial")
