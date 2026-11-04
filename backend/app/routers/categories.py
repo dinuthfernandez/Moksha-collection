@@ -18,9 +18,34 @@ def list_categories(type: Optional[Literal["clothing", "accessories", "saree"]] 
         query = supabase.table("categories").select("*").eq("is_active", True)
         if type:
             query = query.eq("type", type)
-        return query.order("display_order").execute().data
+        rows = query.order("display_order").execute().data or []
+        if type == "saree":
+            live = _saree_slugs_with_products(supabase)
+            rows = [row for row in rows if row["slug"] in live]
+        return rows
 
     return cached(f"categories:{type}", 300, load)
+
+
+def _saree_slugs_with_products(supabase) -> set[str]:
+    """Saree sub-categories are only listed while at least one live product sits under them."""
+    slugs: set[str] = set()
+    offset = 0
+    while True:
+        batch = (
+            supabase.table("products")
+            .select("subcategory_slug")
+            .eq("is_active", True)
+            .eq("category_slug", "saree")
+            .range(offset, offset + 999)
+            .execute()
+            .data
+            or []
+        )
+        slugs.update(row["subcategory_slug"] for row in batch if row.get("subcategory_slug"))
+        if len(batch) < 1000:
+            return slugs
+        offset += 1000
 
 
 @router.get("/{slug}", response_model=CategoryOut)

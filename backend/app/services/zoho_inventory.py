@@ -775,7 +775,30 @@ ALLOWED_SUBCATEGORIES: dict[str, dict[str, str]] = {
         "pant": "Pant",
         "skirt-top": "Skirt & Top",
     },
-    "saree": {"saree": "Saree", "set-saree": "Set Saree"},
+    "saree": {
+        "saree": "Saree",
+        "set-saree": "Set Saree",
+        **{
+            _slug: _name
+            for _slug, _name in (
+                ("traditional-heritage-silk-sarees", "Traditional & Heritage Silk Sarees"),
+                ("banarasi", "Banarasi"), ("kanjeevaram", "Kanjeevaram"), ("chanderi", "Chanderi"),
+                ("patola", "Patola"), ("paithani", "Paithani"), ("tant", "Tant"),
+                ("chanderi-cotton", "Chanderi Cotton"), ("mulmul", "Mulmul"), ("sambalpuri", "Sambalpuri"),
+                ("bandhani", "Bandhani"), ("kalamkari", "Kalamkari"), ("ajrakh", "Ajrakh"), ("batik", "Batik"),
+                ("leheriya", "Leheriya"), ("chikankari", "Chikankari"), ("kantha", "Kantha"),
+                ("phulkari", "Phulkari"), ("gota-patti", "Gota Patti"), ("kasavu", "Kasavu"),
+                ("tissue", "Tissue"), ("semi-silk", "Semi Silk"), ("georgette", "Georgette"),
+                ("organza", "Organza"), ("net", "Net"), ("party-wear", "Party Wear"),
+                ("xmas-special", "Xmas Special"), ("banarasi-sarees", "Banarasi Sarees"),
+                ("tissue-silk", "Tissue Silk"), ("modal-n-semi-modal", "Modal N Semi Modal"),
+                ("semi-katan", "Semi Katan"), ("wedding-collection", "Wedding Collection"),
+                ("mirror-saree", "Mirror Saree"), ("kanchi-cotton", "Kanchi Cotton"),
+                ("kalyani-cotton", "Kalyani Cotton"), ("mul-cotton", "Mul Cotton"),
+                ("999-below-saress-offer", "999 Below Sarees Offer"),
+            )
+        },
+    },
     "accessories": {
         "bindi": "Bindi",
         "earrings": "Earrings",
@@ -842,6 +865,11 @@ _CATEGORY_IMAGES: dict[str, str] = {
     "others": "/assets/category-tiles/others.jpeg",
     "accessories-others": "/assets/category-tiles/accessories-others.jpg",
     "saree-others": "/assets/category-tiles/saree-others.jpg",
+    **{
+        slug: "/assets/category-tiles/all-sarees.jpeg"
+        for slug in ALLOWED_SUBCATEGORIES["saree"]
+        if slug not in ("saree", "set-saree")
+    },
 }
 _CATEGORY_DISPLAY_ORDER = (
     ("clothing", "kurti"),
@@ -881,6 +909,7 @@ _CATEGORY_DISPLAY_ORDER = (
     ("accessories", "nettichutti"),
     ("accessories", "sticker"),
     ("accessories", "saree-pin"),
+    *(("saree", slug) for slug in ALLOWED_SUBCATEGORIES["saree"] if slug not in ("saree", "set-saree")),
     ("clothing", "others"),
     ("saree", "saree-others"),
     ("accessories", "accessories-others"),
