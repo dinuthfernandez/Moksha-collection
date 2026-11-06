@@ -455,6 +455,14 @@
   }
 }
 
+@media (min-width: 1200px) {
+  .azhak-category-grid,
+  .azhak-product-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 30px 18px;
+  }
+}
+
 @media (max-width: 760px) {
   .azhak-catalog {
     padding-top: 2px;

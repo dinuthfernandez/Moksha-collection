@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Sparkles, Tag, Timer } from 'lucide-react'
-import { getProducts } from '../api/categories'
 import Confetti from '../components/ui/Confetti'
-import PlaceholderImage from '../components/ui/PlaceholderImage'
 import BannerSlider from '../components/home/BannerSlider'
 import './Home.css'
 import './HomeModern.css'
@@ -13,8 +11,8 @@ type Offer = 'under5' | 'clearance' | 'discounts'
 
 const SHELVES: { type: Shelf; label: string }[] = [
   { type: 'clothing', label: 'Clothing' },
-  { type: 'accessories', label: 'Accessories' },
   { type: 'saree', label: 'Saree' },
+  { type: 'accessories', label: 'Accessories' },
 ]
 
 const OFFERS: {
@@ -24,8 +22,7 @@ const OFFERS: {
   title: string
   intro: string
   icon: typeof Tag
-  filters: { maxPrice?: number; clearance?: boolean; discounted?: boolean }
-  copy: Record<Shelf, { headline: string; text: string }>
+  image: string
 }[] = [
   {
     id: 'under5',
@@ -34,12 +31,7 @@ const OFFERS: {
     title: 'Under 5 BHD',
     intro: 'Easy, wearable finds that fit any budget.',
     icon: Tag,
-    filters: { maxPrice: 5 },
-    copy: {
-      clothing: { headline: 'Everyday basics', text: 'Tops, kurtis and layers that look far pricier than they are.' },
-      accessories: { headline: 'Tiny treasures', text: 'Bangles, earrings and sparkle to stack, mix and gift.' },
-      saree: { headline: 'Effortless drapes', text: 'Light, easy-to-style sarees at pocket-friendly prices.' },
-    },
+    image: '/assets/home/offers/under5bhd.jpg',
   },
   {
     id: 'clearance',
@@ -48,12 +40,7 @@ const OFFERS: {
     title: 'Clearance Sale',
     intro: 'Last pieces, marked down for good. Once they are gone, they are gone.',
     icon: Timer,
-    filters: { clearance: true },
-    copy: {
-      clothing: { headline: 'Last-chance looks', text: 'End-of-line pieces at our lowest prices of the season.' },
-      accessories: { headline: 'Final-sale shine', text: 'The last of our favourite jewellery, ready for a new home.' },
-      saree: { headline: 'Last of the drapes', text: 'Rare sarees in limited quantities, now at final prices.' },
-    },
+    image: '/assets/home/offers/clearancesale.jpg',
   },
   {
     id: 'discounts',
@@ -62,35 +49,11 @@ const OFFERS: {
     title: 'Discounts',
     intro: 'Special offers running right now. See the saving on every piece.',
     icon: Sparkles,
-    filters: { discounted: true },
-    copy: {
-      clothing: { headline: 'Seasonal offers', text: 'Handpicked clothing with a live discount, while the offer lasts.' },
-      accessories: { headline: 'Sparkle for less', text: 'Select accessories at special prices for a limited time.' },
-      saree: { headline: 'Festive savings', text: 'Beautiful sarees now at a reduced price, only for a short while.' },
-    },
+    image: '/assets/home/offers/discount.jpg',
   },
 ]
 
-function useCounts() {
-  const [counts, setCounts] = useState<Record<string, number | null>>({})
-
-  useEffect(() => {
-    let mounted = true
-    OFFERS.forEach((offer) =>
-      SHELVES.forEach(({ type }) => {
-        getProducts(type, 1, 1, undefined, undefined, offer.filters)
-          .then((data) => mounted && setCounts((prev) => ({ ...prev, [`${offer.id}:${type}`]: data.total })))
-          .catch(() => mounted && setCounts((prev) => ({ ...prev, [`${offer.id}:${type}`]: null })))
-      }),
-    )
-    return () => { mounted = false }
-  }, [])
-
-  return counts
-}
-
 export default function HomeModern() {
-  const counts = useCounts()
   const location = useLocation()
   const navigate = useNavigate()
   const [celebrating, setCelebrating] = useState(
@@ -167,32 +130,12 @@ export default function HomeModern() {
               <p>{offer.intro}</p>
             </div>
             <div className="hm-offer-grid">
-              {SHELVES.map(({ type, label }) => {
-                const count = counts[`${offer.id}:${type}`]
-                const copy = offer.copy[type]
-                return (
-                  <Link key={type} className="hm-card" to={`/${type}#${offer.anchor}`}>
-                    <div className="hm-card-media">
-                      <PlaceholderImage
-                        src={`/assets/home/offers/${offer.id}-${type}.jpg`}
-                        alt={`${offer.title} — ${label}`}
-                        ratio="4 / 3"
-                        className="hm-card-image"
-                      />
-                      <span className="hm-card-badge">{offer.title}</span>
-                      {typeof count === 'number' && count > 0 && <span className="hm-card-count">{count} pieces</span>}
-                    </div>
-                    <div className="hm-card-body">
-                      <span className="hm-card-shelf">{label}</span>
-                      <strong>{copy.headline}</strong>
-                      <p>{copy.text}</p>
-                      <span className="hm-card-cta">
-                        {count === 0 ? 'Coming soon' : `Shop ${label.toLowerCase()}`} <ArrowRight size={15} />
-                      </span>
-                    </div>
-                  </Link>
-                )
-              })}
+              {SHELVES.map(({ type, label }) => (
+                <Link key={type} className="hm-card" to={`/${type}#${offer.anchor}`} aria-label={`${offer.title}: ${label}`}>
+                  <img className="hm-card-image" src={offer.image} alt="" loading="lazy" decoding="async" />
+                  <span className="hm-card-label" aria-hidden="true">{label}</span>
+                </Link>
+              ))}
             </div>
           </section>
         )

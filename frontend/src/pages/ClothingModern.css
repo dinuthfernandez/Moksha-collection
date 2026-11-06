@@ -108,12 +108,13 @@
 
 .modern-hero-badge.saree {
   width: min(240px, 56vw);
-  height: 130px;
+  aspect-ratio: 1152 / 928;
 }
 
-.modern-hero-badge.saree .mc-mark {
-  font-size: clamp(4rem, 14vw, 6rem);
-  line-height: 1;
+.modern-hero-badge.saree img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .modern-hero-badge.accessories {

@@ -20,7 +20,6 @@ import BackButton from './components/ui/BackButton'
 import HomeModern from './pages/HomeModern'
 const Launch = lazy(() => import('./pages/Launch'))
 const LaunchButton = lazy(() => import('./pages/LaunchButton'))
-const Categories = lazy(() => import('./pages/Categories'))
 const ClothingModern = lazy(() => import('./pages/ClothingModern'))
 const CategoryDetail = lazy(() => import('./pages/CategoryDetail'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
@@ -116,7 +115,6 @@ function AppShell() {
         <Route element={<Layout />}>
           <Route index element={<HomeModern />} />
           <Route path="search" element={<SearchResults />} />
-          <Route path="categories" element={<Categories />} />
           <Route path="clothing" element={<ClothingModern />} />
           <Route path="clothing/:slug" element={<CategoryDetail />} />
           <Route path="saree" element={<ClothingModern type="saree" />} />

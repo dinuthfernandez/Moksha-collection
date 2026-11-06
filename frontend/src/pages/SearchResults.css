@@ -120,7 +120,7 @@
 
 .search-product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -287,6 +287,18 @@
 
   .search-product-body h2 {
     font-size: 0.88rem;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1199px) {
+  .search-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 761px) and (max-width: 920px) {
+  .search-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

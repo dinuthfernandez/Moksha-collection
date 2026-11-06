@@ -12,8 +12,6 @@ import './Header.css'
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
   { label: 'Clothing', to: '/clothing' },
-  { label: 'Saree', to: '/saree' },
-  { label: 'Categories', to: '/categories' },
 ]
 
 const MORE_LINKS = [
@@ -109,7 +107,7 @@ export default function Header() {
           </Link>
 
           <nav className="site-nav" aria-label="Primary">
-            {NAV_LINKS.slice(0, 2).map((link) => (
+            {NAV_LINKS.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -122,7 +120,7 @@ export default function Header() {
               to="/saree"
               className={({ isActive }) => 'site-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
             >
-              <span className="azhak-nav-badge saree-nav-badge"><span className="mc-mark">mc</span></span>
+              <span className="azhak-nav-badge saree-nav-badge"><img src="/assets/logo/saree.jpg" alt="" aria-hidden="true" /></span>
               Saree
             </NavLink>
             <NavLink
@@ -134,15 +132,6 @@ export default function Header() {
               </span>
               Accessories
             </NavLink>
-            {NAV_LINKS.slice(3).map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) => 'site-nav-link' + (isActive ? ' is-active' : '')}
-              >
-                {link.label}
-              </NavLink>
-            ))}
             <div className="site-nav-more" ref={moreRef}>
               <button
                 type="button"
@@ -223,7 +212,7 @@ export default function Header() {
         </div>
 
         <div className={`mobile-nav ${menuOpen ? 'is-open' : ''}`}>
-          {NAV_LINKS.slice(0, 2).map((link) => (
+          {NAV_LINKS.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -238,7 +227,7 @@ export default function Header() {
             className={({ isActive }) => 'mobile-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
             onClick={() => setMenuOpen(false)}
           >
-            <span className="azhak-nav-badge saree-nav-badge"><span className="mc-mark">mc</span></span>
+            <span className="azhak-nav-badge saree-nav-badge"><img src="/assets/logo/saree.jpg" alt="" aria-hidden="true" /></span>
             Saree
           </NavLink>
           <NavLink
@@ -251,16 +240,6 @@ export default function Header() {
             </span>
             Accessories
           </NavLink>
-          {NAV_LINKS.slice(3).map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) => 'mobile-nav-link' + (isActive ? ' is-active' : '')}
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-            </NavLink>
-          ))}
           <span className="mobile-nav-heading">More</span>
           {MORE_LINKS.map((link) => (
             <NavLink

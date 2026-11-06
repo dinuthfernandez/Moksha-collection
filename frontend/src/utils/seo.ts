@@ -22,10 +22,6 @@ const PAGES: Record<string, { title: string; description: string }> = {
     title: 'Indian Accessories in Bahrain - Bangles, Earrings, Necklaces | Moksha Collections',
     description: 'Indian fashion accessories in Bahrain: bangles, earrings, studs, necklaces and bracelets.',
   },
-  '/categories': {
-    title: 'Shop by Category - Indian Clothing, Sarees & Accessories | Moksha Collections Bahrain',
-    description: 'Browse every Moksha Collections category: clothing, sarees and accessories in Bahrain.',
-  },
   '/size-charts': {
     title: 'Size Charts - Find Your Fit | Moksha Collections Bahrain',
     description: 'Size charts for kurtis, tops, frocks, kids wear and more at Moksha Collections, Bahrain.',

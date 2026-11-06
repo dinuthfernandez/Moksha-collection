@@ -112,7 +112,7 @@ function LogoHero({ type }: { type: 'accessories' | 'saree' }) {
         <span className="modern-hero-eyebrow">{c.eyebrow}</span>
         <div className={`modern-hero-badge ${type}`}>
           {type === 'saree' ? (
-            <span className="mc-mark" aria-label="Moksha Collections saree">mc</span>
+            <img src="/assets/logo/saree.jpg" alt="Pallu & Pleats" />
           ) : (
             <img src="/assets/logo/azhak-logo.png" alt="Azhak by Moksha Collections" />
           )}

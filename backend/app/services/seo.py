@@ -64,11 +64,6 @@ STATIC_PAGES: dict[str, dict[str, str]] = {
         "bracelets. Shop online from Moksha Collections, Manama.",
         "h1": "Indian Accessories in Bahrain",
     },
-    "/categories": {
-        "title": "Shop by Category - Indian Clothing, Sarees & Accessories | Moksha Collections Bahrain",
-        "desc": "Browse every Moksha Collections category: clothing, sarees and accessories for women and kids in Bahrain.",
-        "h1": "Shop by Category",
-    },
     "/size-charts": {
         "title": "Size Charts - Find Your Fit | Moksha Collections Bahrain",
         "desc": "Size charts for kurtis, tops, frocks, kids wear and more at Moksha Collections, Bahrain.",
@@ -245,7 +240,7 @@ def _breadcrumb(items: list[tuple[str, str]]) -> dict[str, Any]:
 
 def _nav_links_html() -> str:
     links = [("Home", "/"), ("Clothing", "/clothing"), ("Saree", "/saree"), ("Accessories", "/accessories"),
-             ("Shop by Category", "/categories"), ("Size Charts", "/size-charts"), ("About Us", "/about-us"),
+             ("Size Charts", "/size-charts"), ("About Us", "/about-us"),
              ("Contact Us", "/contact-us"), ("Policies", "/policies")]
     return "<nav aria-label='Main'><ul>" + "".join(
         f"<li><a href='{escape(p)}'>{escape(n)}</a></li>" for n, p in links
@@ -296,9 +291,6 @@ def resolve(path: str) -> dict[str, Any]:
                 "@context": "https://schema.org", "@type": "CollectionPage", "name": meta["h1"],
                 "url": _abs(path), "isPartOf": {"@id": f"{base_url()}/#website"},
             })
-        elif path == "/categories":
-            for t in ROOT_TYPES:
-                body += f"<h2>{TYPE_LABEL[t]}</h2>" + _category_links_html(t)
         elif path == "/contact-us":
             body += ("<p>Shop No 55, Building 106, Sugaya Avenue, Saqiyyaah 0328, Manama, Kingdom of Bahrain. "
                      f"Phone/WhatsApp {PHONE}. Email {EMAIL}.</p>")
