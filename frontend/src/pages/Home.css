@@ -321,7 +321,8 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
   align-items: center;
   gap: 8%;
-  padding-block: 100px;
+  padding-block: 24px;
+  scroll-margin-top: calc(var(--header-height) + var(--announcement-height));
 }
 
 .mh-story-copy {
@@ -336,7 +337,7 @@
 }
 
 .mh-story-image {
-  aspect-ratio: 5 / 4;
+  height: clamp(220px, 30vw, 340px);
   overflow: hidden;
   background: var(--color-onyx-soft);
 }
@@ -484,12 +485,13 @@
 
   .mh-story {
     grid-template-columns: 1fr;
-    gap: 25px;
-    padding-block: 65px;
+    gap: 20px;
+    padding-block: 20px;
   }
 
   .mh-story-image {
     order: -1;
+    height: clamp(180px, 55vw, 240px);
   }
 
   .mh-concierge {

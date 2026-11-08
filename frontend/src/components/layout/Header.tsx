@@ -120,7 +120,7 @@ export default function Header() {
               to="/saree"
               className={({ isActive }) => 'site-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
             >
-              <span className="azhak-nav-badge saree-nav-badge"><img src="/assets/logo/saree.jpg" alt="" aria-hidden="true" /></span>
+              <span className="azhak-nav-badge saree-nav-badge"><img src="/assets/logo/saree.png" alt="" aria-hidden="true" /></span>
               Saree
             </NavLink>
             <NavLink
@@ -227,7 +227,7 @@ export default function Header() {
             className={({ isActive }) => 'mobile-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
             onClick={() => setMenuOpen(false)}
           >
-            <span className="azhak-nav-badge saree-nav-badge"><img src="/assets/logo/saree.jpg" alt="" aria-hidden="true" /></span>
+            <span className="azhak-nav-badge saree-nav-badge"><img src="/assets/logo/saree.png" alt="" aria-hidden="true" /></span>
             Saree
           </NavLink>
           <NavLink

@@ -108,7 +108,7 @@
 
 .modern-hero-badge.saree {
   width: min(240px, 56vw);
-  aspect-ratio: 1152 / 928;
+  aspect-ratio: 1;
 }
 
 .modern-hero-badge.saree img {

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Sparkles, Tag, Timer } from 'lucide-react'
 import Confetti from '../components/ui/Confetti'
 import BannerSlider from '../components/home/BannerSlider'
+import CollectionCarousel from '../components/home/CollectionCarousel'
 import './Home.css'
 import './HomeModern.css'
 
@@ -14,6 +15,47 @@ const SHELVES: { type: Shelf; label: string }[] = [
   { type: 'saree', label: 'Saree' },
   { type: 'accessories', label: 'Accessories' },
 ]
+
+const BRAND_COLLECTIONS = [
+  {
+    type: 'clothing',
+    title: 'Clothing',
+    eyebrow: 'Dresses & ethnic wear',
+    description: 'Discover thoughtfully chosen styles for every day and every celebration.',
+    logo: '/assets/logo/logo.png',
+    logoAlt: 'Moksha Collections',
+    tiles: [
+      { name: 'Kurti', image: 'kurti.jpg' },
+      { name: 'Co-ord Set', image: 'co-ord-set.jpg' },
+      { name: 'Frock', image: 'frock.jpg' },
+    ],
+  },
+  {
+    type: 'accessories',
+    title: 'Accessories',
+    eyebrow: 'The finishing touch',
+    description: 'Find jewellery and accessories to complete your look, from everyday to occasion.',
+    logo: '/assets/logo/azhak-logo.png',
+    logoAlt: 'Azhak by Moksha Collections',
+    tiles: [
+      { name: 'Necklaces', image: 'necklace.jpg' },
+      { name: 'Earrings', image: 'earrings.jpg' },
+      { name: 'Bangles', image: 'bangles.jpg' },
+    ],
+  },
+  {
+    type: 'saree',
+    title: 'Saree',
+    eyebrow: 'Timeless drapes',
+    description: 'Explore sarees and set sarees selected for special moments and everyday elegance.',
+    logo: '/assets/logo/saree.png',
+    logoAlt: 'Pallu & Pleats',
+    tiles: [
+      { name: 'Saree', image: 'saree.jpg' },
+      { name: 'Set Saree', image: 'set-saree.jpg' },
+    ],
+  },
+] as const
 
 const OFFERS: {
   id: Offer
@@ -98,24 +140,33 @@ export default function HomeModern() {
           </div>
           <p>Distinct edits, thoughtfully selected. Find the pieces that feel like you.</p>
         </div>
-        <div className="mh-category-grid">
-          <Link className="mh-category-card" to="/clothing/kurti">
-            <img src="/assets/category-tiles/kurti.jpg" alt="Kurti collection" />
-            <span className="mh-category-copy"><strong>Kurti</strong><span>Shop Now</span></span>
-          </Link>
-          <Link className="mh-category-card" to="/clothing/co-ord-set">
-            <img src="/assets/category-tiles/co-ord-set.jpg" alt="Co-ord set collection" />
-            <span className="mh-category-copy"><strong>Co-ord Set</strong><span>Shop Now</span></span>
-          </Link>
-          <Link className="mh-category-card" to="/clothing/saree">
-            <img src="/assets/category-tiles/saree.jpg" alt="Saree collection" />
-            <span className="mh-category-copy"><strong>Saree</strong><span>Shop Now</span></span>
-          </Link>
-          <Link className="mh-category-card" to="/clothing/frock">
-            <img src="/assets/category-tiles/frock.jpg" alt="Frock collection" />
-            <span className="mh-category-copy"><strong>Frock</strong><span>Shop Now</span></span>
-          </Link>
-        </div>
+        <CollectionCarousel />
+      </section>
+
+      <section className="mh-container hm-brands" aria-label="Explore our collections">
+        {BRAND_COLLECTIONS.map((brand) => (
+          <article key={brand.type} className={`hm-brand hm-brand--${brand.type}`}>
+            <div className="hm-brand-visuals" aria-hidden="true">
+              {brand.tiles.map((tile) => (
+                <div className="hm-brand-tile" key={tile.name}>
+                  <img src={`/assets/category-tiles/${tile.image}`} alt="" loading="lazy" decoding="async" />
+                  <span>{tile.name}</span>
+                </div>
+              ))}
+            </div>
+            <div className="hm-brand-content">
+              <div className="hm-brand-logo">
+                <img src={brand.logo} alt={brand.logoAlt} loading="lazy" decoding="async" />
+              </div>
+              <p className="hm-brand-eyebrow">{brand.eyebrow}</p>
+              <h2>{brand.title}</h2>
+              <p className="hm-brand-description">{brand.description}</p>
+              <Link className="hm-brand-link" to={`/${brand.type}`}>
+                Shop {brand.title} <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            </div>
+          </article>
+        ))}
       </section>
 
       {OFFERS.map((offer) => {
