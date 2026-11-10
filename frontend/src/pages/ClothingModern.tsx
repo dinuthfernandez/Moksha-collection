@@ -154,8 +154,7 @@ function Rail({
       .catch(() => mounted && page === 1 && setItems([]))
       .finally(() => mounted && setLoading(false))
     return () => { mounted = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filters.maxPrice, filters.clearance, filters.discounted])
+  }, [type, page, filters.maxPrice, filters.clearance, filters.discounted])
 
   const showLess = () => {
     setItems((prev) => prev.slice(0, RAIL_SIZE))
@@ -485,6 +484,7 @@ export default function ClothingModern({ type = 'clothing' }: { type?: PageType 
         </section>}
 
         <Rail
+          key={`${type}-under5`}
           id="modern-under5-title"
           type={type}
           title="Under 5 BHD"
@@ -495,6 +495,7 @@ export default function ClothingModern({ type = 'clothing' }: { type?: PageType 
           onAdd={handleAddToBag}
         />
         <Rail
+          key={`${type}-clearance`}
           id="modern-clearance-title"
           type={type}
           title="Clearance Sale"
@@ -505,6 +506,7 @@ export default function ClothingModern({ type = 'clothing' }: { type?: PageType 
           onAdd={handleAddToBag}
         />
         <Rail
+          key={`${type}-discounts`}
           id="modern-discounts-title"
           type={type}
           title="Discounts"
