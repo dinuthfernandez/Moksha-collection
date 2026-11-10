@@ -726,8 +726,8 @@ def _mark_primary_variants(records: list[dict[str, Any]]) -> None:
 
 
 async def sync_products_to_supabase(full: bool = False) -> int:
-    """Light sync by default: only name, SKU, description and stock are refreshed for existing
-    products (and only rows that actually changed are written). New products are inserted in full."""
+    """Light sync by default: refresh basic fields, categories and images on existing products.
+    New products are inserted in full, and only changed rows are written."""
     settings = get_settings()
     if not all(
         [
@@ -983,6 +983,12 @@ def _resolve_product_image(
     <= 300 KB and stored in Supabase Storage; an unchanged image is never re-downloaded."""
     document_id = str(item.get("image_document_id") or "").strip()
     if not document_id:
+        if "image_document_id" not in item and not _extract_image_url(item):
+            logger.warning("Zoho item %s has no image metadata; preserving its existing image", item_id)
+            return {
+                "image_url": (existing_row or {}).get("image_url"),
+                "image_source_id": (existing_row or {}).get("image_source_id"),
+            }
         return {"image_url": _extract_image_url(item), "image_source_id": None}
 
     if existing_row and existing_row.get("image_url") and existing_row.get("image_source_id") == document_id:
@@ -997,6 +1003,7 @@ def _resolve_product_image(
     try:
         data = client.download_item_image(item_id)
         if not data:
+            logger.warning("Zoho image %s for item %s was unavailable; retaining previous image", document_id, item_id)
             return fallback
         return {"image_url": store_product_image(item_id, data), "image_source_id": document_id}
     except Exception:
@@ -1143,9 +1150,9 @@ def _primary_variant_updates(
 def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = False, light: bool = False) -> int:
     """Writes Zoho items to Supabase.
 
-    light=True refreshes only name/SKU/description/stock on existing products (new products are inserted
-    in full). Either way only rows whose values actually changed are written, concurrently, and inserts
-    are batched. partial=True means `items` is a subset, so nothing is deactivated or deleted."""
+    light=True refreshes basic fields, categories and images on existing products; new products are inserted
+    in full. Only changed rows are written, concurrently, and inserts are batched.
+    partial=True means `items` is a subset, so nothing is deactivated or deleted."""
     supabase = get_supabase()
     settings = get_settings()
     client = ZohoInventoryClient(
@@ -1214,7 +1221,11 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
         row = existing_map.get(item_id)
 
         if row is not None and light:
-            record = {**_light_record(item), **_category_fields(item, subcategories_seen)}
+            record = {
+                **_light_record(item),
+                **_category_fields(item, subcategories_seen),
+                **_resolve_product_image(client, item, item_id, row),
+            }
             record.pop("description", None)
             if not has_clearance_column:
                 record.pop("is_clearance", None)

@@ -40,6 +40,14 @@ npm run dev
 Vite dev server runs on http://localhost:5173 and proxies `/api` to the
 backend on port 8000.
 
+### Hourly product image sync
+The hourly Zoho sync checks image document IDs for existing and new online products.
+Images with the same stored document ID are not downloaded again; new or changed
+images are compressed and stored with content-versioned URLs. If an image download
+fails, the previous image is retained and the next sync retries it. A full sync
+uses the same image check, while the single-product refresh forces a download.
+This relies on Zoho changing the image document ID when its image is replaced.
+
 ## Database (Supabase)
 All tables live in the **`moksha_collection`** schema — never `public`.
 

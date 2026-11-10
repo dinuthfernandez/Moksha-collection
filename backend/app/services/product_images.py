@@ -1,3 +1,4 @@
+import hashlib
 import io
 import logging
 from typing import Any
@@ -54,7 +55,8 @@ def store_product_image(zoho_item_id: str, data: bytes) -> str:
     compressed = compress_image(data)
     supabase = get_supabase()
     _ensure_bucket(supabase)
-    path = f"{zoho_item_id}.jpg"
+    digest = hashlib.sha256(compressed).hexdigest()
+    path = f"{zoho_item_id}/{digest}.jpg"
     supabase.storage.from_(PRODUCT_IMAGE_BUCKET).upload(
         path, compressed, {"content-type": "image/jpeg", "upsert": "true", "cache-control": "31536000"}
     )
