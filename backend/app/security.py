@@ -30,6 +30,23 @@ def create_access_token(customer_id: str) -> str:
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
+def create_impersonation_token(customer_id: str) -> str:
+    settings = get_settings()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+    payload: dict[str, Any] = {"sub": customer_id, "role": "impersonation", "exp": expires_at}
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+def impersonation_customer_id(token: str) -> str | None:
+    settings = get_settings()
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    except jwt.PyJWTError:
+        return None
+    subject = payload.get("sub")
+    return subject if payload.get("role") == "impersonation" and isinstance(subject, str) else None
+
+
 def decode_access_token(token: str) -> str | None:
     """Returns the customer id from a valid token, or None if invalid/expired."""
     settings = get_settings()

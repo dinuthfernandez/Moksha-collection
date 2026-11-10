@@ -52,6 +52,9 @@
 .sa-logs { background: #000; color: #cfd6e4; padding: 12px; border-radius: 10px; font-size: 12px; overflow: auto; max-height: calc(100vh - 240px); white-space: pre-wrap; word-break: break-word; font-family: Consolas, monospace; }
 .sa-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .sa-table th, .sa-table td { text-align: left; padding: 8px; border-bottom: 1px solid #2a2038; word-break: break-word; }
+.sa-customer-results { display: grid; gap: 10px; }
+.sa-customer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: #0b0812; padding: 12px; border-radius: 8px; overflow-wrap: anywhere; }
+.sa-customer button:disabled { opacity: .5; cursor: not-allowed; }
 
 .sa-sync { grid-column: 1 / -1; }
 .sa-progress { position: relative; height: 22px; background: #1b1428; border: 1px solid #2a2038; border-radius: 999px; overflow: hidden; }

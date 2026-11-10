@@ -84,3 +84,7 @@ services:
         sync: false
       - key: ZOHO_INVENTORY_SYNC_INTERVAL_SECONDS
         value: "3600"
+      - key: IMPERSONATION_PASSWORD_1
+        sync: false
+      - key: IMPERSONATION_PASSWORD_2
+        sync: false

@@ -78,6 +78,21 @@ async def maintenance_gate(request: Request, call_next):
         )
     return await call_next(request)
 
+
+@app.middleware("http")
+async def audit_impersonation_requests(request: Request, call_next):
+    authorization = request.headers.get("authorization", "")
+    customer_id = None
+    if request.url.path.startswith("/api/") and authorization.lower().startswith("bearer "):
+        customer_id = security.impersonation_customer_id(authorization.split(" ", 1)[1].strip())
+    response = await call_next(request)
+    if customer_id and request.method not in ("GET", "HEAD", "OPTIONS"):
+        superadmin_state.audit(
+            "impersonation_action", request.client.host if request.client else "unknown",
+            f"customer_id={customer_id} {request.method} {request.url.path} status={response.status_code}",
+        )
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -273,4 +288,3 @@ else:
     @app.get("/")
     def root():
         return {"service": "moksha-collections-api", "status": "running"}
-

@@ -6,14 +6,15 @@ import sys
 import time
 from pathlib import Path
 from typing import Literal
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field, field_validator
 
 from ..config import get_settings
 from ..database import get_supabase
 from ..deps import get_current_superadmin
-from ..security import create_superadmin_token
+from ..security import create_impersonation_token, create_superadmin_token
 from ..services import superadmin_state as state
 from ..services import system_metrics
 from ..services.cache import invalidate_catalog
@@ -64,6 +65,11 @@ class ShellIn(BaseModel):
     command: str = Field(min_length=1, max_length=5000)
 
 
+class ImpersonationIn(BaseModel):
+    password_1: str = Field(min_length=1, max_length=200)
+    password_2: str = Field(min_length=1, max_length=200)
+
+
 @router.post("/login")
 async def superadmin_login(payload: LoginIn, request: Request):
     settings = get_settings()
@@ -88,6 +94,62 @@ async def superadmin_login(payload: LoginIn, request: Request):
 
 
 protected = APIRouter(dependencies=[Depends(get_current_superadmin)])
+
+
+@protected.get("/customers/search")
+def search_customers(response: Response, q: str = Query(min_length=2, max_length=100)):
+    response.headers["Cache-Control"] = "no-store"
+    query = q.strip()
+    if len(query) < 2 or not all(c.isalnum() or c in " @.+-_' " for c in query):
+        raise HTTPException(status_code=400, detail="Enter at least two valid name, email or phone characters.")
+    escaped = query.replace("_", "\\_")
+    pattern = f"%{escaped}%"
+    fields = "id,first_name,last_name,email,phone_country_code,phone,is_active,is_banned"
+    supabase = get_supabase()
+    rows = {}
+    for column in ("first_name", "last_name", "email", "phone"):
+        result = supabase.table("customers").select(fields).ilike(column, pattern).limit(30).execute()
+        for row in result.data or []:
+            rows[row["id"]] = row
+    parts = query.split(maxsplit=1)
+    if len(parts) == 2:
+        first, last = (part.replace("_", "\\_") for part in parts)
+        result = (
+            supabase.table("customers").select(fields)
+            .ilike("first_name", f"%{first}%").ilike("last_name", f"%{last}%").limit(30).execute()
+        )
+        for row in result.data or []:
+            rows[row["id"]] = row
+    return {"customers": list(rows.values())[:30]}
+
+
+@protected.post("/customers/{customer_id}/impersonate")
+def impersonate_customer(customer_id: UUID, payload: ImpersonationIn, request: Request, response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    settings = get_settings()
+    ip = _client_ip(request)
+    if not settings.impersonation_password_1 or not settings.impersonation_password_2:
+        raise HTTPException(status_code=503, detail="Customer sessions are not configured. Set both impersonation passwords.")
+    if state.impersonation_lock_remaining(ip):
+        state.audit("impersonation_blocked", ip)
+        raise HTTPException(status_code=429, detail="Too many failed attempts. Try again later.")
+    first_ok = hmac.compare_digest(payload.password_1.encode("utf-8"), settings.impersonation_password_1.encode("utf-8"))
+    second_ok = hmac.compare_digest(payload.password_2.encode("utf-8"), settings.impersonation_password_2.encode("utf-8"))
+    if not (first_ok and second_ok):
+        state.register_impersonation_failure(ip)
+        state.audit("impersonation_auth_failed", ip)
+        raise HTTPException(status_code=403, detail="Incorrect impersonation passwords.")
+    state.clear_impersonation_failures(ip)
+    rows = (
+        get_supabase().table("customers").select("id,is_active,is_banned")
+        .eq("id", str(customer_id)).limit(1).execute().data
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    if not rows[0].get("is_active", True) or rows[0].get("is_banned"):
+        raise HTTPException(status_code=403, detail="Cannot impersonate a disabled or banned account")
+    state.audit("impersonation_started", ip, f"customer_id={customer_id}")
+    return {"access_token": create_impersonation_token(str(customer_id)), "expires_in": 1800}
 
 
 @protected.get("/overview")

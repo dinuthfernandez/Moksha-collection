@@ -158,6 +158,8 @@ LOCK_SECONDS = 3600
 _ip_fails: dict[str, list[float]] = {}
 _global_fails: list[float] = []
 _locked_until: dict[str, float] = {}
+_impersonation_fails: dict[str, list[float]] = {}
+_impersonation_locked_until: dict[str, float] = {}
 
 
 def _recent(entries: list[float]) -> list[float]:
@@ -169,6 +171,27 @@ def lock_remaining(ip: str) -> int:
     now = time.time()
     until = max(_locked_until.get(ip, 0), _locked_until.get("*", 0))
     return max(int(until - now), 0)
+
+
+def impersonation_lock_remaining(ip: str) -> int:
+    with _lock:
+        return max(int(_impersonation_locked_until.get(ip, 0) - time.time() + 0.999), 0)
+
+
+def register_impersonation_failure(ip: str) -> None:
+    now = time.time()
+    with _lock:
+        failures = _recent(_impersonation_fails.get(ip, [])) + [now]
+        _impersonation_fails[ip] = failures
+        if len(failures) >= MAX_FAILS_PER_IP:
+            _impersonation_locked_until[ip] = now + LOCK_SECONDS
+            _impersonation_fails.pop(ip, None)
+
+
+def clear_impersonation_failures(ip: str) -> None:
+    with _lock:
+        _impersonation_fails.pop(ip, None)
+        _impersonation_locked_until.pop(ip, None)
 
 
 def register_failure(ip: str) -> None:

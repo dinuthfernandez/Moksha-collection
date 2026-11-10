@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { setCartReservation } from '../api/cart'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ApiError, getAuthToken } from '../api/client'
+import { ApiError, getAuthToken, isImpersonation } from '../api/client'
 import type { CartItem } from '../types'
 
 const STORAGE_KEY = 'moksha-cart'
 const RESERVATION_ID_KEY = 'moksha-cart-reservation-id'
+const cartStorage = isImpersonation ? sessionStorage : localStorage
 
 interface CartContextValue {
   items: CartItem[]
@@ -24,16 +25,16 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
 function createReservationToken(): string {
-  const saved = localStorage.getItem(RESERVATION_ID_KEY)
+  const saved = cartStorage.getItem(RESERVATION_ID_KEY)
   if (saved) return saved
   const token = crypto.randomUUID()
-  localStorage.setItem(RESERVATION_ID_KEY, token)
+  cartStorage.setItem(RESERVATION_ID_KEY, token)
   return token
 }
 
 function loadCart(): CartItem[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = cartStorage.getItem(STORAGE_KEY)
     const items = raw ? (JSON.parse(raw) as CartItem[]) : []
     return items.filter((item) => !item.hold_expires_at || Date.parse(item.hold_expires_at) > Date.now())
   } catch {
@@ -85,7 +86,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    cartStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
   const applyOptimistically = (productId: string, change: (current: CartItem[]) => CartItem[]) => {

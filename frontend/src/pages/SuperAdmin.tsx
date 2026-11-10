@@ -33,7 +33,7 @@ interface Overview {
 interface ShellResult { stdout: string; stderr: string; exit_code: number; cwd: string; seconds: number }
 interface ShellLine { kind: 'cmd' | 'out' | 'err' | 'meta'; text: string }
 
-const TABS = ['Overview', 'Shell', 'Logs', 'Data', 'Audit'] as const
+const TABS = ['Overview', 'Customers', 'Shell', 'Logs', 'Data', 'Audit'] as const
 type Tab = (typeof TABS)[number]
 const TABLES = ['orders', 'order_items', 'customers', 'products', 'categories', 'campaigns', 'coupons', 'cart_reservations']
 
@@ -228,11 +228,138 @@ export default function SuperAdmin() {
         </section>
       )}
 
+      {tab === 'Customers' && <CustomerImpersonationTab token={token} />}
       {tab === 'Shell' && <ShellTab token={token} enabled={overview?.shell_enabled ?? true} guard={guard} />}
       {tab === 'Logs' && <LogsTab token={token} guard={guard} />}
       {tab === 'Data' && <DataTab token={token} guard={guard} />}
       {tab === 'Audit' && <AuditTab token={token} guard={guard} />}
     </div>
+  )
+}
+
+interface SupportCustomer {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  phone_country_code: string
+  phone: string
+  is_active: boolean
+  is_banned: boolean
+}
+
+function CustomerImpersonationTab({ token }: { token: string }) {
+  const [query, setQuery] = useState('')
+  const [customers, setCustomers] = useState<SupportCustomer[]>([])
+  const [error, setError] = useState('')
+  const [searched, setSearched] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [selected, setSelected] = useState<SupportCustomer | null>(null)
+  const [passwordStep, setPasswordStep] = useState<1 | 2>(1)
+  const [password1, setPassword1] = useState('')
+  const [password2, setPassword2] = useState('')
+
+  const cancelUnlock = () => {
+    setSelected(null)
+    setPassword1('')
+    setPassword2('')
+    setPasswordStep(1)
+  }
+
+  const search = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setError('')
+    setSearched(false)
+    setCustomers([])
+    try {
+      const data = await call<{ customers: SupportCustomer[] }>(`/customers/search?q=${encodeURIComponent(query.trim())}`, token)
+      setCustomers(data.customers)
+      setSearched(true)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const openCustomer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selected) return
+    if (passwordStep === 1) {
+      setPasswordStep(2)
+      return
+    }
+    const child = window.open('', '_blank')
+    if (!child) {
+      setError('The browser blocked the new window. Allow pop-ups and try again.')
+      return
+    }
+    setError('')
+    setBusy(true)
+    try {
+      const result = await call<{ access_token: string }>(`/customers/${selected.id}/impersonate`, token, {
+        password_1: password1,
+        password_2: password2,
+      })
+      child.sessionStorage.clear()
+      child.sessionStorage.setItem('moksha-impersonation', 'true')
+      child.sessionStorage.setItem('moksha-auth-token', result.access_token)
+      child.opener = null
+      child.location.replace('/account')
+      cancelUnlock()
+    } catch (e) {
+      child.close()
+      setError((e as Error).message)
+      cancelUnlock()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="sa-card">
+      <h2>Customer support session</h2>
+      <p>Search by name, email or phone. Sessions expire after 30 minutes and have full customer access, including orders and payments. Actions are logged.</p>
+      <form className="sa-row" onSubmit={search}>
+        <input aria-label="Customer name, email or phone" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Name, email or phone" required minLength={2} maxLength={100} />
+        <button type="submit" disabled={busy}>{busy ? 'Searching…' : 'Search'}</button>
+      </form>
+      {error && <p className="sa-error" role="alert">{error}</p>}
+      {selected && (
+        <form className="sa-card" onSubmit={openCustomer}>
+          <h2>Unlock session for {selected.first_name} {selected.last_name}</h2>
+          <label>Impersonation password {passwordStep} of 2
+            <input
+              key={passwordStep}
+              type="password"
+              autoComplete="off"
+              autoFocus
+              required
+              maxLength={200}
+              value={passwordStep === 1 ? password1 : password2}
+              onChange={(e) => passwordStep === 1 ? setPassword1(e.target.value) : setPassword2(e.target.value)}
+            />
+          </label>
+          <div className="sa-row">
+            <button type="submit" disabled={busy}>{passwordStep === 1 ? 'Next' : busy ? 'Opening…' : 'Open session'}</button>
+            <button type="button" className="sa-ghost" disabled={busy} onClick={cancelUnlock}>Cancel</button>
+          </div>
+          <small>Both passwords are checked together when opening the session.</small>
+        </form>
+      )}
+      {searched && customers.length === 0 && <p>No customers found.</p>}
+      <div className="sa-customer-results">
+        {customers.map((customer) => (
+          <div className="sa-customer" key={customer.id}>
+            <div><strong>{customer.first_name} {customer.last_name}</strong><br />{customer.email}<br />{customer.phone_country_code} {customer.phone}</div>
+            <button type="button" disabled={!customer.is_active || customer.is_banned || busy} onClick={() => { cancelUnlock(); setError(''); setSelected(customer) }}>
+              {!customer.is_active || customer.is_banned ? 'Unavailable' : 'Open customer'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 

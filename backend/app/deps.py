@@ -2,7 +2,7 @@ from fastapi import Header, HTTPException
 
 from .config import get_settings
 from .database import get_supabase
-from .security import decode_access_token, is_valid_admin_token, is_valid_superadmin_token
+from .security import decode_access_token, impersonation_customer_id, is_valid_admin_token, is_valid_superadmin_token
 
 
 async def get_current_superadmin(authorization: str | None = Header(default=None)) -> bool:
@@ -34,6 +34,8 @@ async def get_current_customer(authorization: str | None = Header(default=None))
     customer = result.data[0]
     if customer.get("is_banned"):
         raise HTTPException(status_code=403, detail="This account has been banned")
+    if impersonation_customer_id(token) and not customer.get("is_active", True):
+        raise HTTPException(status_code=403, detail="This account is unavailable")
 
     return customer
 

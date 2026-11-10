@@ -25,7 +25,7 @@ class ZohoImageSyncTests(unittest.TestCase):
             **zoho_inventory._category_fields(self.item, {}),
         }
 
-    def run_light_sync(self, items, rows, client):
+    def run_light_sync(self, items, rows, client, light=True):
         supabase = Mock()
         settings = SimpleNamespace(
             zoho_client_id="client",
@@ -44,7 +44,7 @@ class ZohoImageSyncTests(unittest.TestCase):
             patch.object(zoho_inventory, "invalidate_catalog") as invalidate,
             patch.object(zoho_inventory, "store_product_image", return_value="https://example.test/new.jpg") as store,
         ):
-            zoho_inventory._write_products_to_supabase(items, partial=True, light=True)
+            zoho_inventory._write_products_to_supabase(items, partial=True, light=light)
             return updates.call_args.args[1], supabase, store, invalidate
 
     def test_existing_unchanged_image_is_not_downloaded_or_written(self):
@@ -54,6 +54,12 @@ class ZohoImageSyncTests(unittest.TestCase):
         client.download_item_image.assert_not_called()
         store.assert_not_called()
         invalidate.assert_not_called()
+
+    def test_full_sync_also_skips_unchanged_image(self):
+        client = Mock()
+        _, _, store, _ = self.run_light_sync([self.item], [self.row], client, light=False)
+        client.download_item_image.assert_not_called()
+        store.assert_not_called()
 
     def test_existing_changed_image_is_downloaded_and_updated(self):
         item = {**self.item, "image_document_id": "image-2"}

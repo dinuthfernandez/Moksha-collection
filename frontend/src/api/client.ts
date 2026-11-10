@@ -2,12 +2,15 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 const TOKEN_STORAGE_KEY = 'moksha-auth-token'
-let authToken: string | null = localStorage.getItem(TOKEN_STORAGE_KEY)
+const IMPERSONATION_KEY = 'moksha-impersonation'
+export const isImpersonation = sessionStorage.getItem(IMPERSONATION_KEY) === 'true'
+const tokenStorage = isImpersonation ? sessionStorage : localStorage
+let authToken: string | null = tokenStorage.getItem(TOKEN_STORAGE_KEY)
 
 export function setAuthToken(token: string | null) {
   authToken = token
-  if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token)
-  else localStorage.removeItem(TOKEN_STORAGE_KEY)
+  if (token) tokenStorage.setItem(TOKEN_STORAGE_KEY, token)
+  else tokenStorage.removeItem(TOKEN_STORAGE_KEY)
 }
 
 export function getAuthToken() {
@@ -80,4 +83,3 @@ export const api = {
   put: <T>(path: string, data: unknown) => request<T>(path, { method: 'PUT', body: JSON.stringify(data) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 }
-

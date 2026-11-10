@@ -58,6 +58,23 @@ Wait for the deployed version to include this script before running it. It repor
 progress and errors in the shell, does not alter the hourly schedule, and should
 not be run while another sync is in progress.
 
+### Super-admin customer support sessions
+The super-admin Customers tab searches customer names, email addresses and phone
+numbers. Open an active customer to start a separate 30-minute session without
+their password. Configure `IMPERSONATION_PASSWORD_1` and
+`IMPERSONATION_PASSWORD_2` as secret environment variables on the backend, then
+enter them in order for each session. If either is missing, sessions are disabled.
+Five incorrect attempts lock that IP for one hour per backend process; this
+in-memory lock does not persist across restarts or coordinate multiple instances.
+The session has full customer permissions, including purchases,
+and uses its own browser-session cart rather than the customer's local cart.
+Session starts and write requests are logged through the super-admin audit logger;
+the dashboard's in-memory audit list is temporary, so retain server logs as needed.
+Customer support sessions obey maintenance mode, and do not bypass disabled or
+banned accounts. Close the support window or use End session when finished.
+Ending a session removes the token from that window; a copied token remains valid
+until its 30-minute expiry.
+
 ## Database (Supabase)
 All tables live in the **`moksha_collection`** schema — never `public`.
 
