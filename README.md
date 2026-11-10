@@ -48,6 +48,16 @@ fails, the previous image is retained and the next sync retries it. A full sync
 uses the same image check, while the single-product refresh forces a download.
 This relies on Zoho changing the image document ID when its image is replaced.
 
+To run the same light sync once from the Render Shell, from the project root:
+
+```sh
+python -u backend/light_sync.py
+```
+
+Wait for the deployed version to include this script before running it. It reports
+progress and errors in the shell, does not alter the hourly schedule, and should
+not be run while another sync is in progress.
+
 ## Database (Supabase)
 All tables live in the **`moksha_collection`** schema — never `public`.
 
