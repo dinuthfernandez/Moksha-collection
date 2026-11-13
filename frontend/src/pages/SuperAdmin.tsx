@@ -53,6 +53,7 @@ export default function SuperAdmin() {
   const [mtMessage, setMtMessage] = useState('')
   const [mtEta, setMtEta] = useState('')
   const [bypassPw, setBypassPw] = useState('')
+  const [bypassBusy, setBypassBusy] = useState(false)
 
   const logout = useCallback(() => {
     sessionStorage.removeItem(TOKEN_KEY)
@@ -109,11 +110,18 @@ export default function SuperAdmin() {
   }
 
   const saveBypass = async (value: string) => {
-    const res = await guard(() => call('/bypass-password', token, { password: value }))
-    if (res) {
-      setBypassPw('')
-      setNotice(value ? 'Bypass password saved.' : 'Bypass password removed.')
-      loadOverview()
+    if (!value && !window.confirm('Clear the developer bypass password and log out all developers? No one can use developer access until a new password is saved.')) return
+    setBypassBusy(true)
+    setNotice(value ? 'Saving developer password…' : 'Clearing developer access…')
+    try {
+      const res = await guard(() => call<{ has_bypass_password: boolean }>('/bypass-password', token, { password: value }))
+      if (res) {
+        setBypassPw('')
+        setOverview((current) => current && { ...current, has_bypass_password: res.has_bypass_password })
+        setNotice(value ? 'Bypass password saved. Previous developer sessions have been invalidated.' : 'Developer password cleared and existing sessions invalidated.')
+      }
+    } finally {
+      setBypassBusy(false)
     }
   }
 
@@ -183,14 +191,14 @@ export default function SuperAdmin() {
               {overview.has_bypass_password ? '● A bypass password is set' : '● No bypass password — nobody can get past maintenance'}
             </p>
             <label>New bypass password (min 8 characters)
-              <input type="password" autoComplete="new-password" value={bypassPw} onChange={(e) => setBypassPw(e.target.value)} placeholder="Leave empty & press Remove to disable" />
+              <input type="password" autoComplete="new-password" value={bypassPw} onChange={(e) => setBypassPw(e.target.value)} placeholder="Enter a new developer password" />
             </label>
             <div className="sa-row">
-              <button className="sa-go" disabled={bypassPw.length < 8} onClick={() => saveBypass(bypassPw)}>Save password</button>
-              {overview.has_bypass_password && <button className="sa-ghost" onClick={() => saveBypass('')}>Remove</button>}
+              <button className="sa-go" disabled={bypassBusy || bypassPw.length < 8} onClick={() => saveBypass(bypassPw)}>{bypassBusy ? 'Please wait…' : 'Save password'}</button>
+              <button className="sa-danger" disabled={bypassBusy} onClick={() => saveBypass('')}>Clear all passwords &amp; log out developers</button>
             </div>
             <p className="sa-status" style={{ fontSize: 12 }}>
-              While maintenance is ON, developers open the site, tap “Developer access” on the maintenance page and enter this password. Changing or removing it invalidates existing access immediately; open pages update automatically when connected.
+              Only one developer bypass password is stored. Clearing it disables developer access until a new password is saved. Changing or clearing it invalidates existing access immediately; connected open pages update automatically.
             </p>
           </div>
 

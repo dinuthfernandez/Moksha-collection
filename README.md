@@ -54,6 +54,9 @@ Saving or removing the developer bypass password requires a successful Supabase
 bypass cookies; connected pages receive a live refresh notification, with
 periodic and tab-visibility checks as fallbacks. Disconnected or suspended
 pages update when they reconnect or resume. The previous password is rejected.
+The super-admin **Clear all passwords & log out developers** button removes the
+single stored bypass password and disables developer access until a new one is
+saved; it does not change customer, admin, or super-admin passwords.
 Maintenance state is held in the running process, so this behavior assumes the
 single backend process configured in `render.yaml`.
 

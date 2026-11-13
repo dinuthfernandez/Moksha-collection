@@ -4,6 +4,7 @@
 .sa-login-card input, .sa-app input, .sa-app textarea, .sa-app select { background: #0b0812; border: 1px solid #2a2038; color: #f1ecf7; padding: 10px 12px; border-radius: 8px; font: inherit; width: 100%; box-sizing: border-box; }
 .sa-login-card button, .sa-app button { background: #e10a8c; color: #fff; border: 0; padding: 10px 16px; border-radius: 8px; cursor: pointer; font: inherit; font-weight: 600; }
 .sa-login-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+.sa-app button:disabled { opacity: 0.5; cursor: not-allowed; }
 .sa-error { color: #ff6b81; margin: 0; font-size: 13px; text-align: center; }
 
 .sa-app { position: fixed; inset: 0; overflow: auto; z-index: 9999; background: #07050b; color: #e9e3f1; padding: 20px; font-family: 'Inter', Arial, sans-serif; }

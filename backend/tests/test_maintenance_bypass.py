@@ -58,8 +58,16 @@ class MaintenanceBypassTests(unittest.TestCase):
             self.assertTrue(client.get("/api/maintenance").json()["bypass"])
 
         self.assertEqual(self.save_password("").status_code, 200)
-        self.assertFalse(self.first.get("/api/maintenance").json()["bypass"])
-        self.assertEqual(self.second.get("/api/auth/me").status_code, 503)
+        for client in (self.first, self.second):
+            status = client.get("/api/maintenance").json()
+            self.assertFalse(status["bypass"])
+            self.assertFalse(status["bypass_available"])
+            self.assertEqual(client.get("/api/auth/me").status_code, 503)
+        self.assertFalse(state.verify_bypass_password("first-password"))
+        self.assertFalse(state.verify_bypass_password("second-password"))
+        self.assertEqual(self.save_password("third-password").status_code, 200)
+        self.assertTrue(state.verify_bypass_password("third-password"))
+        self.assertFalse(state.verify_bypass_password("second-password"))
 
     def test_failed_password_save_preserves_previous_password(self):
         self.assertEqual(self.save_password("first-password").status_code, 200)
