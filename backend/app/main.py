@@ -24,6 +24,7 @@ from .routers import (
     contact,
     coupons,
     health,
+    home_test_visibility,
     orders,
     products,
     reviews,
@@ -152,6 +153,7 @@ app.include_router(wishlists.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
 app.include_router(rider.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
+app.include_router(home_test_visibility.router, prefix="/api")
 app.include_router(admin_auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(banners.public_router, prefix="/api")

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import RouteSeo from './utils/seo'
 import BrandLoader from './components/ui/BrandLoader'
 import { useAuth } from './context/AuthContext'
@@ -17,7 +17,7 @@ import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute'
 import MaintenanceGate from './components/layout/MaintenanceGate'
 const SuperAdmin = lazy(() => import('./pages/SuperAdmin'))
 import BackButton from './components/ui/BackButton'
-import HomeModern from './pages/HomeModern'
+const HomeTest = lazy(() => import('./pages/HomeTest'))
 const Launch = lazy(() => import('./pages/Launch'))
 const LaunchButton = lazy(() => import('./pages/LaunchButton'))
 const ClothingModern = lazy(() => import('./pages/ClothingModern'))
@@ -51,7 +51,7 @@ const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'))
 const AdminZohoSync = lazy(() => import('./pages/admin/AdminZohoSync'))
 const AdminDiscounts = lazy(() => import('./pages/admin/AdminDiscounts'))
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'))
-const AdminBanners = lazy(() => import('./pages/admin/AdminBanners'))
+const AdminShowHide = lazy(() => import('./pages/admin/AdminShowHide'))
 
 function AppShell() {
   const { isLoading: authLoading } = useAuth()
@@ -108,12 +108,13 @@ function AppShell() {
             <Route path="zoho-sync" element={<AdminZohoSync />} />
             <Route path="discounts" element={<AdminDiscounts />} />
             <Route path="analytics" element={<AdminAnalytics />} />
-            <Route path="banners" element={<AdminBanners />} />
+            <Route path="show-hide" element={<AdminShowHide />} />
           </Route>
         </Route>
 
         <Route element={<Layout />}>
-          <Route index element={<HomeModern />} />
+          <Route index element={<HomeTest />} />
+          <Route path="home-test" element={<Navigate to="/" replace />} />
           <Route path="search" element={<SearchResults />} />
           <Route path="clothing" element={<ClothingModern />} />
           <Route path="clothing/:slug" element={<CategoryDetail />} />

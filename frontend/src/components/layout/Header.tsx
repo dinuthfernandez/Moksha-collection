@@ -9,9 +9,10 @@ import AnnouncementBar from './AnnouncementBar'
 import ThemeToggle from '../ui/ThemeToggle'
 import './Header.css'
 
-const NAV_LINKS = [
-  { label: 'Home', to: '/' },
-  { label: 'Clothing', to: '/clothing' },
+const HOUSE_LINKS = [
+  { label: 'Moksha', category: 'Dresses', to: '/clothing' },
+  { label: 'Azhaku', category: 'Accessories', to: '/accessories' },
+  { label: 'Pallu & Pleats', category: 'Sarees', to: '/saree' },
 ]
 
 const MORE_LINKS = [
@@ -89,7 +90,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="site-header">
+      <header className="site-header site-header--test">
         {location.pathname === '/' && <AnnouncementBar />}
         <div className="site-header-bar container">
           <button
@@ -107,31 +108,12 @@ export default function Header() {
           </Link>
 
           <nav className="site-nav" aria-label="Primary">
-            {NAV_LINKS.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) => 'site-nav-link' + (isActive ? ' is-active' : '')}
-              >
-                {link.label}
+            <NavLink to="/" end className={({ isActive }) => 'site-nav-link' + (isActive ? ' is-active' : '')}>Home</NavLink>
+            {HOUSE_LINKS.map((link) => (
+              <NavLink key={link.to} to={link.to} className={({ isActive }) => 'site-nav-link test-nav-house' + (isActive ? ' is-active' : '')}>
+                <span>{link.label}</span><small>{link.category}</small>
               </NavLink>
             ))}
-            <NavLink
-              to="/saree"
-              className={({ isActive }) => 'site-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
-            >
-              <span className="azhak-nav-badge saree-nav-badge"><img src="/assets/logo/saree.png" alt="" aria-hidden="true" /></span>
-              Saree
-            </NavLink>
-            <NavLink
-              to="/accessories"
-              className={({ isActive }) => 'site-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
-            >
-              <span className="azhak-nav-badge">
-                <img src="/assets/logo/azhak-logo.png" alt="" aria-hidden="true" className="azhak-nav-logo" />
-              </span>
-              Accessories
-            </NavLink>
             <div className="site-nav-more" ref={moreRef}>
               <button
                 type="button"
@@ -212,34 +194,12 @@ export default function Header() {
         </div>
 
         <div className={`mobile-nav ${menuOpen ? 'is-open' : ''}`}>
-          {NAV_LINKS.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) => 'mobile-nav-link' + (isActive ? ' is-active' : '')}
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
+          <NavLink to="/" end className={({ isActive }) => 'mobile-nav-link' + (isActive ? ' is-active' : '')} onClick={() => setMenuOpen(false)}>Home</NavLink>
+          {HOUSE_LINKS.map((link) => (
+            <NavLink key={link.to} to={link.to} className={({ isActive }) => 'mobile-nav-link test-nav-house' + (isActive ? ' is-active' : '')} onClick={() => setMenuOpen(false)}>
+              <span>{link.label}</span><small>{link.category}</small>
             </NavLink>
           ))}
-          <NavLink
-            to="/saree"
-            className={({ isActive }) => 'mobile-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span className="azhak-nav-badge saree-nav-badge"><img src="/assets/logo/saree.png" alt="" aria-hidden="true" /></span>
-            Saree
-          </NavLink>
-          <NavLink
-            to="/accessories"
-            className={({ isActive }) => 'mobile-nav-link azhak-nav-link' + (isActive ? ' is-active' : '')}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span className="azhak-nav-badge">
-              <img src="/assets/logo/azhak-logo.png" alt="" aria-hidden="true" className="azhak-nav-logo" />
-            </span>
-            Accessories
-          </NavLink>
           <span className="mobile-nav-heading">More</span>
           {MORE_LINKS.map((link) => (
             <NavLink

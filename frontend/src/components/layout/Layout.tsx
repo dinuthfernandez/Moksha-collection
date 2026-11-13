@@ -27,7 +27,7 @@ export default function Layout() {
         {!isHome && <BackButton fallbackTo="/" fixedBelowHeader />}
         <Outlet />
       </main>
-      <Footer />
+      <Footer showHouseLogos />
       <WhatsAppFloatingButton />
     </>
   )

@@ -12,17 +12,34 @@ const SOCIAL_LINKS = [
   { label: 'TikTok', href: 'https://www.tiktok.com/@moksha.collections', icon: '/assets/icons/svg/icons8-tiktok.svg' },
 ]
 
-export default function Footer() {
+export default function Footer({ showHouseLogos = false }: { showHouseLogos?: boolean }) {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="site-footer">
-      <div className="footer-main container">
-        <div className="footer-col footer-brand">
-          <Link to="/">
-            <img src="/assets/logo/logo.png" alt="Moksha Collections" className="footer-logo" />
-          </Link>
+    <footer className={`site-footer${showHouseLogos ? ' site-footer--houses' : ''}`}>
+      {showHouseLogos && (
+        <div className="footer-houses" aria-label="Our collections">
+          <div className="footer-houses-inner container">
+            <Link to="/clothing" aria-label="Shop Moksha clothing">
+              <img src="/assets/logo/logo.png" alt="Moksha Collections" />
+            </Link>
+            <Link to="/accessories" aria-label="Shop Azhaku accessories">
+              <img className="footer-house-azhak" src="/assets/logo/azhak-logo.png" alt="Azhaku by Moksha Collections" />
+            </Link>
+            <Link to="/saree" aria-label="Shop Pallu & Pleats sarees">
+              <img src="/assets/logo/saree.png" alt="Pallu & Pleats" />
+            </Link>
+          </div>
         </div>
+      )}
+      <div className="footer-main container">
+        {!showHouseLogos && (
+          <div className="footer-col footer-brand">
+            <Link to="/">
+              <img src="/assets/logo/logo.png" alt="Moksha Collections" className="footer-logo" />
+            </Link>
+          </div>
+        )}
 
         <div className="footer-col">
           <h3>Shop</h3>

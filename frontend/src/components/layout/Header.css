@@ -360,6 +360,81 @@
   box-shadow: 0 14px 34px rgba(20, 14, 10, 0.14);
 }
 
+.site-header--test .site-nav-link,
+.site-header--test .mobile-nav-link,
+.site-header--test .site-nav-more-item,
+:root[data-theme='light'] .site-header--test .site-nav-link,
+:root[data-theme='light'] .site-header--test .mobile-nav-link,
+:root[data-theme='light'] .site-header--test .site-nav-more-item {
+  color: var(--color-warm-white);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.site-header--test .site-nav-link:hover,
+.site-header--test .mobile-nav-link:hover,
+.site-header--test .site-nav-more-item:hover,
+:root[data-theme='light'] .site-header--test .site-nav-link:hover,
+:root[data-theme='light'] .site-header--test .mobile-nav-link:hover,
+:root[data-theme='light'] .site-header--test .site-nav-more-item:hover {
+  color: var(--color-magenta);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.site-header--test .site-nav-link.is-active,
+.site-header--test .mobile-nav-link.is-active,
+.site-header--test .site-nav-more-item.is-active {
+  color: #ff76c7;
+}
+
+:root[data-theme='light'] .site-header--test .site-nav-link.is-active,
+:root[data-theme='light'] .site-header--test .mobile-nav-link.is-active,
+:root[data-theme='light'] .site-header--test .site-nav-more-item.is-active {
+  color: #a00060;
+}
+
+.site-header--test .site-nav-link.is-active::after {
+  content: '';
+  display: block;
+  position: absolute;
+  right: 14px;
+  bottom: 1px;
+  left: 14px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+.site-header--test .mobile-nav-link.is-active,
+.site-header--test .site-nav-more-item.is-active {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.site-header--test .test-nav-house {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-family: var(--font-brand);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.site-header--test .test-nav-house small {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 400;
+}
+
 .mobile-nav-link.azhak-nav-link {
   display: flex;
   align-items: center;

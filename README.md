@@ -40,6 +40,14 @@ npm run dev
 Vite dev server runs on http://localhost:5173 and proxies `/api` to the
 backend on port 8000.
 
+### Homepage visibility
+The admin **Show and Hide** page has separate switches for the homepage's Under 5
+BHD, Clearance Sale, and Discounts sections. Changes are saved in Supabase
+`app_state`; refresh an already open homepage to see them. All three are visible
+until settings are saved. The former Banner admin page is no longer available,
+but its stored banner data is not deleted. `/home-test` redirects to the homepage.
+For a new database, run `backend/sql/027_app_state.sql` in the Supabase SQL editor.
+
 ### Hourly product image sync
 The hourly Zoho sync checks image document IDs for existing and new online products.
 Images with the same stored document ID are not downloaded again; new or changed
