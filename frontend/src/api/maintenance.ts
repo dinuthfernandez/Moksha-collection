@@ -33,3 +33,9 @@ export async function fetchMaintenance(signal?: AbortSignal): Promise<Maintenanc
     return null
   }
 }
+
+export function watchMaintenance(onChange: () => void): EventSource {
+  const events = new EventSource(`${API_BASE_URL}/maintenance/events`)
+  events.addEventListener('change', onChange)
+  return events
+}

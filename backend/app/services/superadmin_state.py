@@ -88,12 +88,20 @@ def set_bypass_password(password: str) -> None:
     """Sets (or, with an empty string, removes) the developer bypass password."""
     with _lock:
         if not password:
-            _bypass["hash"] = ""
+            new_hash = ""
         else:
             salt = secrets.token_bytes(16)
             digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, _PBKDF2_ROUNDS)
-            _bypass["hash"] = f"{salt.hex()}${digest.hex()}"
-        _persist()
+            new_hash = f"{salt.hex()}${digest.hex()}"
+        payload = {**_maintenance, "bypass_hash": new_hash}
+        from ..database import get_supabase
+
+        get_supabase().table("app_state").upsert({"key": "maintenance", "value": payload}).execute()
+        _bypass["hash"] = new_hash
+        try:
+            STATE_FILE.write_text(json.dumps(payload), encoding="utf-8")
+        except OSError:
+            logging.getLogger(__name__).warning("Could not save local maintenance state", exc_info=True)
 
 
 def verify_bypass_password(password: str) -> bool:

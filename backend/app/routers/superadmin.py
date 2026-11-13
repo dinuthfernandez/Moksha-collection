@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import platform
 import subprocess
@@ -198,7 +199,11 @@ def set_maintenance(payload: MaintenanceIn, request: Request):
 
 @protected.post("/bypass-password")
 def set_bypass_password(payload: BypassPasswordIn, request: Request):
-    state.set_bypass_password(payload.password)
+    try:
+        state.set_bypass_password(payload.password)
+    except Exception as exc:
+        logging.getLogger(__name__).exception("Could not save bypass password")
+        raise HTTPException(status_code=503, detail="Could not save bypass password. Please try again.") from exc
     state.audit("bypass_password_set" if payload.password else "bypass_password_removed", _client_ip(request))
     return {"has_bypass_password": state.has_bypass_password()}
 

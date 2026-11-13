@@ -190,7 +190,7 @@ export default function SuperAdmin() {
               {overview.has_bypass_password && <button className="sa-ghost" onClick={() => saveBypass('')}>Remove</button>}
             </div>
             <p className="sa-status" style={{ fontSize: 12 }}>
-              While maintenance is ON, developers open the site, tap “Developer access” on the maintenance page and enter this password. Changing or removing it instantly logs out every developer.
+              While maintenance is ON, developers open the site, tap “Developer access” on the maintenance page and enter this password. Changing or removing it invalidates existing access immediately; open pages update automatically when connected.
             </p>
           </div>
 

@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import security
@@ -175,13 +175,39 @@ def launch_trigger():
 @app.get("/api/maintenance")
 def maintenance_status(request: Request):
     state = superadmin_state.get_maintenance()
-    return {
+    return JSONResponse({
         "enabled": state["enabled"],
         "message": state["message"],
         "eta": state["eta"],
         "bypass": state["enabled"] and _has_bypass(request),
         "bypass_available": superadmin_state.has_bypass_password(),
-    }
+    }, headers={"Cache-Control": "no-store"})
+
+
+async def _maintenance_events(request: Request):
+    previous = None
+    heartbeat = 0
+    while not await request.is_disconnected():
+        state = superadmin_state.get_maintenance()
+        current = (state["enabled"], state["message"], state["eta"], superadmin_state.bypass_fingerprint())
+        if current != previous:
+            yield "event: change\ndata: refresh\n\n"
+            previous = current
+            heartbeat = 0
+        elif heartbeat >= 30:
+            yield ": keepalive\n\n"
+            heartbeat = 0
+        await asyncio.sleep(0.5)
+        heartbeat += 1
+
+
+@app.get("/api/maintenance/events")
+async def maintenance_events(request: Request):
+    return StreamingResponse(
+        _maintenance_events(request),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache, no-store", "Content-Encoding": "identity", "X-Accel-Buffering": "no"},
+    )
 
 
 class BypassIn(BaseModel):

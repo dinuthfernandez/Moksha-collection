@@ -48,6 +48,15 @@ until settings are saved. The former Banner admin page is no longer available,
 but its stored banner data is not deleted. `/home-test` redirects to the homepage.
 For a new database, run `backend/sql/027_app_state.sql` in the Supabase SQL editor.
 
+### Maintenance developer access
+Saving or removing the developer bypass password requires a successful Supabase
+`app_state` write. A successful change immediately invalidates all existing
+bypass cookies; connected pages receive a live refresh notification, with
+periodic and tab-visibility checks as fallbacks. Disconnected or suspended
+pages update when they reconnect or resume. The previous password is rejected.
+Maintenance state is held in the running process, so this behavior assumes the
+single backend process configured in `render.yaml`.
+
 ### Hourly product image sync
 The hourly Zoho sync checks image document IDs for existing and new online products.
 Images with the same stored document ID are not downloaded again; new or changed
