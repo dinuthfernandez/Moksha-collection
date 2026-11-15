@@ -33,6 +33,12 @@
   object-fit: contain;
 }
 
+:root[data-theme='dark'] .size-chart-icon {
+  padding: 6px;
+  background: var(--fixed-white);
+  border-radius: var(--radius-sm);
+}
+
 .size-chart-card .btn {
   width: 100%;
   white-space: normal;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react'
 import { getCategoryTree, getProducts } from '../api/categories'
 import { useCart } from '../context/CartContext'
@@ -339,6 +339,8 @@ function CategoryRow({ category, onAdd }: { category: Category; onAdd: (p: Produ
 }
 
 export default function ClothingModern({ type = 'clothing' }: { type?: PageType }) {
+  const { hash } = useLocation()
+  const sectionsRef = useRef<HTMLDivElement>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [showAllCategories, setShowAllCategories] = useState(false)
@@ -400,13 +402,47 @@ export default function ClothingModern({ type = 'clothing' }: { type?: PageType 
     document.querySelector('.modern-catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  // Links from the home page jump straight to Under 5 BHD / Clearance / Discounts.
   useEffect(() => {
-    const id = window.location.hash.slice(1)
-    if (!id) return
-    const timer = window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 700)
-    return () => window.clearTimeout(timer)
-  }, [type])
+    const id = hash.slice(1)
+    if (!['modern-under5-title', 'modern-clearance-title', 'modern-discounts-title'].includes(id)) return
+
+    const sections = sectionsRef.current
+    const target = document.getElementById(id)?.closest('section')
+    if (!sections || !target) return
+
+    let frame = 0
+    const align = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => target.scrollIntoView({ behavior: 'auto', block: 'start' }))
+    }
+    const resizeObserver = new ResizeObserver(align)
+    const observeSections = () => {
+      resizeObserver.observe(sections)
+      Array.from(sections.children).forEach((section) => resizeObserver.observe(section))
+    }
+    const mutationObserver = new MutationObserver(() => {
+      observeSections()
+      align()
+    })
+    const stop = () => {
+      window.cancelAnimationFrame(frame)
+      resizeObserver.disconnect()
+      mutationObserver.disconnect()
+      window.removeEventListener('wheel', stop)
+      window.removeEventListener('touchstart', stop)
+      window.removeEventListener('pointerdown', stop)
+      window.removeEventListener('keydown', stop)
+    }
+
+    observeSections()
+    mutationObserver.observe(sections, { childList: true })
+    window.addEventListener('wheel', stop, { passive: true })
+    window.addEventListener('touchstart', stop, { passive: true })
+    window.addEventListener('pointerdown', stop, { passive: true })
+    window.addEventListener('keydown', stop)
+    align()
+    return stop
+  }, [hash, type])
 
   const visibleCategories = showAllCategories ? categories : categories.slice(0, categoryLimit)
   const hasMore = catalog.length < catalogTotal
@@ -425,7 +461,7 @@ export default function ClothingModern({ type = 'clothing' }: { type?: PageType 
         <LogoHero type={type} />
       )}
 
-      <div className="azhak-page clothing-shop-sections">
+      <div className="azhak-page clothing-shop-sections" ref={sectionsRef}>
         {(categoriesLoading || categories.length > 0) && (
           <section className="azhak-category-section container" aria-labelledby="modern-categories-title">
             <div className="azhak-section-heading">

@@ -72,7 +72,10 @@ export function getProductBySlug(slug: string) {
   return cachedGet<Product>(`/products/${slug}`)
 }
 
+export function getProductById(id: string) {
+  return cachedGet<Product>(`/products/by-id/${encodeURIComponent(id)}`)
+}
+
 export function peekProductBySlug(slug: string) {
   return peekCached<Product>(`/products/${slug}`)
 }
-

@@ -120,6 +120,7 @@ function AppShell() {
           <Route path="clothing/:slug" element={<CategoryDetail />} />
           <Route path="saree" element={<ClothingModern type="saree" />} />
           <Route path="saree/:slug" element={<CategoryDetail />} />
+          <Route path="product/id/:id" element={<ProductDetail />} />
           <Route path="product/:slug" element={<ProductDetail />} />
           <Route path="accessories" element={<ClothingModern type="accessories" />} />
           <Route path="accessories/:slug" element={<CategoryDetail />} />

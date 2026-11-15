@@ -38,7 +38,7 @@
 .test-houses { margin-top: 48px; scroll-margin-top: 130px; }
 .test-house { display: grid; grid-template-columns: 1fr 1fr; min-height: 600px; border: 1px solid var(--test-line); }
 .test-house + .test-house { border-top: 0; }
-.test-house-photo { min-width: 0; background: var(--test-panel); position: relative; }
+.test-house-photo { min-width: 0; margin: clamp(32px, 6vw, 96px); background: var(--test-panel); position: relative; border-radius: var(--test-radius); overflow: hidden; }
 .test-house-photo > .test-photo-note { position: absolute; bottom: 14px; left: 14px; }
 .test-house-photo img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; }
 .test-house--accessories .test-house-photo { grid-column: 2; grid-row: 1; }
@@ -138,7 +138,7 @@
   .test-desktop-break { display: none; }
   .test-houses { margin-top: 24px; }
   .test-house { grid-template-columns: 1fr; min-height: 0; }
-  .test-house-photo { min-height: 330px; }
+  .test-house-photo { min-height: 220px; margin: 36px 36px 0; }
   .test-house--accessories .test-house-photo { grid-column: auto; grid-row: auto; }
   .test-house-content { padding: 28px 22px 34px; }
   .test-house-logo { height: 96px; }

@@ -124,7 +124,6 @@ export default function HomeTest() {
         <section className="test-arrivals" aria-labelledby="test-arrivals-title">
           <div className="test-arrivals-heading">
             <h2 id="test-arrivals-title">New arrivals</h2>
-            <Link className="test-text-link" to="/clothing">See everything new</Link>
           </div>
           <div className="test-arrival-list">
             {houses.map((house) => (

@@ -29,11 +29,25 @@
   padding: 14px;
 }
 
-.cart-item img {
+.cart-item-image {
+  display: grid;
+  place-items: center;
   width: 80px;
   height: 100px;
-  object-fit: cover;
+  overflow: hidden;
+  background: var(--color-onyx-elevated);
   border-radius: var(--radius-sm);
+}
+
+.cart-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cart-item-info h3 a:hover,
+.cart-item-info h3 a:focus-visible {
+  color: var(--color-magenta);
 }
 
 .cart-item-info {

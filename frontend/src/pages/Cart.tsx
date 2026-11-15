@@ -58,9 +58,11 @@ export default function Cart() {
           <ul className="cart-items">
             {items.map((item) => (
               <li key={`${item.id}-${item.size}-${item.color}`} className="cart-item">
-                {item.image_url && <img src={item.image_url} alt={item.name} loading="lazy" decoding="async" />}
+                <Link to={`/product/id/${encodeURIComponent(item.id)}`} className="cart-item-image" aria-label={`View ${item.name}`}>
+                  {item.image_url ? <img src={item.image_url} alt="" loading="lazy" decoding="async" /> : <span className="mc-mark" aria-hidden="true">mc</span>}
+                </Link>
                 <div className="cart-item-info">
-                  <h3>{item.name}</h3>
+                  <h3><Link to={`/product/id/${encodeURIComponent(item.id)}`}>{item.name}</Link></h3>
                   {(item.size || item.color) && (
                     <span>Sizes &amp; Colors: {formatVariant(item)}</span>
                   )}

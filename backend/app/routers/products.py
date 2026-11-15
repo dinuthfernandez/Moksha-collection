@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timezone
 from typing import Literal, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from postgrest.exceptions import APIError
@@ -185,11 +186,10 @@ def list_products(
     return _with_discounts(cached(cache_key, 60, load))
 
 
-@router.get("/{slug}", response_model=ProductOut)
-def get_product(slug: str):
+def _get_product(field: str, value: str):
     def load() -> dict:
         supabase = get_supabase()
-        result = supabase.table("products").select("*").eq("slug", slug).limit(1).execute()
+        result = supabase.table("products").select("*").eq(field, value).limit(1).execute()
         if not result.data or not result.data[0].get("is_active"):
             raise HTTPException(status_code=404, detail="Product not found")
         product = dict(result.data[0])
@@ -208,9 +208,19 @@ def get_product(slug: str):
             product["variants"] = []
         return product
 
-    product = dict(cached(f"product:{slug}", 60, load))
+    product = dict(cached(f"product:{field}:{value}", 60, load))
     product["variants"] = [apply_discount(v) for v in product.get("variants", [])]
     return apply_discount(product)
+
+
+@router.get("/by-id/{product_id}", response_model=ProductOut)
+def get_product_by_id(product_id: UUID):
+    return _get_product("id", str(product_id))
+
+
+@router.get("/{slug}", response_model=ProductOut)
+def get_product(slug: str):
+    return _get_product("slug", slug)
 
 
 @router.post("/sync", dependencies=[Depends(get_current_admin)])

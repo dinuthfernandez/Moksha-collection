@@ -36,6 +36,10 @@
   object-fit: contain;
 }
 
+.site-footer .footer-logo-dark { display: none; }
+[data-theme='dark'] .site-footer .footer-logo-light { display: none; }
+[data-theme='dark'] .site-footer .footer-logo-dark { display: block; }
+
 :root[data-theme='dark'] .footer-house-azhak {
   filter: invert(1) hue-rotate(180deg);
 }

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useSeo } from '../utils/seo'
 import { CalendarDays, ExternalLink, Heart, MapPin, ShoppingBag, Star, Truck } from 'lucide-react'
-import { getProductBySlug, peekProductBySlug } from '../api/categories'
+import { getProductById, getProductBySlug, peekProductBySlug } from '../api/categories'
 import { getAddresses } from '../api/addresses'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
@@ -60,7 +60,7 @@ function getDeliveryDateRange(rate: DeliveryRate) {
 }
 
 export default function ProductDetail() {
-  const { slug } = useParams<{ slug: string }>()
+  const { slug, id } = useParams<{ slug?: string; id?: string }>()
   const navigate = useNavigate()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -87,9 +87,9 @@ export default function ProductDetail() {
   const { isAuthenticated, isLoading: authLoading } = useAuth()
 
   useEffect(() => {
-    if (!slug) return
+    if (!slug && !id) return
     let mounted = true
-    const cachedProduct = peekProductBySlug(slug)
+    const cachedProduct = slug ? peekProductBySlug(slug) : undefined
     if (cachedProduct) {
       setProduct(cachedProduct)
       setLoading(false)
@@ -99,14 +99,18 @@ export default function ProductDetail() {
       setLoading((current) => current && !product)
       setNotFound(false)
     }
-    getProductBySlug(slug)
+    let request: Promise<Product>
+    if (id) request = getProductById(id)
+    else if (slug) request = getProductBySlug(slug)
+    else return
+    request
       .then((data) => mounted && setProduct(data))
       .catch(() => mounted && setNotFound(true))
       .finally(() => mounted && setLoading(false))
     return () => {
       mounted = false
     }
-  }, [slug])
+  }, [slug, id])
 
   useEffect(() => {
     const siblings = product?.variants ?? []
@@ -194,6 +198,7 @@ export default function ProductDetail() {
   const weight = product.weight ? `${product.weight} ${product.weight_unit ?? ''}`.trim() : null
   const saved = isSaved(product.id)
   const inStock = product.stock_quantity > 0
+  const showSizeChart = product.category_slug !== 'accessories' && product.category_slug !== 'saree'
   const maxQuantity = Math.max(0, product.stock_quantity)
   const deliveryRate = defaultAddress
     ? deliveryRates.find((rate) => rate.delivery_type === getAddressTier(defaultAddress.country_code))
@@ -350,7 +355,7 @@ export default function ProductDetail() {
 
           <div
             ref={inlineActionsRef}
-            className={`product-detail-inline-actions ${showFixedActions ? 'is-replaced' : ''}`}
+            className={`product-detail-inline-actions ${showFixedActions ? 'is-replaced' : ''} ${showSizeChart ? '' : 'without-size-chart'}`}
             role="group"
             aria-label="Product actions"
             aria-hidden={showFixedActions}
@@ -371,9 +376,9 @@ export default function ProductDetail() {
                 <Heart size={18} fill={saved ? 'currentColor' : 'none'} />
                 {saved ? 'Saved to Wishlist' : 'Add to Wishlist'}
               </button>
-              <a className="btn btn-outline product-detail-size-chart" href="/size-charts" target="_blank" rel="noopener noreferrer">
+              {showSizeChart && <a className="btn btn-outline product-detail-size-chart" href="/size-charts" target="_blank" rel="noopener noreferrer">
                 Size charts <ExternalLink size={16} aria-hidden="true" />
-              </a>
+              </a>}
           </div>
           <section className="product-delivery-info" aria-label="Delivery information">
             {isAuthenticated && defaultAddress && (
