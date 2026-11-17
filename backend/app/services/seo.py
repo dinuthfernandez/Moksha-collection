@@ -15,6 +15,7 @@ from typing import Any
 from ..config import get_settings
 from ..database import get_supabase
 from .cache import cached
+from .product_visibility import filter_storefront_products, is_storefront_product
 
 BRAND = "Moksha Collections"
 PHONE = "+97335521619"
@@ -140,12 +141,12 @@ def _product_rows() -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
         offset = 0
         while True:
-            batch = (
+            query = (
                 get_supabase().table("products")
                 .select("slug,name,created_at,last_synced_at")
                 .eq("is_active", True).eq("is_primary_variant", True)
-                .order("slug").range(offset, offset + 999).execute().data or []
             )
+            batch = filter_storefront_products(query).order("slug").range(offset, offset + 999).execute().data or []
             rows.extend(batch)
             if len(batch) < 1000:
                 break
@@ -158,7 +159,7 @@ def _product_rows() -> list[dict[str, Any]]:
 def _product(slug: str) -> dict[str, Any] | None:
     def load():
         rows = get_supabase().table("products").select("*").eq("slug", slug).limit(1).execute().data
-        return rows[0] if rows else None
+        return rows[0] if rows and is_storefront_product(rows[0].get("zoho_sku")) else None
 
     return cached(f"seo:product:{slug}", 600, load)
 

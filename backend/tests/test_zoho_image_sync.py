@@ -6,6 +6,13 @@ from app.services import product_images, zoho_inventory
 
 
 class ZohoImageSyncTests(unittest.TestCase):
+    def test_internal_items_stay_offline_even_if_enabled_in_zoho(self):
+        item = {"status": "active", "cf_show_in_website": True}
+        with patch.object(zoho_inventory, "_extract_online_flag", return_value=True):
+            for sku in ("DELIVERY", "test-clip"):
+                self.assertFalse(zoho_inventory._is_online_store_enabled({**item, "sku": sku}))
+            self.assertTrue(zoho_inventory._is_online_store_enabled({**item, "sku": "REGULAR"}))
+
     def setUp(self):
         self.item = {
             "item_id": "item-1",

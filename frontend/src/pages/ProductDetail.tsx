@@ -13,6 +13,7 @@ import { getAddressTier } from '../data/addressTiers'
 import ProductReviews from '../components/ui/ProductReviews'
 import PriceTag from '../components/ui/PriceTag'
 import ProductQuantitySelector from '../components/ui/ProductQuantitySelector'
+import ProductGallery from '../components/ui/ProductGallery'
 import { TERMS_AND_CONDITIONS_SECTIONS } from '../data/policies'
 import type { Address, DeliveryRate, Product, ProductVariant } from '../types'
 import { formatSize, formatVariant } from '../utils/variant'
@@ -267,13 +268,7 @@ export default function ProductDetail() {
   return (
     <div className="container product-detail-page">
       <div className="product-detail-layout">
-        <div className="product-detail-image-wrap">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="product-detail-image" />
-          ) : (
-            <div className="product-detail-image placeholder" role="img" aria-label="Moksha Collections"><span className="mc-mark">mc</span></div>
-          )}
-        </div>
+        <ProductGallery key={product.id} product={product} />
 
         <div className="product-detail-info">
           {product.category_slug && <span className="eyebrow">{product.category_slug === 'accessories' ? 'Accessories' : product.category_slug === 'saree' ? 'Saree' : 'Clothing'}</span>}

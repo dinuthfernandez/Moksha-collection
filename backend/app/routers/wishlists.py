@@ -4,6 +4,7 @@ from ..database import get_supabase
 from ..deps import get_current_customer
 from ..schemas import WishlistItemIn, WishlistItemOut
 from ..services.discounts import effective_price
+from ..services.product_visibility import is_storefront_product
 from ..services.variant_labels import display_size
 
 router = APIRouter(prefix="/wishlist", tags=["wishlist"])
@@ -35,6 +36,8 @@ def list_wishlist(customer: dict = Depends(get_current_customer)):
     enriched = []
     for row in rows:
         product = live.get(row.get("product_id"))
+        if product and not is_storefront_product(product.get("zoho_sku")):
+            continue
         if product:
             row = {
                 **row,
@@ -52,6 +55,9 @@ def list_wishlist(customer: dict = Depends(get_current_customer)):
 @router.post("", response_model=WishlistItemOut, status_code=201)
 def add_to_wishlist(payload: WishlistItemIn, customer: dict = Depends(get_current_customer)):
     supabase = get_supabase()
+    product = supabase.table("products").select("zoho_sku").eq("id", payload.product_id).limit(1).execute().data
+    if product and not is_storefront_product(product[0].get("zoho_sku")):
+        raise HTTPException(status_code=404, detail="Product not found")
     existing = (
         supabase.table("customer_wishlists")
         .select("*")

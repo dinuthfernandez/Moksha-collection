@@ -40,6 +40,17 @@ npm run dev
 Vite dev server runs on http://localhost:5173 and proxies `/api` to the
 backend on port 8000.
 
+### Product search
+Search groups matching products with the same non-empty Website Serial into
+one design card before calculating totals and pages. Products without a serial
+remain separate. Searches can still find a particular variant by its colour,
+name or SKU; the card links to a matching variant, where the other variants
+are available on the product page.
+
+The Zoho delivery service item (SKU `DELIVERY`) and test items (SKUs beginning
+`TEST-`) are excluded from the customer catalog and sync, even if marked for
+the website in Zoho. Delivery fees still appear normally during checkout.
+
 ### Homepage visibility
 The admin **Show and Hide** page has separate switches for the homepage's Under 5
 BHD, Clearance Sale, and Discounts sections. Changes are saved in Supabase

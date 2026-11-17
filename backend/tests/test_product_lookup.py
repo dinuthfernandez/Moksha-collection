@@ -48,6 +48,13 @@ class ProductLookupTests(unittest.TestCase):
         self.query.limit.return_value.execute.return_value.data = [{**self.record, "is_active": False}]
         self.assertEqual(self.client.get(f"/api/products/by-id/{self.record['id']}").status_code, 404)
 
+    def test_internal_items_cannot_be_opened_by_slug_or_id(self):
+        for sku in ("DELIVERY", "test-clip"):
+            self.query.limit.return_value.execute.return_value.data = [{**self.record, "zoho_sku": sku}]
+            for path in (f"/api/products/by-id/{self.record['id']}", "/api/products/test-dress"):
+                with self.subTest(sku=sku, path=path):
+                    self.assertEqual(self.client.get(path).status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,7 @@ from ..deps import get_current_admin
 from ..schemas import ProductListOut, ProductOut, ProductStockAdjustIn
 from ..services.cache import cached, invalidate_catalog
 from ..services.discounts import apply_discount
+from ..services.product_visibility import filter_storefront_products, is_storefront_product
 from ..services.zoho_inventory import ZohoInventoryClient
 from ..config import get_settings
 
@@ -60,6 +61,7 @@ def suggest_products(q: str = Query(min_length=1, max_length=60)):
             .eq("is_active", True).eq("is_primary_variant", True)
             .order("has_image", desc=True)
         )
+        query = filter_storefront_products(query)
         for token in tokens:
             query = query.or_(f"name.ilike.%{token}%,subcategory_name.ilike.%{token}%,color.ilike.%{token}%")
         seen: set[str] = set()
@@ -91,13 +93,13 @@ def list_new_arrivals(
     later syncs, so it marks when the item first appeared on the website."""
 
     def load() -> ProductListOut:
-        res = (
+        query = (
             get_supabase().table("products").select("*")
             .eq("is_active", True).eq("is_primary_variant", True).eq("category_slug", category)
             .gt("stock_quantity", 0).eq("has_image", True)
             .order("created_at", desc=True).order("id", desc=True)
-            .limit(limit).execute()
         )
+        res = filter_storefront_products(query).limit(limit).execute()
         items = list(res.data or [])
         return ProductListOut(items=items, total=len(items), page=1, page_size=limit, total_pages=1)
 
@@ -123,7 +125,7 @@ def list_products(
     supabase = get_supabase()
 
     def build(in_stock: bool):
-        query = supabase.table("products").select("*", count="exact")
+        query = filter_storefront_products(supabase.table("products").select("*", count="exact"))
         query = query.gt("stock_quantity", 0) if in_stock else query.lte("stock_quantity", 0)
         if active_only:
             query = query.eq("is_active", True)
@@ -134,9 +136,6 @@ def list_products(
             # (e.g. "kurti", "earrings") — subcategory browsing pages pass it in.
             query = query.eq("subcategory_slug", {"pattupavada": "pavada-blouse"}.get(category_slug, category_slug))
         if not q:
-            # Listing/grid views show one card per design: the primary (smallest
-            # size) variant. A search query intentionally ignores this so every
-            # matching variant is still findable by its own SKU/name.
             query = query.eq("is_primary_variant", True)
         if q:
             for token in _search_tokens(q):
@@ -157,7 +156,8 @@ def list_products(
             query = query.gte("price", min_price)
         if max_price is not None:
             query = query.lte("price", max_price)
-        return query.order("has_image", desc=True).order("created_at", desc=True)
+        query = query.order("has_image", desc=True).order("created_at", desc=True)
+        return query.order("id") if q else query
 
     start = (page - 1) * page_size
     end = start + page_size - 1
@@ -172,6 +172,36 @@ def list_products(
             return [], res.count or 0
 
     def load() -> ProductListOut:
+        if q:
+            # Group after matching variants, before pagination, so a SKU or colour
+            # found only on a non-primary variant still leads to its design.
+            seen: set[tuple[str, str]] = set()
+            items: list[dict] = []
+            batch_size = 200
+            for in_stock in (True, False):
+                offset = 0
+                while True:
+                    result = build(in_stock).range(offset, offset + batch_size - 1).execute()
+                    rows = result.data or []
+                    if not rows:
+                        break
+                    for row in rows:
+                        serial = row.get("website_serial")
+                        key = ("serial", serial) if serial else ("id", row["id"])
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        if start <= len(seen) - 1 <= end:
+                            items.append(row)
+                    offset += len(rows)
+                    if offset >= (result.count or 0):
+                        break
+            total = len(seen)
+            return ProductListOut(
+                items=items, total=total, page=page, page_size=page_size,
+                total_pages=max((total + page_size - 1) // page_size, 1),
+            )
+
         # In-stock products first, out-of-stock last, with paging continuing across the boundary.
         items, in_total = fetch(True, start, end)
         out_start = max(0, start - in_total)
@@ -190,7 +220,7 @@ def _get_product(field: str, value: str):
     def load() -> dict:
         supabase = get_supabase()
         result = supabase.table("products").select("*").eq(field, value).limit(1).execute()
-        if not result.data or not result.data[0].get("is_active"):
+        if not result.data or not result.data[0].get("is_active") or not is_storefront_product(result.data[0].get("zoho_sku")):
             raise HTTPException(status_code=404, detail="Product not found")
         product = dict(result.data[0])
 
@@ -203,7 +233,7 @@ def _get_product(field: str, value: str):
                 .eq("is_active", True)
                 .execute()
             )
-            product["variants"] = siblings.data or []
+            product["variants"] = [row for row in (siblings.data or []) if is_storefront_product(row.get("zoho_sku"))]
         else:
             product["variants"] = []
         return product

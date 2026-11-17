@@ -15,6 +15,7 @@ from ..config import get_settings
 from ..database import get_supabase
 from .cache import invalidate_catalog
 from .product_images import store_product_image
+from .product_visibility import is_storefront_product
 
 logger = logging.getLogger(__name__)
 
@@ -561,7 +562,7 @@ def _extract_clearance(item: dict[str, Any]) -> bool:
 
 def _is_online_store_enabled(item: dict[str, Any]) -> bool:
     # Shown on the website only when the item is active AND its "Show in website" box is ticked.
-    return item.get("status") == "active" and _extract_online_flag(item)
+    return item.get("status") == "active" and _extract_online_flag(item) and is_storefront_product(_extract_sku(item))
 
 
 def _extract_brand(item: dict[str, Any]) -> str | None:

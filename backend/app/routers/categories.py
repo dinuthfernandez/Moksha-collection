@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from ..database import get_supabase
 from ..schemas import CategoryOut
 from ..services.cache import cached
+from ..services.product_visibility import filter_storefront_products
 
 router = APIRouter(prefix="/categories", tags=["categories"])
 _LEGACY_CATEGORY_SLUGS = {"pattupavada": "pavada-blouse"}
@@ -32,11 +33,14 @@ def _saree_slugs_with_products(supabase) -> set[str]:
     slugs: set[str] = set()
     offset = 0
     while True:
-        batch = (
+        query = (
             supabase.table("products")
             .select("subcategory_slug")
             .eq("is_active", True)
             .eq("category_slug", "saree")
+        )
+        batch = (
+            filter_storefront_products(query)
             .range(offset, offset + 999)
             .execute()
             .data

@@ -16,9 +16,6 @@
 }
 
 .product-detail-image-wrap {
-  width: min(100%, max(0px, (100svh - var(--header-height) - 48px) * 0.8));
-  justify-self: center;
-  align-self: start;
   border-radius: 18px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.02);
