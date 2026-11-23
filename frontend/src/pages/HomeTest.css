@@ -43,10 +43,10 @@
 .test-house-photo img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; }
 .test-house--accessories .test-house-photo { grid-column: 2; grid-row: 1; }
 .test-house-content { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: clamp(30px, 4.2vw, 54px); }
-.test-house-logo { width: 100%; height: 112px; background: #0e0a14; display: grid; place-items: center; margin-bottom: 20px; }
+.test-house-logo { width: 100%; height: 112px; background: #fff; border: 1px solid #e8e2dc; display: grid; place-items: center; margin-bottom: 20px; }
 .test-home-logo { width: 155px; height: 70px; object-fit: contain; }
 .test-home-logo--accessories { background: #f8f4ef; border-radius: 2px; padding: 4px; }
-.test-house-logo .test-home-logo--accessories { width: 190px; height: 106px; }
+.test-house-logo .test-home-logo--accessories { width: 190px; height: 106px; background: transparent; }
 .test-house-logo .test-home-logo--saree { transform: scale(2.2); }
 .test-house-content h2 { font-size: 30px; }
 .test-house-content > p { font-size: 14px; color: var(--test-muted); margin: 18px 0; max-width: 375px; }
@@ -141,7 +141,7 @@
   .test-house-photo { min-height: 220px; margin: 36px 36px 0; }
   .test-house--accessories .test-house-photo { grid-column: auto; grid-row: auto; }
   .test-house-content { padding: 28px 22px 34px; }
-  .test-house-logo { height: 96px; }
+  .test-house-logo { width: calc(100% + 44px); height: 96px; margin-inline: -22px; }
   .test-house-logo .test-home-logo--accessories { height: 90px; }
   .test-house-logo .test-home-logo--saree { transform: scale(1.9); }
   .test-arrivals { padding: 42px 0; }

@@ -119,7 +119,7 @@
 
 .modern-hero-badge.accessories {
   width: min(320px, 70vw);
-  height: 200px;
+  aspect-ratio: 1639 / 960;
 }
 
 .modern-hero-badge.accessories img {

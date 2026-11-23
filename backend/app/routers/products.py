@@ -106,6 +106,36 @@ def list_new_arrivals(
     return _with_discounts(cached(f"new-arrivals:{category}:{limit}", 60, load))
 
 
+@router.get("/sub-subcategories")
+def list_sub_subcategories(
+    category: Literal["clothing", "accessories", "saree"],
+    category_slug: str = Query(min_length=1, max_length=120),
+):
+    subcategory_slug = {"pattupavada": "pavada-blouse"}.get(category_slug, category_slug)
+
+    def load():
+        names: dict[str, str] = {}
+        offset = 0
+        while True:
+            query = (
+                get_supabase().table("products")
+                .select("id,sub_subcategory_name,sub_subcategory_slug")
+                .eq("is_active", True).eq("category_slug", category)
+                .eq("subcategory_slug", subcategory_slug).gt("stock_quantity", 0)
+            )
+            rows = filter_storefront_products(query).order("id").range(offset, offset + 999).execute().data or []
+            for row in rows:
+                slug, name = row.get("sub_subcategory_slug"), row.get("sub_subcategory_name")
+                if slug and name:
+                    names.setdefault(slug, name)
+            if len(rows) < 1000:
+                break
+            offset += len(rows)
+        return [{"slug": slug, "name": name} for slug, name in sorted(names.items(), key=lambda item: item[1].casefold())]
+
+    return cached(f"sub-subcategories:{category}:{subcategory_slug}", 60, load)
+
+
 @router.get("", response_model=ProductListOut)
 def list_products(
     category: Optional[Literal["clothing", "accessories", "saree"]] = None,
@@ -118,6 +148,7 @@ def list_products(
     max_price: Optional[float] = Query(default=None, ge=0),
     clearance: bool = Query(default=False),
     discounted: bool = Query(default=False),
+    sub_subcategory_slug: Optional[str] = None,
 ):
     if min_price is not None and max_price is not None and min_price > max_price:
         raise HTTPException(status_code=422, detail="Minimum price cannot exceed maximum price")
@@ -135,7 +166,9 @@ def list_products(
             # `category_slug` here is actually a Zoho Product Sub Category slug
             # (e.g. "kurti", "earrings") — subcategory browsing pages pass it in.
             query = query.eq("subcategory_slug", {"pattupavada": "pavada-blouse"}.get(category_slug, category_slug))
-        if not q:
+        if sub_subcategory_slug:
+            query = query.eq("sub_subcategory_slug", sub_subcategory_slug)
+        if not q and not category_slug and not sub_subcategory_slug:
             query = query.eq("is_primary_variant", True)
         if q:
             for token in _search_tokens(q):
@@ -157,7 +190,7 @@ def list_products(
         if max_price is not None:
             query = query.lte("price", max_price)
         query = query.order("has_image", desc=True).order("created_at", desc=True)
-        return query.order("id") if q else query
+        return query.order("id") if q or category_slug or sub_subcategory_slug else query
 
     start = (page - 1) * page_size
     end = start + page_size - 1
@@ -172,9 +205,9 @@ def list_products(
             return [], res.count or 0
 
     def load() -> ProductListOut:
-        if q:
-            # Group after matching variants, before pagination, so a SKU or colour
-            # found only on a non-primary variant still leads to its design.
+        if q or category_slug or sub_subcategory_slug:
+            # Group matching variants before pagination, including variants whose
+            # primary belongs to another subcategory.
             seen: set[tuple[str, str]] = set()
             items: list[dict] = []
             batch_size = 200
@@ -212,7 +245,7 @@ def list_products(
         total_pages = max((total + page_size - 1) // page_size, 1)
         return ProductListOut(items=items, total=total, page=page, page_size=page_size, total_pages=total_pages)
 
-    cache_key = f"products:{category}:{category_slug}:{active_only}:{page}:{page_size}:{q}:    {min_price}:{max_price}:{clearance}:{discounted}"
+    cache_key = f"products:{category}:{category_slug}:{sub_subcategory_slug}:{active_only}:{page}:{page_size}:{q}:    {min_price}:{max_price}:{clearance}:{discounted}"
     return _with_discounts(cached(cache_key, 60, load))
 
 
@@ -220,7 +253,7 @@ def _get_product(field: str, value: str):
     def load() -> dict:
         supabase = get_supabase()
         result = supabase.table("products").select("*").eq(field, value).limit(1).execute()
-        if not result.data or not result.data[0].get("is_active") or not is_storefront_product(result.data[0].get("zoho_sku")):
+        if not result.data or not result.data[0].get("is_active") or not result.data[0].get("category_hierarchy_valid", True) or not is_storefront_product(result.data[0].get("zoho_sku")):
             raise HTTPException(status_code=404, detail="Product not found")
         product = dict(result.data[0])
 
@@ -233,7 +266,7 @@ def _get_product(field: str, value: str):
                 .eq("is_active", True)
                 .execute()
             )
-            product["variants"] = [row for row in (siblings.data or []) if is_storefront_product(row.get("zoho_sku"))]
+            product["variants"] = [row for row in (siblings.data or []) if row.get("category_hierarchy_valid", True) and is_storefront_product(row.get("zoho_sku"))]
         else:
             product["variants"] = []
         return product

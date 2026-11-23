@@ -68,8 +68,9 @@ const offers = [
 
 const whatsapp = buildWhatsAppLink('Hello! I would like to book a styling chat.')
 
-function Logo({ house }: { house: (typeof houses)[number] }) {
-  return <img className={`test-home-logo test-home-logo--${house.id}`} src={house.logo} alt={house.brand} />
+function Logo({ house, lightBackground = false }: { house: (typeof houses)[number]; lightBackground?: boolean }) {
+  const src = lightBackground && house.id === 'clothing' ? '/assets/logo/logo-light.svg' : house.logo
+  return <img className={`test-home-logo test-home-logo--${house.id}`} src={src} alt={house.brand} />
 }
 
 export default function HomeTest() {
@@ -111,7 +112,11 @@ export default function HomeTest() {
                 <img src={house.housePhoto} alt={house.housePhotoAlt} loading="lazy" />
               </div>
               <div className="test-house-content">
-                <div className="test-house-logo"><Logo house={house} /></div>
+                <div className="test-house-logo">
+                  {house.id === 'accessories'
+                    ? <img className="test-home-logo test-home-logo--accessories" src="/assets/logo/accessories-new.png" alt="Azhaku by Moksha Collections" />
+                    : <Logo house={house} lightBackground />}
+                </div>
                 <h2>{house.title}</h2>
                 <p>{house.description}</p>
                 <ul>{house.links.map(([label, url]) => <li key={label}><Link to={url}>{label}</Link></li>)}</ul>

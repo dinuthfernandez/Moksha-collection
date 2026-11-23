@@ -7,6 +7,6 @@ def is_storefront_product(sku: str | None) -> bool:
 
 
 def filter_storefront_products(query: Any) -> Any:
-    return query.or_(
+    return query.eq("category_hierarchy_valid", True).or_(
         "zoho_sku.is.null,and(zoho_sku.not.ilike.DELIVERY,zoho_sku.not.ilike.TEST-*)"
     )

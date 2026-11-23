@@ -618,7 +618,7 @@ def _extract_category_slug(item: dict[str, Any]) -> str | None:
         if isinstance(value, dict):
             value = value.get("value") or value.get("name") or value.get("label")
         normalized = str(value or "").strip().casefold()
-        if normalized in {"clothing", "accessories"}:
+        if normalized in {"clothing", "accessories", "saree"}:
             return normalized
     return None
 
@@ -653,6 +653,10 @@ def _extract_custom_field(item: dict[str, Any], api_name: str, label: str) -> st
 
 def _extract_subcategory_name(item: dict[str, Any]) -> str | None:
     return _extract_custom_field(item, "cf_product_sub_category", "Product Sub Category")
+
+
+def _extract_sub_subcategory_name(item: dict[str, Any]) -> str | None:
+    return _extract_custom_field(item, "cf_product_sub_sub_category", "Product Sub sub category")
 
 
 def _extract_color(item: dict[str, Any]) -> str | None:
@@ -717,6 +721,7 @@ def _mark_primary_variants(records: list[dict[str, Any]]) -> None:
             continue
         group.sort(
             key=lambda r: (
+                not r.get("category_hierarchy_valid", True),
                 _size_sort_key(r.get("size")),
                 (r.get("color") or "").strip().lower(),
                 (r.get("zoho_sku") or "").strip().lower(),
@@ -1079,6 +1084,8 @@ def _light_record(item: dict[str, Any]) -> dict[str, Any]:
 def _category_fields(item: dict[str, Any], subcategories_seen: dict[tuple[str, str], str]) -> dict[str, Any]:
     category_slug = _extract_category_slug(item)
     subcategory_name = _extract_subcategory_name(item)
+    sub_subcategory_name = _extract_sub_subcategory_name(item)
+    hierarchy_valid = not sub_subcategory_name or bool(category_slug and subcategory_name)
     raw_sub_slug = _slugify(subcategory_name, "") if subcategory_name else ""
     if _SUBCATEGORY_ALIASES.get(raw_sub_slug, raw_sub_slug) in SAREE_SUBCATEGORY_SLUGS:
         category_slug = "saree"
@@ -1089,6 +1096,9 @@ def _category_fields(item: dict[str, Any], subcategories_seen: dict[tuple[str, s
         "category_slug": category_slug,
         "subcategory_name": subcategory_name,
         "subcategory_slug": subcategory_slug,
+        "sub_subcategory_name": sub_subcategory_name,
+        "sub_subcategory_slug": (_slugify(sub_subcategory_name, "") or None) if sub_subcategory_name else None,
+        "category_hierarchy_valid": hierarchy_valid,
     }
 
 
@@ -1135,6 +1145,7 @@ def _primary_variant_updates(
             "size": row.get("size"),
             "color": row.get("color"),
             "zoho_sku": row.get("zoho_sku"),
+            "category_hierarchy_valid": row.get("category_hierarchy_valid", True),
             "_was": row.get("is_primary_variant"),
         }
         for row in rows
@@ -1265,8 +1276,10 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
             changed = _changed_fields(row, record)
             if changed:
                 updates.append((row["id"], {**changed, "last_synced_at": now}))
-    elif new_records:
-        updates.extend(_primary_variant_updates(existing_rows, new_records))
+    elif new_records or any("category_hierarchy_valid" in fields or fields.get("is_active") for _, fields in updates):
+        changes_by_id = dict(updates)
+        current_rows = [{**row, **changes_by_id.get(row["id"], {})} for row in existing_rows]
+        updates.extend(_primary_variant_updates(current_rows, new_records))
 
     _report(82, f"Writing to Supabase: {len(updates)} updates, {len(new_records)} new products")
     _apply_updates(supabase, updates)
@@ -1331,6 +1344,7 @@ def _write_products_to_supabase(items: list[dict[str, Any]], partial: bool = Fal
 
 _REFRESH_PREVIEW_FIELDS = (
     "name", "description", "zoho_sku", "stock_quantity", "price", "category_slug", "subcategory_name",
+    "sub_subcategory_name", "category_hierarchy_valid",
     "color", "size", "kids_size", "website_serial", "image_url", "is_active",
 )
 

@@ -39,6 +39,8 @@ class ProductOut(BaseModel):
     category_slug: Optional[str] = None
     subcategory_name: Optional[str] = None
     subcategory_slug: Optional[str] = None
+    sub_subcategory_name: Optional[str] = None
+    sub_subcategory_slug: Optional[str] = None
     website_serial: Optional[str] = None
     color: Optional[str] = None
     size: Optional[str] = None

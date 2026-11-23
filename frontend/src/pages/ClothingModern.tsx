@@ -114,7 +114,7 @@ function LogoHero({ type }: { type: 'accessories' | 'saree' }) {
           {type === 'saree' ? (
             <img src="/assets/logo/saree.png" alt="Pallu & Pleats" />
           ) : (
-            <img src="/assets/logo/azhak-logo.png" alt="Azhak by Moksha Collections" />
+            <img src="/assets/logo/accessories-new.png" alt="Azhaku by Moksha Collections" />
           )}
         </div>
         <h1>{c.title}</h1>

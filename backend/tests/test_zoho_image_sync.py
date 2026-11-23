@@ -62,6 +62,34 @@ class ZohoImageSyncTests(unittest.TestCase):
         store.assert_not_called()
         invalidate.assert_not_called()
 
+    def test_light_sync_updates_sub_subcategory_and_rejects_missing_parent(self):
+        client = Mock()
+        item = {**self.item, "cf_product_category": "Clothing", "cf_product_sub_sub_category": "Flower Design"}
+        updates, _, _, invalidate = self.run_light_sync([item], [self.row], client)
+        self.assertEqual(updates[0][1]["sub_subcategory_slug"], "flower-design")
+        self.assertFalse(updates[0][1]["category_hierarchy_valid"])
+        invalidate.assert_called_once()
+
+        valid = {**item, "cf_product_sub_category": "Pant"}
+        fields = zoho_inventory._category_fields(valid, {})
+        self.assertTrue(fields["category_hierarchy_valid"])
+        self.assertEqual(fields["subcategory_slug"], "pant")
+        self.assertEqual(fields["sub_subcategory_name"], "Flower Design")
+        self.assertTrue(zoho_inventory._category_fields(self.item, {})["category_hierarchy_valid"])
+        self.assertFalse(zoho_inventory._category_fields({**valid, "cf_product_category": ""}, {})["category_hierarchy_valid"])
+        saree = zoho_inventory._category_fields({**valid, "cf_product_category": "Saree", "cf_product_sub_category": "Georgette"}, {})
+        self.assertTrue(saree["category_hierarchy_valid"])
+        self.assertEqual(saree["category_slug"], "saree")
+
+    def test_primary_variant_prefers_valid_hierarchy(self):
+        records = [
+            {"website_serial": "same", "size": "S", "category_hierarchy_valid": False},
+            {"website_serial": "same", "size": "M", "category_hierarchy_valid": True},
+        ]
+        zoho_inventory._mark_primary_variants(records)
+        self.assertFalse(records[0]["is_primary_variant"])
+        self.assertTrue(records[1]["is_primary_variant"])
+
     def test_full_sync_also_skips_unchanged_image(self):
         client = Mock()
         _, _, store, _ = self.run_light_sync([self.item], [self.row], client, light=False)

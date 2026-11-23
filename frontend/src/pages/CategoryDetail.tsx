@@ -1,9 +1,10 @@
 import BrandLoader from '../components/ui/BrandLoader'
 import PriceTag from '../components/ui/PriceTag'
+import PlaceholderImage from '../components/ui/PlaceholderImage'
 import { useEffect, useState } from 'react'
 import { useLocation, useParams, Link } from 'react-router-dom'
 import { useSeo } from '../utils/seo'
-import { getCategoryBySlug, getProducts } from '../api/categories'
+import { getCategoryBySlug, getProducts, getSubSubcategories } from '../api/categories'
 import type { Category, Product } from '../types'
 import './CategoryDetail.css'
 
@@ -16,7 +17,15 @@ export default function CategoryDetail() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [loadAttempt, setLoadAttempt] = useState(0)
+  const [subSubcategories, setSubSubcategories] = useState<{ name: string; slug: string }[]>([])
+  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState<string | null>(null)
+  const [filterError, setFilterError] = useState(false)
+  const [filterAttempt, setFilterAttempt] = useState(0)
   const { pathname } = useLocation()
+  const root = pathname.split('/')[1]
+  const categoryType = root === 'clothing' || root === 'accessories' || root === 'saree' ? root : undefined
   useSeo(
     category ? `${category.name} in Bahrain - Buy Indian ${category.name} Online | Moksha Collections` : undefined,
     category
@@ -26,16 +35,33 @@ export default function CategoryDetail() {
 
   useEffect(() => {
     setPage(1)
-  }, [slug])
+    setSelectedSubSubcategory(null)
+  }, [slug, categoryType])
+
+  useEffect(() => {
+    if (!slug || !categoryType) return
+    let mounted = true
+    setSubSubcategories([])
+    setFilterError(false)
+    getSubSubcategories(categoryType, slug)
+      .then((items) => { if (mounted) setSubSubcategories(items) })
+      .catch((error: unknown) => {
+        console.error('Could not load sub-subcategories', error)
+        if (mounted) setFilterError(true)
+      })
+    return () => { mounted = false }
+  }, [slug, categoryType, filterAttempt])
 
   useEffect(() => {
     if (!slug) return
     let mounted = true
     setLoading(true)
-    const rootCategory = slug === 'accessories' || slug === 'clothing' ? slug : undefined
+    setLoadError(false)
     Promise.all([
       getCategoryBySlug(slug).catch(() => null),
-      getProducts(rootCategory, page, PAGE_SIZE, undefined, rootCategory ? undefined : slug),
+      getProducts(categoryType, page, PAGE_SIZE, undefined, slug, {
+        subSubcategorySlug: selectedSubSubcategory ?? undefined,
+      }),
     ])
       .then(([categoryData, productData]) => {
         if (!mounted) return
@@ -43,8 +69,10 @@ export default function CategoryDetail() {
         setProducts(productData.items)
         setTotalPages(productData.total_pages)
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        console.error('Could not load category products', error)
         if (!mounted) return
+        setLoadError(true)
         setCategory(null)
         setProducts([])
         setTotalPages(1)
@@ -53,7 +81,7 @@ export default function CategoryDetail() {
     return () => {
       mounted = false
     }
-  }, [slug, page])
+  }, [slug, categoryType, page, selectedSubSubcategory, loadAttempt])
 
   const goToPage = (nextPage: number) => {
     if (nextPage < 1 || nextPage > totalPages || nextPage === page) return
@@ -78,7 +106,24 @@ export default function CategoryDetail() {
         <h1 className="section-title">{category?.name ?? fallbackName}</h1>
       </div>
 
-      {products.length === 0 ? (
+      {filterError && <p role="alert">Could not load collection filters. <button type="button" onClick={() => setFilterAttempt((value) => value + 1)}>Try again</button></p>}
+      {subSubcategories.length > 0 && (
+        <div className="sub-subcategory-filters" role="group" aria-label="Filter by collection">
+          <button type="button" className={`sub-subcategory-filter${selectedSubSubcategory === null ? ' is-selected' : ''}`} aria-pressed={selectedSubSubcategory === null} onClick={() => { setSelectedSubSubcategory(null); setPage(1) }}>
+            <span className="sub-subcategory-all">All</span><span>All</span>
+          </button>
+          {subSubcategories.map((item) => (
+            <button type="button" key={item.slug} className={`sub-subcategory-filter${selectedSubSubcategory === item.slug ? ' is-selected' : ''}`} aria-pressed={selectedSubSubcategory === item.slug} onClick={() => { setSelectedSubSubcategory(item.slug); setPage(1) }}>
+              <PlaceholderImage alt={item.name} className="sub-subcategory-image" />
+              <span>{item.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {loadError ? (
+        <div className="category-empty-state" role="alert">Could not load products. <button type="button" onClick={() => setLoadAttempt((value) => value + 1)}>Try again</button></div>
+      ) : products.length === 0 ? (
         <div className="category-empty-state">
           <p>No products available in this collection yet.</p>
         </div>

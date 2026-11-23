@@ -26,7 +26,7 @@ export function getProducts(
   pageSize = 24,
   query?: string,
   categorySlug?: string,
-  filters?: { maxPrice?: number; clearance?: boolean; discounted?: boolean },
+  filters?: { maxPrice?: number; clearance?: boolean; discounted?: boolean; subSubcategorySlug?: string },
 ) {
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
   if (category) params.set('category', category)
@@ -35,7 +35,13 @@ export function getProducts(
   if (filters?.maxPrice !== undefined) params.set('max_price', String(filters.maxPrice))
   if (filters?.clearance) params.set('clearance', 'true')
   if (filters?.discounted) params.set('discounted', 'true')
+  if (filters?.subSubcategorySlug) params.set('sub_subcategory_slug', filters.subSubcategorySlug)
   return cachedGet<PaginatedProducts>(`/products?${params.toString()}`)
+}
+
+export function getSubSubcategories(category: 'clothing' | 'accessories' | 'saree', categorySlug: string) {
+  const params = new URLSearchParams({ category, category_slug: categorySlug })
+  return cachedGet<{ name: string; slug: string }[]>(`/products/sub-subcategories?${params.toString()}`)
 }
 
 export function getNewArrivals(category: 'clothing' | 'accessories' | 'saree', limit = 8) {

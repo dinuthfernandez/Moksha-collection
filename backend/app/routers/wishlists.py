@@ -36,7 +36,7 @@ def list_wishlist(customer: dict = Depends(get_current_customer)):
     enriched = []
     for row in rows:
         product = live.get(row.get("product_id"))
-        if product and not is_storefront_product(product.get("zoho_sku")):
+        if product and (not product.get("category_hierarchy_valid", True) or not is_storefront_product(product.get("zoho_sku"))):
             continue
         if product:
             row = {
@@ -55,8 +55,8 @@ def list_wishlist(customer: dict = Depends(get_current_customer)):
 @router.post("", response_model=WishlistItemOut, status_code=201)
 def add_to_wishlist(payload: WishlistItemIn, customer: dict = Depends(get_current_customer)):
     supabase = get_supabase()
-    product = supabase.table("products").select("zoho_sku").eq("id", payload.product_id).limit(1).execute().data
-    if product and not is_storefront_product(product[0].get("zoho_sku")):
+    product = supabase.table("products").select("zoho_sku,category_hierarchy_valid").eq("id", payload.product_id).limit(1).execute().data
+    if product and (not product[0].get("category_hierarchy_valid", True) or not is_storefront_product(product[0].get("zoho_sku"))):
         raise HTTPException(status_code=404, detail="Product not found")
     existing = (
         supabase.table("customer_wishlists")

@@ -51,6 +51,19 @@ The Zoho delivery service item (SKU `DELIVERY`) and test items (SKUs beginning
 `TEST-`) are excluded from the customer catalog and sync, even if marked for
 the website in Zoho. Delivery fees still appear normally during checkout.
 
+### Sub-subcategories
+Run `backend/sql/028_product_sub_subcategories.sql` in the Supabase SQL editor
+before deploying this version. The hourly sync reads Zoho's **Product Sub sub
+category** custom field alongside **Product Category** and **Product Sub
+Category**. Products with a sub-subcategory but a missing parent category or
+subcategory are hidden from the storefront until the parent fields are filled.
+Existing products without a sub-subcategory retain their current behavior.
+
+On each subcategory page, the filter starts at **All**. The circular filters
+use the Moksha placeholder and appear only for sub-subcategories with at least
+one active, in-stock product in that category and subcategory. Changes appear
+after the hourly sync; catalog responses may be cached for up to one minute.
+
 ### Homepage visibility
 The admin **Show and Hide** page has separate switches for the homepage's Under 5
 BHD, Clearance Sale, and Discounts sections. Changes are saved in Supabase

@@ -159,7 +159,7 @@ def _product_rows() -> list[dict[str, Any]]:
 def _product(slug: str) -> dict[str, Any] | None:
     def load():
         rows = get_supabase().table("products").select("*").eq("slug", slug).limit(1).execute().data
-        return rows[0] if rows and is_storefront_product(rows[0].get("zoho_sku")) else None
+        return rows[0] if rows and rows[0].get("category_hierarchy_valid", True) and is_storefront_product(rows[0].get("zoho_sku")) else None
 
     return cached(f"seo:product:{slug}", 600, load)
 

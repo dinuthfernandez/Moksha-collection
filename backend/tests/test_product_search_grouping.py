@@ -16,7 +16,7 @@ class ProductQuery:
         return self
 
     def eq(self, field, value):
-        self.rows = [row for row in self.rows if row.get(field) == value]
+        self.rows = [row for row in self.rows if row.get(field, True if field == "category_hierarchy_valid" else None) == value]
         return self
 
     def gt(self, field, value):
@@ -119,6 +119,55 @@ class ProductSearchGroupingTests(unittest.TestCase):
         catalog = self.search(None)
         self.assertEqual(catalog.total, 28)
         self.assertFalse(any(item.id in ("DELIVERY", "test-clip") for item in catalog.items))
+
+    def test_sub_subcategory_filter_groups_matching_nonprimary_variants_and_hides_invalid(self):
+        self.rows = [
+            {"id": "a", "slug": "a", "name": "Pant", "website_serial": "one", "category_slug": "clothing",
+             "subcategory_slug": "pant", "sub_subcategory_slug": "flower", "is_active": True,
+             "is_primary_variant": False, "category_hierarchy_valid": True, "stock_quantity": 1, "price": 5},
+            {"id": "b", "slug": "b", "name": "Pant", "website_serial": "one", "category_slug": "clothing",
+             "subcategory_slug": "pant", "sub_subcategory_slug": "flower", "is_active": True,
+             "is_primary_variant": True, "category_hierarchy_valid": True, "stock_quantity": 0, "price": 5},
+            {"id": "invalid", "slug": "invalid", "name": "Pant", "category_slug": "clothing",
+             "subcategory_slug": "pant", "sub_subcategory_slug": "flower", "is_active": True,
+             "is_primary_variant": True, "category_hierarchy_valid": False, "stock_quantity": 1, "price": 5},
+        ]
+        result = products.list_products(
+            category="clothing", category_slug="pant", active_only=True, page=1, page_size=24,
+            q=None, min_price=None, max_price=None, clearance=False, discounted=False,
+            sub_subcategory_slug="flower",
+        )
+        self.assertEqual(result.total, 1)
+        self.assertEqual(result.items[0].id, "a")
+
+    def test_sub_subcategory_options_require_in_stock_visible_products_in_parent(self):
+        self.rows = [
+            {"id": "1", "category_slug": "clothing", "subcategory_slug": "pant", "sub_subcategory_name": "Flower",
+             "sub_subcategory_slug": "flower", "is_active": True, "stock_quantity": 1},
+            {"id": "2", "category_slug": "clothing", "subcategory_slug": "pant", "sub_subcategory_name": "Sold Out",
+             "sub_subcategory_slug": "sold-out", "is_active": True, "stock_quantity": 0},
+            {"id": "3", "category_slug": "accessories", "subcategory_slug": "pant", "sub_subcategory_name": "Wrong Parent",
+             "sub_subcategory_slug": "wrong-parent", "is_active": True, "stock_quantity": 1},
+            {"id": "4", "category_slug": "clothing", "subcategory_slug": "pant", "sub_subcategory_name": "Invalid",
+             "sub_subcategory_slug": "invalid", "is_active": True, "stock_quantity": 1, "category_hierarchy_valid": False},
+        ]
+        self.assertEqual(products.list_sub_subcategories("clothing", "pant"), [{"name": "Flower", "slug": "flower"}])
+
+    def test_all_in_subcategory_includes_nonprimary_variant_from_that_subcategory(self):
+        self.rows = [
+            {"id": "primary", "slug": "primary", "name": "Set", "website_serial": "one",
+             "category_slug": "clothing", "subcategory_slug": "top", "is_active": True,
+             "is_primary_variant": True, "stock_quantity": 1, "price": 5},
+            {"id": "pant", "slug": "pant", "name": "Pant", "website_serial": "one",
+             "category_slug": "clothing", "subcategory_slug": "pant", "sub_subcategory_slug": "flower",
+             "is_active": True, "is_primary_variant": False, "stock_quantity": 1, "price": 5},
+        ]
+        result = products.list_products(
+            category="clothing", category_slug="pant", active_only=True, page=1, page_size=24,
+            q=None, min_price=None, max_price=None, clearance=False, discounted=False,
+        )
+        self.assertEqual(result.total, 1)
+        self.assertEqual(result.items[0].id, "pant")
 
 
 if __name__ == "__main__":
