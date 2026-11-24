@@ -48,6 +48,12 @@ type RailFilters = { maxPrice?: number; clearance?: boolean; discounted?: boolea
 function ClothingHero() {
   return (
     <section className="modern-hero hero-clothing" aria-label="clothing hero">
+      <div className="clothing-hero-art" aria-hidden="true">
+        <span className="clothing-drape clothing-drape-left" />
+        <span className="clothing-drape clothing-drape-right" />
+        <span className="clothing-stitch clothing-stitch-left" />
+        <span className="clothing-stitch clothing-stitch-right" />
+      </div>
       <div className="clothing-hero-frame" aria-hidden="true" />
       <div className="modern-hero-inner clothing-hero-inner container">
         <span className="clothing-hero-eyebrow">Signature Edit</span>
