@@ -68,9 +68,8 @@ const offers = [
 
 const whatsapp = buildWhatsAppLink('Hello! I would like to book a styling chat.')
 
-function Logo({ house, lightBackground = false }: { house: (typeof houses)[number]; lightBackground?: boolean }) {
-  const src = lightBackground && house.id === 'clothing' ? '/assets/logo/logo-light.svg' : house.logo
-  return <img className={`test-home-logo test-home-logo--${house.id}`} src={src} alt={house.brand} />
+function Logo({ house }: { house: (typeof houses)[number] }) {
+  return <img className={`test-home-logo test-home-logo--${house.id}`} src={house.logo} alt={house.brand} />
 }
 
 export default function HomeTest() {
@@ -113,9 +112,14 @@ export default function HomeTest() {
               </div>
               <div className="test-house-content">
                 <div className="test-house-logo">
-                  {house.id === 'accessories'
-                    ? <img className="test-home-logo test-home-logo--accessories" src="/assets/logo/accessories-new.png" alt="Azhaku by Moksha Collections" />
-                    : <Logo house={house} lightBackground />}
+                  {house.id === 'clothing'
+                    ? <>
+                        <img className="test-home-logo test-house-logo-light" src="/assets/logo/logo-light.svg" alt={house.brand} />
+                        <img className="test-home-logo test-house-logo-dark" src="/assets/logo/logo-dark.svg" alt={house.brand} />
+                      </>
+                    : house.id === 'accessories'
+                    ? <img className="test-home-logo test-home-logo--accessories" src="/assets/logo/accessories-logo.jpeg" alt="Azhaku by Moksha Collections" />
+                    : <Logo house={house} />}
                 </div>
                 <h2>{house.title}</h2>
                 <p>{house.description}</p>

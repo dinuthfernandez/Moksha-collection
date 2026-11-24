@@ -5,7 +5,6 @@ import { getCategoryTree, getProducts } from '../api/categories'
 import { useCart } from '../context/CartContext'
 import type { Category, Product } from '../types'
 import EmptyState from '../components/ui/EmptyState'
-import CategoryHeroCarousel from '../components/ui/CategoryHeroCarousel'
 import PlaceholderImage from '../components/ui/PlaceholderImage'
 import PriceTag from '../components/ui/PriceTag'
 import { useCategoryLimit } from '../utils/useCategoryLimit'
@@ -16,26 +15,6 @@ import './ClothingModern.css'
 const STEP = 8
 const RAIL_SIZE = 8
 const PAGE = 24
-
-const HERO = {
-  eyebrow: 'Signature Edit',
-  title: 'Wear Your',
-  highlight: 'Confidence.',
-  subtitle:
-    'Moksha Collections curates considered silhouettes — refined tailoring, fluid drapes, and colour stories made for the way you actually live.',
-  sets: [
-    {
-      large: '/assets/category/DSC_5516.jpg.jpeg',
-      smallTop: '/assets/category/DSC_5685.jpg.jpeg',
-      smallBottom: '/assets/category/DSC_5742.jpg.jpeg',
-    },
-    {
-      large: '/assets/category/DSC_5679.jpg.jpeg',
-      smallTop: '/assets/category/DSC_5704.jpg.jpeg',
-      smallBottom: '/assets/category/DSC_5650.jpg.jpeg',
-    },
-  ],
-}
 
 function ProductCard({ product, onAdd }: { product: Product; onAdd: (p: Product) => void }) {
   const soldOut = product.stock_quantity <= 0
@@ -65,6 +44,24 @@ function Skeletons({ count }: { count: number }) {
 
 type PageType = 'clothing' | 'accessories' | 'saree'
 type RailFilters = { maxPrice?: number; clearance?: boolean; discounted?: boolean }
+
+function ClothingHero() {
+  return (
+    <section className="modern-hero hero-clothing" aria-label="clothing hero">
+      <div className="clothing-hero-frame" aria-hidden="true" />
+      <div className="modern-hero-inner clothing-hero-inner container">
+        <span className="clothing-hero-eyebrow">Signature Edit</span>
+        <div className="clothing-hero-logo">
+          <img className="clothing-hero-logo-light" src="/assets/logo/logo-light.svg" alt="Moksha Collections" />
+          <img className="clothing-hero-logo-dark" src="/assets/logo/logo-dark.svg" alt="Moksha Collections" />
+        </div>
+        <h1>Wear Your <span>Confidence.</span></h1>
+        <p>Moksha Collections curates considered silhouettes — refined tailoring, fluid drapes, and colour stories made for the way you actually live.</p>
+        <a href="#modern-catalog-title" className="btn btn-primary">Shop now</a>
+      </div>
+    </section>
+  )
+}
 
 const LOGO_HERO: Record<'accessories' | 'saree', { eyebrow: string; title: string; subtitle: string }> = {
   saree: {
@@ -114,7 +111,7 @@ function LogoHero({ type }: { type: 'accessories' | 'saree' }) {
           {type === 'saree' ? (
             <img src="/assets/logo/saree.png" alt="Pallu & Pleats" />
           ) : (
-            <img src="/assets/logo/accessories-new.png" alt="Azhaku by Moksha Collections" />
+            <img src="/assets/logo/accessories-logo.jpeg" alt="Azhaku by Moksha Collections" />
           )}
         </div>
         <h1>{c.title}</h1>
@@ -450,13 +447,7 @@ export default function ClothingModern({ type = 'clothing' }: { type?: PageType 
   return (
     <div className="category-landing clothing-modern">
       {type === 'clothing' ? (
-        <CategoryHeroCarousel
-          eyebrow={HERO.eyebrow}
-          title={HERO.title}
-          highlight={HERO.highlight}
-          subtitle={HERO.subtitle}
-          sets={HERO.sets}
-        />
+        <ClothingHero />
       ) : (
         <LogoHero type={type} />
       )}
