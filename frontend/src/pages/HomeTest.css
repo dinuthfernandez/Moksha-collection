@@ -44,10 +44,8 @@
 .test-house--accessories .test-house-photo { grid-column: 2; grid-row: 1; }
 .test-house-content { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: clamp(30px, 4.2vw, 54px); }
 .test-house-logo { width: 100%; height: 112px; display: grid; place-items: center; margin-bottom: 20px; }
-.test-house-logo-dark { display: none; }
-:root[data-theme='dark'] .test-house-logo-light { display: none; }
-:root[data-theme='dark'] .test-house-logo-dark { display: block; }
 .test-home-logo { width: 155px; height: 70px; object-fit: contain; }
+.test-house-logo .test-home-logo--aira { width: 112px; height: 112px; }
 .test-home-logo--accessories { background: #f8f4ef; border-radius: 2px; padding: 4px; }
 .test-house-logo .test-home-logo--accessories { width: 190px; height: 106px; background: transparent; }
 .test-house-logo .test-home-logo--saree { transform: scale(2.2); }
@@ -145,6 +143,7 @@
   .test-house--accessories .test-house-photo { grid-column: auto; grid-row: auto; }
   .test-house-content { padding: 28px 22px 34px; }
   .test-house-logo { height: 96px; }
+  .test-house-logo .test-home-logo--aira { width: 96px; height: 96px; }
   .test-house-logo .test-home-logo--accessories { height: 90px; }
   .test-house-logo .test-home-logo--saree { transform: scale(1.9); }
   .test-arrivals { padding: 42px 0; }

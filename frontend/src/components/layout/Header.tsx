@@ -10,7 +10,7 @@ import ThemeToggle from '../ui/ThemeToggle'
 import './Header.css'
 
 const HOUSE_LINKS = [
-  { label: 'Moksha', category: 'Dresses', to: '/clothing' },
+  { label: 'Aira', category: 'Dresses', to: '/clothing' },
   { label: 'Azhaku', category: 'Accessories', to: '/accessories' },
   { label: 'Pallu & Pleats', category: 'Sarees', to: '/saree' },
 ]

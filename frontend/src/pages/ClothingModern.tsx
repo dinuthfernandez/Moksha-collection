@@ -58,8 +58,7 @@ function ClothingHero() {
       <div className="modern-hero-inner clothing-hero-inner container">
         <span className="clothing-hero-eyebrow">Signature Edit</span>
         <div className="clothing-hero-logo">
-          <img className="clothing-hero-logo-light" src="/assets/logo/logo-light.svg" alt="Moksha Collections" />
-          <img className="clothing-hero-logo-dark" src="/assets/logo/logo-dark.svg" alt="Moksha Collections" />
+          <img src="/assets/logo/aira.jpg" alt="Aira by Moksha Collections" />
         </div>
         <h1>Wear Your <span>Confidence.</span></h1>
         <p>Moksha Collections curates considered silhouettes — refined tailoring, fluid drapes, and colour stories made for the way you actually live.</p>

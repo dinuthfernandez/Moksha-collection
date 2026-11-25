@@ -113,10 +113,7 @@ export default function HomeTest() {
               <div className="test-house-content">
                 <div className="test-house-logo">
                   {house.id === 'clothing'
-                    ? <>
-                        <img className="test-home-logo test-house-logo-light" src="/assets/logo/logo-light.svg" alt={house.brand} />
-                        <img className="test-home-logo test-house-logo-dark" src="/assets/logo/logo-dark.svg" alt={house.brand} />
-                      </>
+                    ? <img className="test-home-logo test-home-logo--aira" src="/assets/logo/aira.jpg" alt="Aira by Moksha Collections" />
                     : house.id === 'accessories'
                     ? <img className="test-home-logo test-home-logo--accessories" src="/assets/logo/accessories-logo.jpeg" alt="Azhaku by Moksha Collections" />
                     : <Logo house={house} />}
@@ -124,7 +121,7 @@ export default function HomeTest() {
                 <h2>{house.title}</h2>
                 <p>{house.description}</p>
                 <ul>{house.links.map(([label, url]) => <li key={label}><Link to={url}>{label}</Link></li>)}</ul>
-                <Link className="test-button" to={`/${house.id}`}>Shop {house.brand}</Link>
+                <Link className="test-button" to={`/${house.id}`}>Shop {house.id === 'clothing' ? 'Aira' : house.brand}</Link>
               </div>
             </article>
           ))}
